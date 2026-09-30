@@ -1,14 +1,32 @@
-`timescale 1ns/1ps
 
 
-module(
+
+module Stop_watch (
            
     input i_clk, 
-    input i_reset,
- 
+    input i_reset 
 
         );
 
+
+assign o = i_clk;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+endmodule
 
 
 
