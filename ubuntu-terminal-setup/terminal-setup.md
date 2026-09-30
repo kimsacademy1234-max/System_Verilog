@@ -467,7 +467,8 @@ git status --short                                # → ?? project_0930/  처럼
 ## 11단계. vim Verilog 편집 보조: 자동완성 목록 + 문법 오류 표시
 
 - **자동완성:** `.v`/`.sv` 파일에서 2글자 이상 입력하면 커서 아래에 후보 목록이 뜬다 (파일 안 단어 + Verilog/SystemVerilog 키워드). `Tab`/`Shift+Tab`으로 선택.
-- **문법 오류:** ALE 플러그인이 Verilator(`--lint-only`)로 검사해서 왼쪽에 `>>`(오류) / `--`(경고)를 표시하고, 해당 줄 끝에 메시지를 보여준다.
+- **문법 오류:** **`:w` 저장할 때만** ALE 플러그인이 Verilator(`--lint-only`)로 검사해서 왼쪽에 `>>`(오류) / `--`(경고)를 표시하고, 해당 줄 끝에 `/* E: ... */` 주석처럼 메시지를 보여준다.
+  사용자는 입력 중 실시간 검사를 **방해된다고 싫어한다** → 입력 중·파일 열 때 검사는 모두 끈다.
 
 ### 11-1. 사전 확인: Verilator
 ```bash
@@ -520,12 +521,19 @@ augroup END
 inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
 inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
-" 문법 오류 표시 (ALE + Verilator): 왼쪽에 >> 오류 / -- 경고, 커서를 올리면 하단에 메시지
+" 문법 오류 표시 (ALE + Verilator): :w 저장 시 검사, 왼쪽에 >> 오류 / -- 경고 + 줄 끝에 메시지
 let g:ale_linters = {'verilog': ['verilator'], 'systemverilog': ['verilator']}
 let g:ale_linters_explicit = 1          " Verilog 외 다른 파일은 검사 안 함
 let g:ale_sign_error = '>>'
 let g:ale_sign_warning = '--'
 let g:ale_echo_msg_format = '[%linter%] %severity%: %s'
+" 입력 중에는 검사 안 함 → :w 저장할 때만 한 번 검사, 결과는 줄 끝에 주석처럼 표시
+let g:ale_lint_on_text_changed = 'never'
+let g:ale_lint_on_insert_leave = 0
+let g:ale_lint_on_enter = 0
+let g:ale_lint_on_filetype_changed = 0
+let g:ale_lint_on_save = 1
+let g:ale_virtualtext_cursor = 'all'
 ```
 > - 자동완성은 Verilog 파일에서만 켜진다. 키워드 사전은 `iskeyword+=$`로 `$display` 같은 시스템 함수도 포함.
 > - ALE는 Verilator를 `-Wall`로 돌리므로 오류뿐 아니라 "사용 안 한 신호" 같은 경고(`--`)도 나온다.
@@ -537,7 +545,9 @@ let g:ale_echo_msg_format = '[%linter%] %severity%: %s'
 SP=<스크래치패드>; cd "$SP"
 printf 'module(\n  input clk\n);\nendmodule\n' > bad.v
 tmux new-session -d -s vt -x 110 -y 20 "bash -ic 'vim $SP/bad.v'"; sleep 4
-tmux capture-pane -p -t vt | head -2          # → ">>  1 module( ... syntax error" 가 보이면 문법 검사 성공
+tmux capture-pane -p -t vt | head -2          # → 파일만 열었을 땐 >> 표시가 없어야 함 (저장 시에만 검사)
+tmux send-keys -t vt ':w' Enter; sleep 3
+tmux capture-pane -p -t vt | head -2          # → ">>  1 module(  /* E: syntax error ..." 가 보이면 문법 검사 성공
 tmux send-keys -t vt G o 'alw'; sleep 1
 tmux send-keys -t vt Tab; sleep 0.5
 tmux capture-pane -p -t vt | grep always      # → always / always_comb ... 후보 목록이 보이면 자동완성 성공
@@ -561,7 +571,7 @@ tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
-- [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, 문법 오류 줄에 `>>` 표시가 나옴
+- [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
 
 ## 사용자에게 전달할 사용법 요약
 
