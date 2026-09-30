@@ -18,6 +18,7 @@
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
+| 11 | vim Verilog 편집: 입력 중 **자동완성 목록**(Tab 선택) + **문법 오류 표시**(ALE + Verilator) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -463,6 +464,88 @@ git status --short                                # → ?? project_0930/  처럼
 
 ---
 
+## 11단계. vim Verilog 편집 보조: 자동완성 목록 + 문법 오류 표시
+
+- **자동완성:** `.v`/`.sv` 파일에서 2글자 이상 입력하면 커서 아래에 후보 목록이 뜬다 (파일 안 단어 + Verilog/SystemVerilog 키워드). `Tab`/`Shift+Tab`으로 선택.
+- **문법 오류:** ALE 플러그인이 Verilator(`--lint-only`)로 검사해서 왼쪽에 `>>`(오류) / `--`(경고)를 표시하고, 해당 줄 끝에 메시지를 보여준다.
+
+### 11-1. 사전 확인: Verilator
+```bash
+verilator --version     # 없으면 사용자에게 `! sudo apt install verilator` 실행 안내
+```
+> 원래 PC는 Verilator를 소스로 빌드해 `~/verilator/bin`에 두고 `~/.bashrc`에서 PATH에 추가했다 (`export PATH="$HOME/verilator/bin:$PATH"`).
+> apt 버전(5.x)으로도 충분하다.
+
+### 11-2. ALE 설치 + 키워드 사전 만들기
+```bash
+[ -d ~/.vim/pack/plugins/start/ale ] || git clone --depth 1 https://github.com/dense-analysis/ale ~/.vim/pack/plugins/start/ale
+mkdir -p ~/.vim/dict
+python3 - <<'EOF'
+# vim 내장 verilog/systemverilog 문법 파일에서 키워드를 뽑아 자동완성 사전 생성
+import re, glob, os
+words = set()
+for f in glob.glob('/usr/share/vim/vim9*/syntax/*verilog.vim'):
+    if 'ams' in f: continue
+    for line in open(f, encoding='utf-8', errors='ignore'):
+        m = re.match(r'\s*syn(?:tax)?\s+keyword\s+\S+\s+(.*)', line)
+        if m:
+            for w in m.group(1).split():
+                if w.startswith(('contained','nextgroup','skipwhite','transparent')) or '=' in w: continue
+                w = w.strip('\\')
+                if re.fullmatch(r'\$?[A-Za-z_][A-Za-z0-9_$]*', w): words.add(w)
+words.update("always_ff always_comb always_latch logic bit byte int shortint longint unique priority typedef enum struct packed interface modport import package endpackage localparam parameter generate endgenerate genvar initial final assign posedge negedge begin end module endmodule input output inout wire reg integer case casez casex endcase default function endfunction task endtask $display $monitor $finish $stop $time $random $readmemh $readmemb $clog2 $fopen $fclose $fwrite".split())
+open(os.path.expanduser('~/.vim/dict/verilog.dict'), 'w').write('\n'.join(sorted(words)) + '\n')
+print(len(words), 'words')
+EOF
+```
+
+### 11-3. `~/.vimrc` 맨 아래에 추가
+```vim
+" ==========================================
+"  Verilog 편집 보조: 자동완성 목록 + 문법 오류 표시
+" ==========================================
+" 2글자 이상 입력하면 아래에 후보 목록 표시 (파일 안 단어 + Verilog 키워드 사전)
+set completeopt=menuone,noinsert,noselect
+function! s:VerilogAutoComplete()
+    if !pumvisible() && getline('.')[: col('.') - 2] =~ '\k\k$'
+        call feedkeys("\<C-n>", 'n')
+    endif
+endfunction
+augroup verilog_edit
+    autocmd!
+    autocmd FileType verilog,systemverilog setlocal dictionary=~/.vim/dict/verilog.dict complete=.,w,b,k iskeyword+=$
+    autocmd FileType verilog,systemverilog autocmd! verilog_edit TextChangedI <buffer> call s:VerilogAutoComplete()
+augroup END
+" Tab / Shift+Tab : 목록이 떠 있으면 아래 / 위로 선택, 아니면 원래 Tab
+inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+" 문법 오류 표시 (ALE + Verilator): 왼쪽에 >> 오류 / -- 경고, 커서를 올리면 하단에 메시지
+let g:ale_linters = {'verilog': ['verilator'], 'systemverilog': ['verilator']}
+let g:ale_linters_explicit = 1          " Verilog 외 다른 파일은 검사 안 함
+let g:ale_sign_error = '>>'
+let g:ale_sign_warning = '--'
+let g:ale_echo_msg_format = '[%linter%] %severity%: %s'
+```
+> - 자동완성은 Verilog 파일에서만 켜진다. 키워드 사전은 `iskeyword+=$`로 `$display` 같은 시스템 함수도 포함.
+> - ALE는 Verilator를 `-Wall`로 돌리므로 오류뿐 아니라 "사용 안 한 신호" 같은 경고(`--`)도 나온다.
+> - vim은 셸의 PATH를 물려받으므로, Verilator가 PATH에 있는 셸에서 vim을 실행해야 한다.
+> - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
+
+### 11-4. 검증 (tmux 임시 세션에서 실제 화면 확인)
+```bash
+SP=<스크래치패드>; cd "$SP"
+printf 'module(\n  input clk\n);\nendmodule\n' > bad.v
+tmux new-session -d -s vt -x 110 -y 20 "bash -ic 'vim $SP/bad.v'"; sleep 4
+tmux capture-pane -p -t vt | head -2          # → ">>  1 module( ... syntax error" 가 보이면 문법 검사 성공
+tmux send-keys -t vt G o 'alw'; sleep 1
+tmux send-keys -t vt Tab; sleep 0.5
+tmux capture-pane -p -t vt | grep always      # → always / always_comb ... 후보 목록이 보이면 자동완성 성공
+tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -478,6 +561,7 @@ git status --short                                # → ?? project_0930/  처럼
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
+- [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, 문법 오류 줄에 `>>` 표시가 나옴
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -491,6 +575,7 @@ git status --short                                # → ?? project_0930/  처럼
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
+| Verilog 자동완성 후보 선택 (입력 모드) | `Tab` / `Shift+Tab` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -504,3 +589,4 @@ git status --short                                # → ?? project_0930/  처럼
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
 - git status 경로: `git config --global --unset status.relativePaths`
+- Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
