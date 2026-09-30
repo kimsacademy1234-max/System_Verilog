@@ -18,7 +18,7 @@
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
-| 11 | **glow**로 md 파일을 터미널에서 VS Code 미리보기처럼 보기 | `~/.local/bin/glow` |
+| 11 | vim에서 `m` 한 번으로 md 파일을 **VS Code처럼 브라우저 실시간 미리보기** (markdown-preview.nvim) | `~/.vim/pack/`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -462,37 +462,57 @@ git status --short                                # → ?? project_0930/  처럼
 
 ---
 
-## 11단계. glow: 터미널 Markdown 뷰어
+## 11단계. Markdown 실시간 미리보기 (markdown-preview.nvim)
 
-md 파일을 제목·표·코드 블록 서식을 입혀 터미널에서 보기 위한 도구. sudo 없이 GitHub 릴리스 바이너리를 `~/.local/bin`에 설치한다.
-사전 확인: `type glow` → 이미 있으면 건너뛴다.
+vim에서 md 파일을 편집하면서 `m`을 누르면 Windows 기본 브라우저에 VS Code 스타일 미리보기가 열린다.
+타이핑하는 대로 실시간 반영되고, vim 커서 위치를 따라 미리보기도 스크롤된다. (Node.js 불필요, 미리 빌드된 파일 사용)
 
+### 11-1. 플러그인 설치
 ```bash
-SP=<스크래치패드 디렉터리>
-cd "$SP"
-URL=$(curl -sL https://api.github.com/repos/charmbracelet/glow/releases/latest | grep browser_download_url | grep -i 'Linux_x86_64.tar.gz"' | head -1 | cut -d'"' -f4)
-curl -sL -o glow.tgz "$URL"
-mkdir -p glowx && tar xzf glow.tgz -C glowx
-mkdir -p ~/.local/bin && cp "$(find glowx -type f -name glow)" ~/.local/bin/ && chmod +x ~/.local/bin/glow
-```
-> - Ubuntu 기본 `~/.profile`은 `~/.local/bin`이 **존재할 때만** PATH에 넣는다. 폴더를 방금 만들었다면
->   `echo $PATH | grep -c .local/bin`이 0일 수 있으니, 새 터미널을 열거나 `source ~/.profile` 하도록 안내한다.
-> - ARM PC면 `Linux_arm64.tar.gz`로 바꾼다 (`uname -m`으로 확인).
-
-검증:
-```bash
-bash -ic 'type glow; glow --version'
-# → glow is /home/<사용자>/.local/bin/glow, glow version 3.x
+D=~/.vim/pack/plugins/start/markdown-preview.nvim
+[ -d $D ] || git clone --depth 1 https://github.com/iamcco/markdown-preview.nvim $D
+cd $D/app && bash install.sh      # app/bin/markdown-preview-linux 다운로드
+ls $D/app/bin/                    # → markdown-preview-linux 가 있어야 함
 ```
 
-사용법 (사용자에게 안내):
-| 입력 | 동작 |
-|---|---|
-| `glow 파일.md` | 서식을 입혀 한 번에 출력 |
-| `glow -p 파일.md` | 페이지 단위로 보기 (`↑↓`/`j k` 스크롤, `q` 종료) |
-| `glow` | 현재 폴더의 md 파일 목록에서 골라 보기 |
+### 11-2. `~/.vimrc` 맨 아래에 추가
+```vim
+" ==========================================
+"  Markdown 미리보기 (markdown-preview.nvim)
+" ==========================================
+" WSL: Windows 기본 브라우저로 미리보기 열기
+function! MkdpOpenWin(url)
+    call job_start(['cmd.exe', '/c', 'start', '', a:url], {'cwd': '/mnt/c'})
+endfunction
+let g:mkdp_browserfunc = 'MkdpOpenWin'
+let g:mkdp_echo_preview_url = 1   " 브라우저가 안 열리면 하단에 뜬 주소를 직접 열기
+let g:mkdp_theme = 'dark'
+" md 파일에서 m : 미리보기 켜기/끄기 (md 파일에서만 m 마크 기능 대신 사용)
+autocmd FileType markdown nnoremap <buffer> <silent> m :MarkdownPreviewToggle<CR>
+```
+> - WSL의 vim은 Windows 브라우저를 직접 못 여므로 `g:mkdp_browserfunc`로 `cmd.exe /c start`를 호출한다.
+>   `cwd`를 `/mnt/c`로 주는 이유: 리눅스 경로에서 `cmd.exe`를 실행하면 UNC 경로 경고가 나온다.
+> - 서버는 WSL의 `localhost`에서 뜨고, WSL2의 localhost 포워딩으로 Windows 브라우저에서 접속된다.
+> - `m`은 **md 파일에서만** 미리보기 키로 바뀐다 (다른 파일의 `m` 마크 기능은 그대로).
 
-> tmux에서 `v`로 좌우 분할 → 한쪽 vim 편집, 한쪽 `glow -p` 보기. 저장해도 자동 갱신은 안 되므로 다시 실행한다.
+### 11-3. 검증 (브라우저를 실제로 띄우지 않고 서버만 확인)
+```bash
+SP=<스크래치패드>; cd "$SP"; rm -f url.txt; printf '# Test\n' > t.md
+cat > t.vim <<EOT
+function! T(u)
+  call writefile([a:u], '$SP/url.txt')
+endfunction
+let g:mkdp_browserfunc = 'T'
+EOT
+tmux new-session -d -s mp -x 120 -y 20 "vim -c 'so $SP/t.vim' t.md"; sleep 1.5
+tmux send-keys -t mp m; sleep 5
+U=$(cat url.txt); echo "$U"
+curl -s -o /dev/null -w "WSL: %{http_code}\n" "$U"
+(cd /mnt/c && curl.exe -s -o NUL -w "Windows: %{http_code}\n" "$U")
+tmux kill-session -t mp
+# → http://localhost:8xxx/page/1, WSL: 200, Windows: 200 이면 성공
+```
+실제 사용: vim으로 md 파일을 열고 `m` → 브라우저가 열리는지 사용자에게 확인받는다.
 
 ---
 
@@ -511,7 +531,7 @@ bash -ic 'type glow; glow --version'
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
-- [ ] `glow -p terminal-setup.md`로 서식이 입혀진 문서가 보임
+- [ ] vim으로 md 파일을 열고 `m` → 브라우저에 미리보기가 열리고, 타이핑이 실시간 반영됨
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -525,7 +545,7 @@ bash -ic 'type glow; glow --version'
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
-| md 파일 보기 | `glow -p 파일.md` |
+| md 파일 미리보기 켜기/끄기 (vim에서 md 파일 열고) | `m` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -539,4 +559,4 @@ bash -ic 'type glow; glow --version'
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
 - git status 경로: `git config --global --unset status.relativePaths`
-- glow: `rm ~/.local/bin/glow`
+- Markdown 미리보기: `rm -rf ~/.vim/pack/plugins/start/markdown-preview.nvim`, `~/.vimrc`의 "Markdown 미리보기" 섹션 삭제
