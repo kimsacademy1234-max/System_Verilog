@@ -17,6 +17,7 @@
 | 7 | 프롬프트를 짧게: `사용자@컴퓨터:` 제거, 경로는 **마지막 폴더 2개**만 | `~/.bashrc` |
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
+| 10 | vim에서 Verilog 파일이 항상 Verilog 색으로 보이게 (빈 `.v`, `.vh`, `.sva` 포함) | `~/.vimrc` |
 
 ## 전제 환경
 
@@ -442,6 +443,34 @@ bash -ic 'alias t4 v h'
 
 ---
 
+## 10단계. vim Verilog 구문 강조 (파일 형식 인식 수정)
+
+**겪은 문제:** vim에서 Verilog 파일에 색이 안 나옴. 원인은 vim의 `.v` 자동 판별(`dist/ft.vim`의 `FTv()`)이다.
+`.v`는 V 언어 확장자이기도 해서, 파일 앞부분에서 `;`로 끝나는 줄을 못 찾으면 `filetype=v`(V 언어)로 판단한다.
+→ `vim 새파일.v`로 **새로 만든(빈) 파일은 항상 V 언어로 인식**되어 Verilog 색이 안 나온다. `.vh`, `.sva`는 아예 인식 안 됨.
+
+`~/.vimrc`의 `syntax on` 줄 바로 아래에 추가:
+```vim
+" Verilog 파일 인식: 빈 .v 파일을 V 언어로 오인하지 않게, .vh/.sva 도 Verilog 색 적용
+let g:filetype_v = 'verilog'
+augroup verilog_ft
+    autocmd!
+    autocmd BufNewFile,BufRead *.vh,*.vlg setfiletype verilog
+    autocmd BufNewFile,BufRead *.sva,*.svi setfiletype systemverilog
+augroup END
+```
+> - `.sv`/`.svh`는 vim이 원래 `systemverilog`로 잘 인식하므로 추가 설정 불필요.
+> - 이미 열려 있는 파일은 vim 재시작, 또는 `:set ft=verilog`로 바로 적용.
+
+검증:
+```bash
+cd <스크래치패드>; : > b.v; : > c.vh; : > d.sva
+for f in b.v c.vh d.sva; do printf "$f -> "; vim -Nu ~/.vimrc -es $f +'redir>>/dev/stdout|echon &ft|redir END' +q; echo; done
+# → b.v -> verilog / c.vh -> verilog / d.sva -> systemverilog
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -456,6 +485,7 @@ bash -ic 'alias t4 v h'
 - [ ] 새 창의 프롬프트가 `.../상위폴더/현재폴더$` 형태 (사용자@컴퓨터 없음)
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
+- [ ] `vim 새파일.v`로 새 파일을 만들어도 `:set ft?` → `filetype=verilog`, `module` 등 키워드에 색이 나옴
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -481,3 +511,4 @@ bash -ic 'alias t4 v h'
 - 프롬프트: `~/.bashrc`의 `PROMPT_DIRTRIM=2` 줄 삭제, PS1에 `\u@\h:` 다시 추가 (또는 `~/.bashrc.bak` 복원)
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
+- Verilog 인식: `~/.vimrc`의 `g:filetype_v` 줄과 `augroup verilog_ft` 블록 삭제
