@@ -16,6 +16,7 @@
 | 6 | **fzf**로 폴더 검색 이동 (`cd **<Tab>`) | `~/.fzf`, `~/.bashrc` |
 | 7 | 프롬프트를 짧게: `사용자@컴퓨터:` 제거, 경로는 **마지막 폴더 2개**만 | `~/.bashrc` |
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
+| 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 
 ## 전제 환경
 
@@ -416,6 +417,31 @@ vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|set directory?|redir END' +q
 
 ---
 
+## 9단계. tmux 분할 alias (`t4` / `v` / `h`)
+
+셸에서 짧은 명령으로 tmux 창을 나누기 위한 alias다.
+사전 확인: `type t4 v h` → 모두 `not found`여야 한다 (다른 명령과 이름이 겹치면 사용자에게 알린다). `which tmux`로 tmux 설치 여부도 확인.
+
+`~/.bashrc` 맨 아래에 없으면 추가:
+```bash
+# tmux 4-pane layout
+alias t4='tmux new-session \; split-window -h \; split-window -v \; select-pane -t 0 \; split-window -v \; select-layout tiled'
+alias v='tmux split-window -h -c "$PWD"'   # 좌우 분할
+alias h='tmux split-window -v -c "$PWD"'   # 상하 분할
+```
+> - `t4`: tmux 세션을 새로 만들면서 2×2로 4분할한다. **tmux 밖에서** 실행한다.
+> - `v` / `h`: 현재 창을 분할한다. 새 창은 현재 폴더에서 시작한다. **tmux 안에서만** 동작한다 (밖에서는 에러).
+> - 이름 규칙은 vim의 `:vsplit`(좌우) / `:split`(상하)과 같다. tmux 옵션 이름(`-h`=좌우, `-v`=상하)과는 반대이니 헷갈리지 말 것.
+
+검증:
+```bash
+bash -ic 'alias t4 v h'
+# → 세 alias가 모두 출력되면 성공
+```
+적용: `source ~/.bashrc`
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -429,12 +455,15 @@ vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|set directory?|redir END' +q
 - [ ] `Ctrl+q` 로 폴더 검색 목록이 뜨고, 선택하면 바로 그 폴더로 이동
 - [ ] 새 창의 프롬프트가 `.../상위폴더/현재폴더$` 형태 (사용자@컴퓨터 없음)
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
+- [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 
 ## 사용자에게 전달할 사용법 요약
 
 | 동작 | 키 |
 |---|---|
 | 좌우 분할 / 위아래 분할 | `Ctrl+b` 다음 `\|` / `Ctrl+b` 다음 `-` |
+| 셸 명령으로 좌우 / 위아래 분할 (tmux 안에서) | `v` / `h` |
+| tmux 4분할 세션 한 번에 열기 | `t4` |
 | 창 순서대로 이동 (vim 창 → tmux 창) | `Ctrl+w w` |
 | 방향으로 이동 | `Ctrl+h/j/k/l` 또는 `Ctrl+w` 다음 `h/j/k/l` |
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
@@ -451,3 +480,4 @@ vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|set directory?|redir END' +q
 - ls 색: `~/.bashrc`의 "ls 색상 (Gruvbox)", "굵은 색 → 밝은 색 코드로 통일" 섹션 삭제
 - 프롬프트: `~/.bashrc`의 `PROMPT_DIRTRIM=2` 줄 삭제, PS1에 `\u@\h:` 다시 추가 (또는 `~/.bashrc.bak` 복원)
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
+- tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
