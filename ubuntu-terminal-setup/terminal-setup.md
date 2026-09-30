@@ -18,7 +18,6 @@
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
-| 11 | vim에서 `\m` 으로 md 파일을 **VS Code처럼 브라우저 실시간 미리보기** (markdown-preview.nvim) | `~/.vim/pack/`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -441,6 +440,8 @@ bash -ic 'alias t4 v h'
 # → 세 alias가 모두 출력되면 성공
 ```
 적용: `source ~/.bashrc`
+> **alias 추가 전에 열려 있던 셸(tmux 창 포함)에는 적용되지 않는다.** 그 창에서 `v`/`h`가 `command not found`면
+> 그 창에서 `source ~/.bashrc`를 실행하거나 새 창을 열도록 안내한다 (실제로 이 때문에 "갑자기 안 된다"는 문제가 있었음).
 
 ---
 
@@ -462,61 +463,6 @@ git status --short                                # → ?? project_0930/  처럼
 
 ---
 
-## 11단계. Markdown 실시간 미리보기 (markdown-preview.nvim)
-
-vim에서 md 파일을 편집하면서 `\m`(`\` 다음 `m`)을 누르면 Windows 기본 브라우저에 VS Code 스타일 미리보기가 열린다.
-타이핑하는 대로 실시간 반영되고, vim 커서 위치를 따라 미리보기도 스크롤된다. (Node.js 불필요, 미리 빌드된 파일 사용)
-
-### 11-1. 플러그인 설치
-```bash
-D=~/.vim/pack/plugins/start/markdown-preview.nvim
-[ -d $D ] || git clone --depth 1 https://github.com/iamcco/markdown-preview.nvim $D
-cd $D/app && bash install.sh      # app/bin/markdown-preview-linux 다운로드
-ls $D/app/bin/                    # → markdown-preview-linux 가 있어야 함
-```
-
-### 11-2. `~/.vimrc` 맨 아래에 추가
-```vim
-" ==========================================
-"  Markdown 미리보기 (markdown-preview.nvim)
-" ==========================================
-" WSL: Windows 기본 브라우저로 미리보기 열기
-function! MkdpOpenWin(url)
-    call job_start(['cmd.exe', '/c', 'start', '', a:url], {'cwd': '/mnt/c'})
-endfunction
-let g:mkdp_browserfunc = 'MkdpOpenWin'
-let g:mkdp_echo_preview_url = 1   " 브라우저가 안 열리면 하단에 뜬 주소를 직접 열기
-let g:mkdp_theme = 'dark'
-" md 파일에서 \m : 미리보기 켜기/끄기 (\ 로 시작하는 키는 vim 기본 명령과 안 겹침)
-autocmd FileType markdown nnoremap <buffer> <silent> <leader>m :MarkdownPreviewToggle<CR>
-```
-> - WSL의 vim은 Windows 브라우저를 직접 못 여므로 `g:mkdp_browserfunc`로 `cmd.exe /c start`를 호출한다.
->   `cwd`를 `/mnt/c`로 주는 이유: 리눅스 경로에서 `cmd.exe`를 실행하면 UNC 경로 경고가 나온다.
-> - 서버는 WSL의 `localhost`에서 뜨고, WSL2의 localhost 포워딩으로 Windows 브라우저에서 접속된다.
-> - 사용자는 **vim 기본 명령과 겹치지 않는 키**를 원한다. `m`(마크) 같은 기본 키에 매핑하지 말 것. `<leader>`(기본 `\`)로 시작하는 키는 안전하다.
-> - **이미 실행 중인 vim에는 적용되지 않는다.** 설치 후 vim을 모두 닫고 다시 열도록 안내한다 (실제로 이 때문에 "안 된다"는 문제가 있었음).
-
-### 11-3. 검증 (브라우저를 실제로 띄우지 않고 서버만 확인)
-```bash
-SP=<스크래치패드>; cd "$SP"; rm -f url.txt; printf '# Test\n' > t.md
-cat > t.vim <<EOT
-function! T(u)
-  call writefile([a:u], '$SP/url.txt')
-endfunction
-let g:mkdp_browserfunc = 'T'
-EOT
-tmux new-session -d -s mp -x 120 -y 20 "vim -c 'so $SP/t.vim' t.md"; sleep 1.5
-tmux send-keys -t mp '\' m; sleep 5
-U=$(cat url.txt); echo "$U"
-curl -s -o /dev/null -w "WSL: %{http_code}\n" "$U"
-(cd /mnt/c && curl.exe -s -o NUL -w "Windows: %{http_code}\n" "$U")
-tmux kill-session -t mp
-# → http://localhost:8xxx/page/1, WSL: 200, Windows: 200 이면 성공
-```
-실제 사용: vim을 새로 열어 md 파일을 열고 `\m` → 브라우저가 열리는지 사용자에게 확인받는다.
-
----
-
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -532,7 +478,6 @@ tmux kill-session -t mp
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
-- [ ] vim으로 md 파일을 열고 `\m` → 브라우저에 미리보기가 열리고, 타이핑이 실시간 반영됨
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -546,7 +491,6 @@ tmux kill-session -t mp
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
-| md 파일 미리보기 켜기/끄기 (vim에서 md 파일 열고) | `\m` (`\` 다음 `m`) |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -560,4 +504,3 @@ tmux kill-session -t mp
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
 - git status 경로: `git config --global --unset status.relativePaths`
-- Markdown 미리보기: `rm -rf ~/.vim/pack/plugins/start/markdown-preview.nvim`, `~/.vimrc`의 "Markdown 미리보기" 섹션 삭제
