@@ -18,6 +18,7 @@
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
+| 11 | **glow**로 md 파일을 터미널에서 VS Code 미리보기처럼 보기 | `~/.local/bin/glow` |
 
 ## 전제 환경
 
@@ -461,6 +462,40 @@ git status --short                                # → ?? project_0930/  처럼
 
 ---
 
+## 11단계. glow: 터미널 Markdown 뷰어
+
+md 파일을 제목·표·코드 블록 서식을 입혀 터미널에서 보기 위한 도구. sudo 없이 GitHub 릴리스 바이너리를 `~/.local/bin`에 설치한다.
+사전 확인: `type glow` → 이미 있으면 건너뛴다.
+
+```bash
+SP=<스크래치패드 디렉터리>
+cd "$SP"
+URL=$(curl -sL https://api.github.com/repos/charmbracelet/glow/releases/latest | grep browser_download_url | grep -i 'Linux_x86_64.tar.gz"' | head -1 | cut -d'"' -f4)
+curl -sL -o glow.tgz "$URL"
+mkdir -p glowx && tar xzf glow.tgz -C glowx
+mkdir -p ~/.local/bin && cp "$(find glowx -type f -name glow)" ~/.local/bin/ && chmod +x ~/.local/bin/glow
+```
+> - Ubuntu 기본 `~/.profile`은 `~/.local/bin`이 **존재할 때만** PATH에 넣는다. 폴더를 방금 만들었다면
+>   `echo $PATH | grep -c .local/bin`이 0일 수 있으니, 새 터미널을 열거나 `source ~/.profile` 하도록 안내한다.
+> - ARM PC면 `Linux_arm64.tar.gz`로 바꾼다 (`uname -m`으로 확인).
+
+검증:
+```bash
+bash -ic 'type glow; glow --version'
+# → glow is /home/<사용자>/.local/bin/glow, glow version 3.x
+```
+
+사용법 (사용자에게 안내):
+| 입력 | 동작 |
+|---|---|
+| `glow 파일.md` | 서식을 입혀 한 번에 출력 |
+| `glow -p 파일.md` | 페이지 단위로 보기 (`↑↓`/`j k` 스크롤, `q` 종료) |
+| `glow` | 현재 폴더의 md 파일 목록에서 골라 보기 |
+
+> tmux에서 `v`로 좌우 분할 → 한쪽 vim 편집, 한쪽 `glow -p` 보기. 저장해도 자동 갱신은 안 되므로 다시 실행한다.
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -476,6 +511,7 @@ git status --short                                # → ?? project_0930/  처럼
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
+- [ ] `glow -p terminal-setup.md`로 서식이 입혀진 문서가 보임
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -489,6 +525,7 @@ git status --short                                # → ?? project_0930/  처럼
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
+| md 파일 보기 | `glow -p 파일.md` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -502,3 +539,4 @@ git status --short                                # → ?? project_0930/  처럼
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
 - git status 경로: `git config --global --unset status.relativePaths`
+- glow: `rm ~/.local/bin/glow`
