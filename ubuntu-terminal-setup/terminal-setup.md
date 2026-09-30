@@ -14,6 +14,8 @@
 | 4 | **`Ctrl+w w`로 vim 창과 tmux 창(터미널)을 구분 없이 이동** (셸의 `Ctrl+w` 단어 지우기는 포기) | `~/.tmux.conf`, `~/.vimrc`, vim-tmux-navigator |
 | 5 | `ls`의 **폴더 색**을 짙은 파랑 → Gruvbox 노랑(#fabd2f)으로 변경 | `~/.bashrc` |
 | 6 | **fzf**로 폴더 검색 이동 (`cd **<Tab>`) | `~/.fzf`, `~/.bashrc` |
+| 7 | 프롬프트를 짧게: `사용자@컴퓨터:` 제거, 경로는 **마지막 폴더 2개**만 | `~/.bashrc` |
+| 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 
 ## 전제 환경
 
@@ -362,6 +364,58 @@ tmux kill-session -t fzftest
 
 ---
 
+## 7단계. 프롬프트 짧게 (경로는 마지막 폴더 2개만)
+
+```
+전: ahn_sung@BOOK-54UP70ES1E:/mnt/c/26_AI_CAMP/System_Verilog/ubuntu-terminal-setup$
+후: .../System_Verilog/ubuntu-terminal-setup$
+```
+
+`~/.bashrc`의 기본 `PS1` 정의(`if [ "$color_prompt" = yes ]; then` 블록)를 아래로 **교체**한다:
+```bash
+# 프롬프트 짧게: 사용자@컴퓨터 이름 빼고, 경로는 마지막 폴더 2개만 (앞부분은 ... 으로)
+PROMPT_DIRTRIM=2
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\w\$ '
+fi
+```
+> - 파일 맨 아래에 PS1을 새로 추가하지 말고 **기존 블록을 교체**한다. 5-1의 "굵은 색 → 밝은 색" 루프가
+>   이 PS1보다 **뒤에** 있어야 경로 색이 밝은 파랑(`01;94m`)으로 바뀐다.
+> - 보이는 폴더 개수는 `PROMPT_DIRTRIM` 숫자로 조절 (1이면 마지막 폴더만).
+
+검증:
+```bash
+cd /usr/share/vim && bash -ic 'echo "${PS1@P}"' | cat -v
+# → ...[01;94m^B.../share/vim^A^[[00m^B$  처럼 사용자@컴퓨터 없이 .../share/vim 만 보이면 성공
+```
+
+---
+
+## 8단계. vim swap 파일을 `~/.vim/swap/`에 저장
+
+vim은 편집 중 같은 폴더에 `.파일명.swp`를 만든다. 그대로 두면 `git add -A` 때 저장소에 섞여 올라가고,
+`/mnt/c` 아래(Windows 드라이브)에서는 swap 기록이 느려 타이핑이 끊기는 원인도 된다.
+
+```bash
+mkdir -p ~/.vim/swap
+```
+`~/.vimrc`의 "기타 편의 기능" 섹션에 추가:
+```vim
+set directory=~/.vim/swap// " swap 파일(.swp)을 작업 폴더 대신 ~/.vim/swap 에 저장
+```
+> - 끝의 `//`는 swap 파일 이름에 전체 경로를 넣으라는 뜻이다. 다른 폴더의 같은 이름 파일끼리 swap이 겹치지 않는다.
+> - `~/.vim/swap` 폴더가 없으면 vim이 경고를 띄우므로 `mkdir`를 먼저 한다.
+
+검증:
+```bash
+vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|set directory?|redir END' +q
+# → directory=~/.vim/swap//
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -373,6 +427,8 @@ tmux kill-session -t fzftest
 - [ ] `ls` 시 폴더가 노란색
 - [ ] `cd **` + `Tab` 으로 Gruvbox 색의 폴더 검색 목록이 뜸
 - [ ] `Ctrl+q` 로 폴더 검색 목록이 뜨고, 선택하면 바로 그 폴더로 이동
+- [ ] 새 창의 프롬프트가 `.../상위폴더/현재폴더$` 형태 (사용자@컴퓨터 없음)
+- [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -393,3 +449,5 @@ tmux kill-session -t fzftest
 - vim: `~/.vimrc.bak` 복원, `rm -rf ~/.vim/pack/themes/start/gruvbox ~/.vim/pack/plugins/start/vim-tmux-navigator`
 - tmux: `~/.tmux.conf`에서 해당 섹션 삭제 후 `tmux source-file ~/.tmux.conf`
 - ls 색: `~/.bashrc`의 "ls 색상 (Gruvbox)", "굵은 색 → 밝은 색 코드로 통일" 섹션 삭제
+- 프롬프트: `~/.bashrc`의 `PROMPT_DIRTRIM=2` 줄 삭제, PS1에 `\u@\h:` 다시 추가 (또는 `~/.bashrc.bak` 복원)
+- vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
