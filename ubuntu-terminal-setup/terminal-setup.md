@@ -19,6 +19,7 @@
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
 | 11 | vim Verilog 편집: 입력 중 **자동완성 목록**(Tab 선택) + **문법 오류 표시**(ALE + Verilator) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
+| 12 | `watch_html "파일명"`으로 HTML 파일을 Windows 기본 브라우저에서 열기 | `~/.bashrc` |
 
 ## 전제 환경
 
@@ -556,6 +557,41 @@ tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 
 ---
 
+## 12단계. `watch_html "파일명"`: HTML 파일을 Windows 브라우저로 열기
+
+WSL에서 `explorer.exe 파일.html`처럼 **리눅스 상대 경로**를 넘기면 브라우저가 열리지 않는다 (실제로 겪은 문제).
+Windows 경로(`C:\...`)로 바꿔서 `cmd.exe /c start`로 열어야 한다.
+사전 확인: `type -t watch_html` → 출력이 없어야 한다 (이름 충돌 없음). `open`은 리눅스 기본 명령(`xdg-open`으로 연결됨)이라 쓰지 않는다.
+
+`~/.bashrc` 맨 아래에 없으면 추가:
+```bash
+# ==========================================
+#  watch_html "파일명" : HTML 파일을 Windows 기본 브라우저로 열기
+# ==========================================
+watch_html() {
+    if [ $# -ne 1 ] || [ ! -f "$1" ]; then
+        echo "사용법: watch_html \"파일명.html\"  (파일이 없거나 인자가 잘못됨: $1)" >&2
+        return 1
+    fi
+    local win
+    win=$(wslpath -w "$(realpath "$1")") || return 1
+    (cd /mnt/c && cmd.exe /c start "" "$win")
+}
+```
+> - `cd /mnt/c`: 리눅스 폴더에서 `cmd.exe`를 실행하면 UNC 경로 경고가 나와서 Windows 폴더로 옮겨서 실행한다.
+> - `start` 다음의 `""`는 창 제목 자리다. 빠뜨리면 경로를 제목으로 착각해서 열리지 않는다.
+> - `explorer.exe`는 성공해도 종료 코드 1을 돌려주므로 성공 여부 판단에 쓰지 않는다.
+
+검증:
+```bash
+bash -ic 'type -t watch_html; watch_html 없는파일.html; echo "exit=$?"'
+# → function, 사용법 안내 메시지, exit=1
+```
+실제 사용: `watch_html tmux-cheatsheet.html` → 브라우저가 열리는지 사용자에게 확인받는다.
+적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -571,6 +607,7 @@ tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
+- [ ] `watch_html 파일.html` 로 Windows 브라우저에 HTML이 열림
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
 
 ## 사용자에게 전달할 사용법 요약
@@ -586,6 +623,7 @@ tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
 | Verilog 자동완성 후보 선택 (입력 모드) | `Tab` / `Shift+Tab` |
+| HTML 파일을 브라우저로 열기 | `watch_html "파일명.html"` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -599,4 +637,5 @@ tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 - vim swap 위치: `~/.vimrc`의 `set directory=~/.vim/swap//` 줄 삭제
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
 - git status 경로: `git config --global --unset status.relativePaths`
+- watch_html: `~/.bashrc`의 "watch_html" 섹션 삭제
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제

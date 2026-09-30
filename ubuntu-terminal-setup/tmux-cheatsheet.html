@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tmux 사용법</title>
+<style>
+  :root {
+    --bg: #282828; --bg1: #32302f; --bg2: #3c3836; --line: #504945;
+    --fg: #ebdbb2; --muted: #a89984;
+    --yellow: #fabd2f; --orange: #fe8019; --aqua: #8ec07c; --blue: #83a598; --red: #fb4934;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #fbf1c7; --bg1: #f2e5bc; --bg2: #ebdbb2; --line: #d5c4a1;
+      --fg: #3c3836; --muted: #7c6f64;
+      --yellow: #b57614; --orange: #af3a03; --aqua: #427b58; --blue: #076678; --red: #9d0006;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.6 "D2Coding", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+  header { margin-bottom: 28px; }
+  h1 { margin: 0 0 6px; font-size: 28px; color: var(--yellow); }
+  header p { margin: 0; color: var(--muted); }
+  .prefix {
+    margin-top: 16px; padding: 12px 16px; background: var(--bg1);
+    border-left: 4px solid var(--orange); border-radius: 6px;
+  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 16px; }
+  section {
+    background: var(--bg1); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px;
+  }
+  section.wide { grid-column: 1 / -1; }
+  h2 { margin: 0 0 12px; font-size: 17px; color: var(--aqua); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+  tr:first-child td { border-top: 0; }
+  td:first-child { width: 46%; white-space: nowrap; padding-right: 12px; }
+  kbd, code {
+    font-family: "D2Coding", Consolas, monospace; font-size: 13.5px;
+    background: var(--bg2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px;
+  }
+  kbd { color: var(--yellow); }
+  code { color: var(--blue); }
+  .then { color: var(--muted); margin: 0 3px; }
+  .tag {
+    display: inline-block; font-size: 11px; color: var(--bg); background: var(--orange);
+    border-radius: 3px; padding: 0 5px; margin-left: 4px; vertical-align: 1px;
+  }
+  pre {
+    margin: 8px 0 0; padding: 10px 12px; background: var(--bg2); border-radius: 6px;
+    overflow-x: auto; font: 13.5px/1.5 "D2Coding", Consolas, monospace; color: var(--fg);
+  }
+  .note { margin: 10px 0 0; color: var(--muted); font-size: 13.5px; }
+  .warn { color: var(--red); }
+  @media (max-width: 520px) { td:first-child { white-space: normal; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>tmux 사용법</h1>
+    <p>WSL + tmux 환경 기준 · <span class="tag">내 설정</span> 표시는 <code>~/.tmux.conf</code> / <code>~/.bashrc</code>에 직접 추가한 기능</p>
+    <div class="prefix">
+      대부분의 단축키는 <b>prefix</b>인 <kbd>Ctrl+b</kbd>를 누르고 <b>손을 뗀 다음</b> 다음 키를 누릅니다.
+      표에서 <kbd>Ctrl+b</kbd><span class="then">→</span><kbd>%</kbd>는 이 순서를 뜻합니다.
+    </div>
+  </header>
+
+  <div class="grid">
+    <section>
+      <h2>창 분할</h2>
+      <table>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>|</kbd> <span class="tag">내 설정</span></td><td>좌우 분할</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>-</kbd> <span class="tag">내 설정</span></td><td>상하 분할</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>%</kbd></td><td>좌우 분할 (기본 키)</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>"</kbd></td><td>상하 분할 (기본 키)</td></tr>
+        <tr><td><code>v</code> <span class="tag">내 설정</span></td><td>셸에서 입력: 좌우 분할</td></tr>
+        <tr><td><code>h</code> <span class="tag">내 설정</span></td><td>셸에서 입력: 상하 분할</td></tr>
+        <tr><td><code>t4</code> <span class="tag">내 설정</span></td><td>새 세션을 2×2로 4분할해서 열기 (tmux 밖에서)</td></tr>
+      </table>
+      <p class="note">분할한 새 창은 현재 폴더에서 시작합니다. <code>v</code>/<code>h</code>는 tmux 안에서만 동작합니다.</p>
+    </section>
+
+    <section>
+      <h2>창 이동</h2>
+      <table>
+        <tr><td><kbd>Ctrl+w</kbd><span class="then">→</span><kbd>w</kbd> <span class="tag">내 설정</span></td><td>다음 창으로 순서대로 이동 (vim 창 ↔ tmux 창)</td></tr>
+        <tr><td><kbd>Ctrl+h/j/k/l</kbd> <span class="tag">내 설정</span></td><td>왼쪽 / 아래 / 위 / 오른쪽 창으로 이동</td></tr>
+        <tr><td><kbd>Ctrl+w</kbd><span class="then">→</span><kbd>h/j/k/l</kbd> <span class="tag">내 설정</span></td><td>방향으로 이동</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>방향키</kbd></td><td>방향으로 이동</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>o</kbd></td><td>다음 창으로 순환</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>q</kbd></td><td>창 번호 표시 (보이는 동안 번호를 누르면 이동)</td></tr>
+        <tr><td>마우스 클릭</td><td>클릭한 창으로 이동 <span class="tag">내 설정</span></td></tr>
+      </table>
+      <p class="note">vim 안에서는 <b>일반 모드</b>에서만 이동됩니다. 입력 모드면 <kbd>Esc</kbd> 먼저.</p>
+    </section>
+
+    <section>
+      <h2>창 조작</h2>
+      <table>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>z</kbd></td><td>현재 창 최대화 / 복귀</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>x</kbd></td><td>현재 창 닫기 (셸에서 <code>exit</code>도 가능)</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>Ctrl+방향키</kbd></td><td>창 크기 조절 (마우스로 경계선 드래그도 가능)</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>Space</kbd></td><td>레이아웃 순환 (균등 배치, 세로 배치 등)</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>{</kbd> / <kbd>}</kbd></td><td>창 위치 서로 바꾸기</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>Ctrl+l</kbd> <span class="tag">내 설정</span></td><td>셸 화면 지우기 (<code>clear</code>와 같음)</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>세션 관리</h2>
+      <table>
+        <tr><td><code>tmux ls</code></td><td>세션 목록 (번호, 생성 시각, 접속 중 여부)</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>s</kbd></td><td><b>세션 트리 + 미리보기.</b> <kbd>Enter</kbd> 이동, <kbd>x</kbd> 종료</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>w</kbd></td><td>세션과 창 전체를 트리로 보기</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>d</kbd></td><td>세션에서 나가기 (세션은 계속 실행됨)</td></tr>
+        <tr><td><code>tmux attach</code></td><td>마지막 세션에 다시 접속</td></tr>
+        <tr><td><code>tmux attach -t 21</code></td><td>21번 세션에 접속</td></tr>
+        <tr><td><code>tmux kill-session -t 21</code></td><td>21번 세션 종료</td></tr>
+        <tr><td><code>tmux kill-server</code></td><td>모든 세션 종료 <span class="warn">(저장 안 한 vim 내용 사라짐)</span></td></tr>
+      </table>
+      <p class="note"><code>t4</code>는 실행할 때마다 새 세션을 만들고, 창을 닫아도 세션은 남습니다. 가끔 <kbd>Ctrl+b</kbd><span class="then">→</span><kbd>s</kbd>로 정리하세요.</p>
+    </section>
+
+    <section>
+      <h2>지나간 출력 보기 (스크롤)</h2>
+      <table>
+        <tr><td>마우스 휠 <span class="tag">내 설정</span></td><td>바로 위로 스크롤</td></tr>
+        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>[</kbd></td><td>스크롤 모드 시작</td></tr>
+        <tr><td><kbd>↑↓</kbd> <kbd>PgUp</kbd> <kbd>PgDn</kbd></td><td>스크롤 모드에서 이동</td></tr>
+        <tr><td><kbd>/</kbd> 또는 <kbd>?</kbd></td><td>스크롤 모드에서 아래 / 위로 검색</td></tr>
+        <tr><td><kbd>q</kbd></td><td>스크롤 모드 끝내기</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>세션 내용 확인 · 기록</h2>
+      <table>
+        <tr><td><code>tmux capture-pane -p -t 21</code></td><td>21번 세션 화면을 들어가지 않고 텍스트로 출력</td></tr>
+        <tr><td><code>tmux pipe-pane -o 'cat &gt;&gt; ~/tmux-#S-#P.log'</code></td><td>현재 창 출력을 파일로 계속 저장. 한 번 더 실행하면 중지</td></tr>
+      </table>
+      <p class="note">tmux는 세션 기록을 따로 저장하지 않습니다. 파일로 남기려면 <code>pipe-pane</code>을 쓰세요. 로그는 <code>~/tmux-세션명-창번호.log</code>에 쌓입니다.</p>
+    </section>
+
+    <section class="wide">
+      <h2>자주 쓰는 흐름</h2>
+      <pre>t4                      # 4분할 세션 열기
+vim StopWatch.v         # 왼쪽 위에서 코드 편집
+Ctrl+w w                # 옆 창(터미널)으로 이동해서 시뮬레이션 실행
+Ctrl+b z                # 보고 싶은 창만 잠깐 크게 보기, 한 번 더 누르면 복귀
+Ctrl+b d                # 작업 두고 나가기 → 나중에 tmux attach 로 이어서</pre>
+      <p class="note">설정 파일을 바꾼 뒤에는 <code>tmux source-file ~/.tmux.conf</code>, 셸 alias를 바꾼 뒤에는 이미 열린 창에서 <code>source ~/.bashrc</code>를 실행해야 적용됩니다.</p>
+    </section>
+  </div>
+</main>
+</body>
+</html>
