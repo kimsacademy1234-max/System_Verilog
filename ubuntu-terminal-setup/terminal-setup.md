@@ -104,6 +104,8 @@ cp ~/.vimrc ~/.vimrc.bak 2>/dev/null
 
 `~/.vimrc`의 테마 부분을 아래처럼 맞춘다 (기존 `colorscheme` 줄을 교체):
 ```vim
+" .v 파일은 항상 Verilog로 인식 (안 그러면 새 파일/짧은 파일을 V 언어로 오인식)
+let g:filetype_v = 'verilog'
 syntax on
 set background=dark
 set termguicolors          " 트루컬러 사용 (Windows Terminal 지원)
@@ -418,6 +420,37 @@ vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|set directory?|redir END' +q
 # → directory=~/.vim/swap//
 ```
 
+### 8-1. 서로 다른 vim 창끼리 `yy` → `p` 공유
+Ubuntu 기본 `vim` 패키지는 `-clipboard` 빌드라서 vim 프로세스마다 레지스터가 따로다 (tmux 왼쪽 vim에서 `yy` → 오른쪽 vim에서 `p` 안 됨).
+vim 9.1의 `+clipboard_provider` 기능으로 **공용 파일(`~/.vim/.clipboard`)을 클립보드처럼** 쓰게 한다 (패키지 설치 불필요).
+`~/.vimrc`의 "기타 편의 기능" 섹션에 추가:
+```vim
+if has('clipboard_provider')
+    let s:clipfile = expand('~/.vim/.clipboard')
+    function! s:ClipCopy(reg, type, lines)
+        call writefile([a:type] + a:lines, s:clipfile)
+    endfunction
+    function! s:ClipPaste(reg)
+        if !filereadable(s:clipfile)
+            return ['', []]
+        endif
+        let l:data = readfile(s:clipfile)
+        return [get(l:data, 0, ''), l:data[1:]]
+    endfunction
+    let v:clipproviders['shared'] = {
+        \ 'copy':  {'+': function('s:ClipCopy'),  '*': function('s:ClipCopy')},
+        \ 'paste': {'+': function('s:ClipPaste'), '*': function('s:ClipPaste')}
+        \ }
+    set clipmethod^=shared
+    set clipboard=unnamedplus
+endif
+```
+> - 파일 첫 줄에 레지스터 종류(줄 단위 `V` / 글자 단위 `v` / 블록 `^V`)를 저장해서 `p` 동작이 원래와 같다.
+> - `dd`, `x`로 지운 내용도 공용 클립보드에 들어간다 (vim 기본 동작과 동일).
+> - Windows 클립보드와는 연결되지 않는다 (vim ↔ vim 전용).
+
+검증: tmux 2분할로 vim 두 개를 띄우고 한쪽에서 `yy`, 다른 쪽에서 `p` → 붙여넣어지면 성공.
+
 ---
 
 ## 9단계. tmux 분할 alias (`t4` / `v` / `h`)
@@ -444,6 +477,43 @@ bash -ic 'alias t4 v h'
 적용: `source ~/.bashrc`
 > **alias 추가 전에 열려 있던 셸(tmux 창 포함)에는 적용되지 않는다.** 그 창에서 `v`/`h`가 `command not found`면
 > 그 창에서 `source ~/.bashrc`를 실행하거나 새 창을 열도록 안내한다 (실제로 이 때문에 "갑자기 안 된다"는 문제가 있었음).
+
+### 9-1. `tsv`: System_Verilog 작업 화면 한 번에 만들기
+```
+┌──────────────┬──────────────┬──────────┐
+│ project_0930 │ sources_1/new│ vivado   │  ← 위 20%
+│   (38%)      │   (37%)      ├──────────┤
+│              │              │ 저장소    │  ← 아래 80%
+│              │              │ 루트(25%) │
+└──────────────┴──────────────┴──────────┘
+```
+`~/.bashrc`의 tmux alias 아래에 추가:
+```bash
+tsv() {
+    local B=/mnt/d/26_AI_CAMP_2/System_Verilog
+    local D0="$B/vivado/project_0930"                         # 왼쪽
+    local D1="$D0/project_0930.srcs/sources_1/new"            # 가운데
+    local D2="$B/vivado"                                      # 오른쪽 위
+    local D3="$B"                                             # 오른쪽 아래
+    local p0 p1 p2
+    if [ -n "$TMUX" ]; then
+        p0=$(tmux new-window -P -F '#{pane_id}' -c "$D0")
+    elif tmux has-session -t sv 2>/dev/null; then
+        tmux attach -t sv; return
+    else
+        p0=$(tmux new-session -d -s sv -x "$(tput cols)" -y "$(tput lines)" -P -F '#{pane_id}' -c "$D0")
+    fi
+    p1=$(tmux split-window -h -l 62% -t "$p0" -P -F '#{pane_id}' -c "$D1")
+    p2=$(tmux split-window -h -l 40% -t "$p1" -P -F '#{pane_id}' -c "$D2")
+    tmux split-window -v -l 80% -t "$p2" -c "$D3"
+    tmux select-pane -t "$p0"
+    [ -z "$TMUX" ] && tmux attach -t sv
+}
+```
+> - tmux 밖: `sv` 세션을 만들어 접속. 이미 `sv` 세션이 있으면 새로 만들지 않고 **그 세션에 다시 접속**(열어둔 vim 그대로).
+> - tmux 안: 현재 세션에 새 창(window)으로 같은 배치를 만든다 (`Ctrl+b n`/`p`로 창 전환).
+> - 분할 순서를 고정하고 `pane_id`로 지정하므로 창 번호가 0(왼쪽) 1(가운데) 2(오른쪽 위) 3(오른쪽 아래)로 항상 같다.
+> - 프로젝트 폴더가 바뀌면 `D0`~`D3` 경로만 수정한다.
 
 ---
 
@@ -554,6 +624,22 @@ tmux send-keys -t vt Tab; sleep 0.5
 tmux capture-pane -p -t vt | grep always      # → always / always_comb ... 후보 목록이 보이면 자동완성 성공
 tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 ```
+
+### 11-5. 새 `.v` / `.sv` 파일 기본 틀 자동 삽입
+`vim 새파일.v`처럼 **없는 파일**을 만들 때만 timescale + `module 파일이름(); endmodule` 틀을 넣는다 (기존 파일은 그대로).
+`~/.vimrc`에 추가:
+```vim
+function! s:VerilogTemplate()
+    let l:name = expand('<afile>:t:r')
+    call setline(1, ['`timescale 1ns / 1ps', '', '', 'module ' . l:name . '(', '', '', ');', '', '', 'endmodule'])
+    call cursor(5, 1)   " 포트 목록 안에서 시작
+endfunction
+augroup verilog_template
+    autocmd!
+    autocmd BufNewFile *.v,*.sv call s:VerilogTemplate()
+augroup END
+```
+검증: `vim -es -u ~/.vimrc -c wq "$SP/My_Mux.v"; cat "$SP/My_Mux.v"` → `module My_Mux(` 가 들어 있으면 성공.
 
 ---
 
