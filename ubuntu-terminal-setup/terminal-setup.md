@@ -4,6 +4,29 @@
 > 아래 순서대로 진행하되, 각 단계의 **사전 확인**으로 이미 적용된 부분은 건너뛰고(중복 추가 금지),
 > 설정 파일을 수정하기 전에는 반드시 `.bak` 백업을 만든다. 모든 단계가 끝나면 **최종 검증**을 실행하고 결과를 사용자에게 보고한다.
 
+## 업데이트 이력
+
+### 2026-10-01 업데이트
+
+> **Claude Code에게:** 2026-09-30까지의 설정(1~8단계)이 이미 적용된 PC라면 **아래 항목만** 적용하면 된다.
+> 처음 설정하는 PC라면 이 목록은 무시하고 1단계부터 순서대로 진행한다.
+> 항목마다 해당 단계의 **사전 확인**을 먼저 실행해서 이미 적용된 것은 건너뛴다.
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| **변경** | 5단계 | `ls` 폴더 색: Gruvbox 노랑(`250;189;47`) → **연한 하늘색**(`135;206;250`). `~/.bashrc`의 기존 `LS_COLORS` 줄에서 RGB 숫자만 바꾼다 (**새 줄 추가 금지**) | `~/.bashrc` |
+| 추가 | 9단계 | tmux 분할 alias `t4` / `v` / `h` | `~/.bashrc` |
+| 추가 | 10단계 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`status.relativePaths false`) | `~/.gitconfig` |
+| 추가 | 11단계 | vim Verilog 자동완성 목록 + ALE/Verilator 문법 오류 표시 (**`:w` 저장할 때만** 검사) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
+| 추가 | 12단계 | `watch_html "파일명"`: HTML 파일을 Windows 기본 브라우저로 열기 | `~/.bashrc` |
+| 추가 | 13단계 | `viva`: System_Verilog 작업 폴더로 이동 (경로는 PC마다 확인) | `~/.bashrc` |
+| 추가 | 14단계 | 터미널·vim **배경만 검은색**(#000000), 글자색은 Gruvbox 유지 | Windows Terminal `settings.json`, `~/.vimrc` |
+| 추가 | 15단계 | `ppt "파일명"` / `ppt "폴더명"`: PPT를 Windows PowerPoint로 열기 | `~/.bashrc` |
+| 파일 | - | `ubuntu-terminal-setup/tmux-cheatsheet.html`: tmux 단축키 정리 (설치할 것 없음, `watch_html`로 열어 보는 용도) | - |
+
+- 이날 시도했다가 **되돌린 것** (적용하지 말 것): glow / markdown-preview.nvim 마크다운 미리보기, vim Verilog filetype 감지 단계, 입력 중 실시간 lint.
+- 적용 후: 열려 있는 터미널에서 `source ~/.bashrc`, tmux 안이면 `tmux source-file ~/.tmux.conf`. 마지막에 **최종 검증 체크리스트**를 실행하고 결과를 사용자에게 보고한다.
+
 ## 목표 요약
 
 | # | 목표 | 수정 대상 |
@@ -12,7 +35,7 @@
 | 2 | vim 테마를 **Gruvbox**로 변경 | `~/.vimrc`, `~/.vim/pack/` |
 | 3 | tmux 상태바/테두리를 **Gruvbox** 색으로, 트루컬러 활성화 | `~/.tmux.conf` |
 | 4 | **`Ctrl+w w`로 vim 창과 tmux 창(터미널)을 구분 없이 이동** (셸의 `Ctrl+w` 단어 지우기는 포기) | `~/.tmux.conf`, `~/.vimrc`, vim-tmux-navigator |
-| 5 | `ls`의 **폴더 색**을 짙은 파랑 → Gruvbox 노랑(#fabd2f)으로 변경 | `~/.bashrc` |
+| 5 | `ls`의 **폴더 색**을 짙은 파랑 → 연한 하늘색(#87cefa)으로 변경 | `~/.bashrc` |
 | 6 | **fzf**로 폴더 검색 이동 (`cd **<Tab>`) | `~/.fzf`, `~/.bashrc` |
 | 7 | 프롬프트를 짧게: `사용자@컴퓨터:` 제거, 경로는 **마지막 폴더 2개**만 | `~/.bashrc` |
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
@@ -20,6 +43,9 @@
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
 | 11 | vim Verilog 편집: 입력 중 **자동완성 목록**(Tab 선택) + **문법 오류 표시**(ALE + Verilator) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
 | 12 | `watch_html "파일명"`으로 HTML 파일을 Windows 기본 브라우저에서 열기 | `~/.bashrc` |
+| 13 | `viva` 입력 시 System_Verilog 작업 폴더로 바로 이동 | `~/.bashrc` |
+| 14 | 터미널·vim **배경만 검은색**(#000000)으로, 글자색은 Gruvbox 그대로 | Windows Terminal `settings.json`, `~/.vimrc` |
+| 15 | `ppt "파일명"` 또는 `ppt "폴더명"`으로 PPT 파일을 Windows PowerPoint에서 열기 | `~/.bashrc` |
 
 ## 전제 환경
 
@@ -253,18 +279,18 @@ exec 7>&-; tmux kill-session -t cwtest; rm -f $SP/kbd
 
 ---
 
-## 5단계. `ls` 폴더 색 변경 (짙은 파랑 → Gruvbox 노랑)
+## 5단계. `ls` 폴더 색 변경 (짙은 파랑 → 연한 하늘색)
 
 `~/.bashrc`에 없으면 맨 아래에 추가 (기본 `dircolors` 설정 줄보다 **뒤**에 있어야 함):
 ```bash
 # ==========================================
 #  ls 색상 (Gruvbox)
 # ==========================================
-# 폴더: 굵은 노란색 (#fabd2f), /mnt/c 폴더의 초록 배경도 제거
-export LS_COLORS="${LS_COLORS}:di=01;38;2;250;189;47:ow=01;38;2;250;189;47:tw=01;38;2;250;189;47"
+# 폴더: 굵은 연한 하늘색 (#87cefa), /mnt/c 폴더의 초록 배경도 제거
+export LS_COLORS="${LS_COLORS}:di=01;38;2;135;206;250:ow=01;38;2;135;206;250:tw=01;38;2;135;206;250"
 ```
 - `di`=일반 폴더, `ow`=다른 사용자 쓰기 가능 폴더(`/mnt/c` 아래 Windows 폴더), `tw`=sticky+쓰기 가능 폴더
-- 색 바꾸려면 RGB 3개 숫자만 교체: 노랑 `250;189;47` / 주황 `254;128;25` / 연파랑 `131;165;152` / 청록 `142;192;124` / 연두 `184;187;38`
+- 색 바꾸려면 RGB 3개 숫자만 교체: 연한 하늘색 `135;206;250`(현재) / 노랑 `250;189;47`(이전) / 주황 `254;128;25` / 연파랑 `131;165;152` / 청록 `142;192;124` / 연두 `184;187;38`
 
 ### 5-1. 굵은 색 → 밝은 색 코드로 통일 (Windows Terminal ↔ vim `:term` 색 일치)
 Windows Terminal은 **굵은 글자(`01;3x`)를 밝은 색으로** 표시하지만, vim `:term`은 그렇지 않아서
@@ -290,7 +316,7 @@ export LS_COLORS
 검증:
 ```bash
 bash -ic 'mkdir -p /tmp/lstest/dir; ls --color=always /tmp/lstest | cat -v; rm -rf /tmp/lstest'
-# → ^[[01;38;2;250;189;47mdir 가 보이면 성공
+# → ^[[01;38;2;135;206;250mdir 가 보이면 성공
 ```
 적용: `source ~/.bashrc`
 
@@ -678,6 +704,111 @@ bash -ic 'type -t watch_html; watch_html 없는파일.html; echo "exit=$?"'
 
 ---
 
+## 13단계. `viva`: System_Verilog 작업 폴더로 바로 이동
+
+사전 확인: `type -t viva` → 출력이 없어야 한다 (이름 충돌 없음).
+경로는 PC마다 다를 수 있으니, 다른 PC에서는 실제 작업 폴더 경로로 바꿔서 넣는다.
+
+`~/.bashrc` 맨 아래에 없으면 추가:
+```bash
+# viva : System_Verilog 작업 폴더로 바로 이동
+alias viva='cd /mnt/c/26_AI_CAMP/System_Verilog'
+```
+
+검증:
+```bash
+bash -ic 'viva && pwd'
+# → /mnt/c/26_AI_CAMP/System_Verilog
+```
+적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
+
+---
+
+## 14단계. 배경만 검은색으로 (글자색은 Gruvbox 유지)
+
+1·2단계를 마친 뒤 적용한다. 바꾸는 것은 **배경색 하나**뿐이고, 글자·구문 강조 색은 그대로다.
+
+### 14-1. Windows Terminal: Gruvbox Dark 색 구성표의 `background`만 변경
+```bash
+F="<1-1에서 찾은 settings.json 경로>"
+cp "$F" "$F.bak2"
+python3 - "$F" <<'EOF'
+import json,sys
+p=sys.argv[1]; d=json.load(open(p,encoding='utf-8'))
+for s in d["schemes"]:
+    if s.get("name")=="Gruvbox Dark": s["background"]="#000000"; print(s["background"])
+json.dump(d,open(p,'w',encoding='utf-8'),indent=4,ensure_ascii=False)
+EOF
+# → #000000
+```
+> 저장하면 Windows Terminal에 바로 반영된다 (재시작 불필요).
+
+### 14-2. vim: `~/.vimrc`의 `colorscheme gruvbox` 줄 **바로 위**에 추가
+```vim
+" 배경만 검은색으로 (글자색은 Gruvbox 그대로). colorscheme 다시 불러와도 유지되도록 autocmd 사용
+augroup BlackBackground
+    autocmd!
+    autocmd ColorScheme * highlight Normal guibg=#000000 | highlight EndOfBuffer guibg=#000000 | highlight SignColumn guibg=#000000
+augroup END
+```
+> - `colorscheme` **위**에 있어야 한다. 아래에 두면 처음 불러올 때 autocmd가 실행되지 않는다.
+> - `termguicolors`가 켜져 있으면 vim은 터미널 배경이 아닌 자체 `Normal` 배경색을 칠하므로, 1단계만 바꾸면 vim 안은 여전히 갈색이다.
+> - `SignColumn`: ALE 오류 표시(`>>`) 칸이 회색 띠로 남지 않게 함께 검은색으로.
+
+검증:
+```bash
+vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|hi Normal|hi SignColumn|redir END' +q
+# → Normal ... guifg=#ebdbb2 guibg=#000000 / SignColumn ... guibg=#000000
+```
+
+---
+
+## 15단계. `ppt "파일명|폴더명"`: PPT 파일을 Windows PowerPoint로 열기
+
+12단계 `watch_html`과 같은 방식(Windows 경로로 바꿔서 `cmd.exe /c start`)이다. 파일을 주면 그 파일을, 폴더를 주면 그 폴더 안의 `.ppt`/`.pptx`를 전부 연다 (하위 폴더는 안 봄, 대소문자 무시).
+사전 확인: `type -t ppt` → 출력이 없어야 한다 (이름 충돌 없음).
+
+`~/.bashrc` 맨 아래에 없으면 추가:
+```bash
+# ==========================================
+#  ppt "파일명|폴더명" : PPT 파일을 Windows PowerPoint로 열기
+#   - 파일이면 그 파일을, 폴더면 안의 .ppt/.pptx 전부를 연다
+# ==========================================
+ppt() {
+    if [ $# -ne 1 ] || [ ! -e "$1" ]; then
+        echo "사용법: ppt \"파일명.pptx\" 또는 ppt \"폴더명\"  (없는 경로: $1)" >&2
+        return 1
+    fi
+    local files=() f
+    if [ -d "$1" ]; then
+        shopt -s nullglob nocaseglob
+        files=("$1"/*.ppt "$1"/*.pptx)
+        shopt -u nullglob nocaseglob
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "ppt: '$1' 폴더에 .ppt/.pptx 파일이 없음" >&2
+            return 1
+        fi
+    else
+        files=("$1")
+    fi
+    for f in "${files[@]}"; do
+        echo "열기: $f"
+        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$(realpath "$f")")")
+    done
+}
+```
+> - 파일 이름에 공백이 있으면 따옴표로 감싼다: `ppt "파이썬 프로젝트 발표자료.pptx"`
+
+검증:
+```bash
+bash -ic 'type -t ppt; ppt 없는파일.pptx; echo "exit=$?"'
+# → function, 사용법 안내 메시지, exit=1
+```
+실제 사용: PPT 파일 하나로 `ppt "파일.pptx"` → PowerPoint 창이 뜨는지 확인 (`powershell.exe -c "(Get-Process POWERPNT).MainWindowTitle"`).
+적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -686,7 +817,7 @@ bash -ic 'type -t watch_html; watch_html 없는파일.html; echo "exit=$?"'
 - [ ] tmux 하단 상태바가 갈색 바탕 + 노란 세션명 + 주황 현재 창
 - [ ] tmux 안에서 `Ctrl+b |`로 분할 → `Ctrl+w w`로 vim ↔ 터미널 이동 (4-4 테스트 통과)
 - [ ] `Ctrl+h/j/k/l`로도 이동 가능
-- [ ] `ls` 시 폴더가 노란색
+- [ ] `ls` 시 폴더가 연한 하늘색
 - [ ] `cd **` + `Tab` 으로 Gruvbox 색의 폴더 검색 목록이 뜸
 - [ ] `Ctrl+q` 로 폴더 검색 목록이 뜨고, 선택하면 바로 그 폴더로 이동
 - [ ] 새 창의 프롬프트가 `.../상위폴더/현재폴더$` 형태 (사용자@컴퓨터 없음)
@@ -694,6 +825,9 @@ bash -ic 'type -t watch_html; watch_html 없는파일.html; echo "exit=$?"'
 - [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
 - [ ] `watch_html 파일.html` 로 Windows 브라우저에 HTML이 열림
+- [ ] 터미널과 vim 배경이 검은색, 글자색은 Gruvbox 그대로
+- [ ] `viva` 입력 시 `/mnt/c/26_AI_CAMP/System_Verilog`로 이동
+- [ ] `ppt 파일.pptx` / `ppt 폴더` 로 Windows PowerPoint에 PPT가 열림
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
 
 ## 사용자에게 전달할 사용법 요약
@@ -710,6 +844,8 @@ bash -ic 'type -t watch_html; watch_html 없는파일.html; echo "exit=$?"'
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
 | Verilog 자동완성 후보 선택 (입력 모드) | `Tab` / `Shift+Tab` |
 | HTML 파일을 브라우저로 열기 | `watch_html "파일명.html"` |
+| System_Verilog 작업 폴더로 이동 | `viva` |
+| PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt "파일명"` / `ppt "폴더명"` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -724,4 +860,7 @@ bash -ic 'type -t watch_html; watch_html 없는파일.html; echo "exit=$?"'
 - tmux 분할 alias: `~/.bashrc`의 `alias t4`, `alias v`, `alias h` 줄 삭제
 - git status 경로: `git config --global --unset status.relativePaths`
 - watch_html: `~/.bashrc`의 "watch_html" 섹션 삭제
+- viva: `~/.bashrc`의 `alias viva` 줄 삭제
+- ppt: `~/.bashrc`의 "ppt" 섹션 삭제
+- 검은 배경: settings.json의 Gruvbox Dark `background`를 `#282828`로 되돌림 (또는 `settings.json.bak2` 복원), `~/.vimrc`의 `augroup BlackBackground` 블록 삭제
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
