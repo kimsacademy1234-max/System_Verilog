@@ -1,0 +1,12 @@
+-- Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+-- --------------------------------------------------------------------------------
+-- Tool Version: Vivado v.2020.2 (win64) Build 3064766 Wed Nov 18 09:12:45 MST 2020
+-- Date        : Thu Oct  1 11:24:39 2026
+-- Host        : DESKTOP-7CFQ9ND running 64-bit major release  (build 9200)
+-- Command     : write_vhdl -force -mode funcsim
+--               d:/26_AI_CAMP_2/System_Verilog/vivado/project_0930/project_0930.gen/sources_1/bd/design_2/design_2_sim_netlist.vhdl
+-- Design      : design_2
+-- Purpose     : This VHDL netlist is a functional simulation representation of the design and should not be modified or
+--               synthesized. This netlist cannot be used for SDF annotated simulation.
+-- Device      : xc7a35tcpg236-1
+-- --------------------------------------------------------------------------------
