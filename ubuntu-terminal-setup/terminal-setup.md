@@ -16,12 +16,13 @@
 |---|---|---|---|
 | **변경** | 5단계 | `ls` 폴더 색: Gruvbox 노랑(`250;189;47`) → **연한 하늘색**(`135;206;250`). `~/.bashrc`의 기존 `LS_COLORS` 줄에서 RGB 숫자만 바꾼다 (**새 줄 추가 금지**) | `~/.bashrc` |
 | 추가 | 9단계 | tmux 분할 alias `t4` / `v` / `h` | `~/.bashrc` |
+| 추가 | 9-1단계 | `tsv [프로젝트폴더]`: 4분할 작업 화면 (프로젝트 \| sources_1/new \| vivado / 저장소 루트). 저장소 경로 `B`는 PC마다 수정 | `~/.bashrc` |
 | 추가 | 10단계 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`status.relativePaths false`) | `~/.gitconfig` |
 | 추가 | 11단계 | vim Verilog 자동완성 목록 + ALE/Verilator 문법 오류 표시 (**`:w` 저장할 때만** 검사) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
 | 추가 | 12단계 | `watch_html "파일명"`: HTML 파일을 Windows 기본 브라우저로 열기 | `~/.bashrc` |
 | 추가 | 13단계 | `viva`: System_Verilog 작업 폴더로 이동 (경로는 PC마다 확인) | `~/.bashrc` |
 | 추가 | 14단계 | 터미널·vim **배경만 검은색**(#000000), 글자색은 Gruvbox 유지 | Windows Terminal `settings.json`, `~/.vimrc` |
-| 추가 | 15단계 | `ppt "파일명"` / `ppt "폴더명"`: PPT를 Windows PowerPoint로 열기 | `~/.bashrc` |
+| 추가 | 15단계 | `ppt` / `ppt "파일명"` / `ppt "폴더명"`: 현재 폴더 기준으로 PPT를 Windows PowerPoint로 열기 (확장자 생략 가능, `~$` 잠금파일 제외) | `~/.bashrc` |
 | 파일 | - | `ubuntu-terminal-setup/tmux-cheatsheet.html`: tmux 단축키 정리 (설치할 것 없음, `watch_html`로 열어 보는 용도) | - |
 
 - 이날 시도했다가 **되돌린 것** (적용하지 말 것): glow / markdown-preview.nvim 마크다운 미리보기, vim Verilog filetype 감지 단계, 입력 중 실시간 lint.
@@ -45,7 +46,7 @@
 | 12 | `watch_html "파일명"`으로 HTML 파일을 Windows 기본 브라우저에서 열기 | `~/.bashrc` |
 | 13 | `viva` 입력 시 System_Verilog 작업 폴더로 바로 이동 | `~/.bashrc` |
 | 14 | 터미널·vim **배경만 검은색**(#000000)으로, 글자색은 Gruvbox 그대로 | Windows Terminal `settings.json`, `~/.vimrc` |
-| 15 | `ppt "파일명"` 또는 `ppt "폴더명"`으로 PPT 파일을 Windows PowerPoint에서 열기 | `~/.bashrc` |
+| 15 | `ppt` (현재 폴더 전부) / `ppt "파일명"` (확장자 생략 가능) / `ppt "폴더명"`으로 PPT를 Windows PowerPoint에서 열기 | `~/.bashrc` |
 
 ## 전제 환경
 
@@ -513,15 +514,16 @@ bash -ic 'alias t4 v h'
 │              │              │ 루트(25%) │
 └──────────────┴──────────────┴──────────┘
 ```
-`~/.bashrc`의 tmux alias 아래에 추가:
+`~/.bashrc`의 tmux alias 아래에 추가 (`B`는 **이 PC의 System_Verilog 저장소 경로**로 바꾼다. 예: `/mnt/c/26_AI_CAMP/System_Verilog`, `/mnt/d/26_AI_CAMP_2/System_Verilog`):
 ```bash
+# tsv [프로젝트폴더] : System_Verilog 작업 화면 (왼쪽 프로젝트 | 가운데 sources_1/new | 오른쪽 위 vivado / 아래 저장소 루트)
+#   프로젝트폴더 생략 시 vivado/ 안에서 가장 최근에 수정된 폴더
 tsv() {
-    local B=/mnt/d/26_AI_CAMP_2/System_Verilog
-    local D0="$B/vivado/project_0930"                         # 왼쪽
-    local D1="$D0/project_0930.srcs/sources_1/new"            # 가운데
-    local D2="$B/vivado"                                      # 오른쪽 위
-    local D3="$B"                                             # 오른쪽 아래
-    local p0 p1 p2
+    local B=/mnt/c/26_AI_CAMP/System_Verilog
+    local D0 D1 D2="$B/vivado" D3="$B" p0 p1 p2
+    if [ -n "$1" ]; then D0="$D2/$1"; else D0=$(ls -dt "$D2"/*/ 2>/dev/null | head -1); D0="${D0%/}"; fi
+    [ -d "$D0" ] || { echo "tsv: 프로젝트 폴더 없음: $D0  (vivado/ 안의 폴더: $(ls "$D2" | tr '\n' ' '))" >&2; return 1; }
+    D1=$(ls -d "$D0"/*.srcs/sources_1/new 2>/dev/null | head -1); [ -n "$D1" ] || D1="$D0"
     if [ -n "$TMUX" ]; then
         p0=$(tmux new-window -P -F '#{pane_id}' -c "$D0")
     elif tmux has-session -t sv 2>/dev/null; then
@@ -533,13 +535,20 @@ tsv() {
     p2=$(tmux split-window -h -l 40% -t "$p1" -P -F '#{pane_id}' -c "$D2")
     tmux split-window -v -l 80% -t "$p2" -c "$D3"
     tmux select-pane -t "$p0"
-    [ -z "$TMUX" ] && tmux attach -t sv
-}
-```
+    if [ -z "$TMUX" ]; then tmux attach -t sv; fi
+}```
+> - 사용: `tsv` (vivado/ 안에서 **가장 최근에 수정된 프로젝트 폴더**) 또는 `tsv project_1001` (폴더 지정).
+> - 가운데 창은 `<프로젝트>/*.srcs/sources_1/new`를 자동으로 찾는다 (`.srcs` 이름이 프로젝트 폴더명과 달라도 됨, 없으면 프로젝트 폴더).
 > - tmux 밖: `sv` 세션을 만들어 접속. 이미 `sv` 세션이 있으면 새로 만들지 않고 **그 세션에 다시 접속**(열어둔 vim 그대로).
 > - tmux 안: 현재 세션에 새 창(window)으로 같은 배치를 만든다 (`Ctrl+b n`/`p`로 창 전환).
 > - 분할 순서를 고정하고 `pane_id`로 지정하므로 창 번호가 0(왼쪽) 1(가운데) 2(오른쪽 위) 3(오른쪽 아래)로 항상 같다.
-> - 프로젝트 폴더가 바뀌면 `D0`~`D3` 경로만 수정한다.
+> - 마지막 줄을 `[ -z "$TMUX" ] && ...`로 쓰면 tmux 안에서 종료 코드가 1이 되므로 `if`로 쓴다.
+
+검증 (별도 tmux 서버 `-L tsvtest`에서 해서 사용 중인 세션을 건드리지 않는다. **Claude가 tmux 안에서 돌고 있으면 그냥 `tsv`를 실행하면 사용자 세션에 창이 생긴다**):
+```bash
+env -u TMUX bash -ic 'tput() { [ "$1" = cols ] && echo 200 || echo 50; }; tmux() { if [ "$1" = attach ]; then echo "(attach)"; else command tmux -L tsvtest "$@"; fi; }; tsv; echo "exit=$?"; command tmux -L tsvtest list-panes -t sv -F "#{pane_index} #{pane_width}x#{pane_height} #{pane_current_path}"; command tmux -L tsvtest kill-server'
+# → exit=0, 창 4개: 0 프로젝트 / 1 sources_1/new / 2 vivado(낮음) / 3 저장소 루트(높음)
+```
 
 ---
 
@@ -763,37 +772,50 @@ vim -Nu ~/.vimrc -es +'redir>>/dev/stdout|hi Normal|hi SignColumn|redir END' +q
 
 ---
 
-## 15단계. `ppt "파일명|폴더명"`: PPT 파일을 Windows PowerPoint로 열기
+## 15단계. `ppt [파일명|폴더명]`: PPT 파일을 Windows PowerPoint로 열기
 
-12단계 `watch_html`과 같은 방식(Windows 경로로 바꿔서 `cmd.exe /c start`)이다. 파일을 주면 그 파일을, 폴더를 주면 그 폴더 안의 `.ppt`/`.pptx`를 전부 연다 (하위 폴더는 안 봄, 대소문자 무시).
+12단계 `watch_html`과 같은 방식(Windows 경로로 바꿔서 `cmd.exe /c start`)이다. PPT가 있는 폴더로 `cd` 한 뒤 쓰는 것을 기준으로 한다: 인자 없이 `ppt`면 현재 폴더의 `.ppt`/`.pptx` 전부, `ppt 이름`이면 현재 폴더의 그 파일(확장자 생략 가능), 폴더를 주면 그 안의 PPT 전부를 연다 (하위 폴더는 안 봄, 대소문자 무시, PowerPoint가 만드는 `~$` 잠금파일은 제외).
 사전 확인: `type -t ppt` → 출력이 없어야 한다 (이름 충돌 없음).
+> `function`이 나오고 `~/.bashrc`에 예전 버전(`ppt "파일명|폴더명"` 주석, 인자 없으면 사용법 오류)이 있으면 그 `ppt()` 블록을 아래 것으로 **교체**한다 (새로 추가 금지).
 
 `~/.bashrc` 맨 아래에 없으면 추가:
 ```bash
 # ==========================================
-#  ppt "파일명|폴더명" : PPT 파일을 Windows PowerPoint로 열기
-#   - 파일이면 그 파일을, 폴더면 안의 .ppt/.pptx 전부를 연다
+#  ppt [이름] : 현재 폴더의 PPT를 Windows PowerPoint로 열기
+#   - ppt            → 현재 폴더의 .ppt/.pptx 전부
+#   - ppt 이름       → 현재 폴더의 "이름" / "이름.pptx" / "이름.ppt" (확장자 생략 가능)
+#   - ppt 폴더명     → 그 폴더 안의 .ppt/.pptx 전부
+#   - PowerPoint 잠금파일(~$*.pptx)은 건너뜀
 # ==========================================
 ppt() {
-    if [ $# -ne 1 ] || [ ! -e "$1" ]; then
-        echo "사용법: ppt \"파일명.pptx\" 또는 ppt \"폴더명\"  (없는 경로: $1)" >&2
+    local target="${1:-.}" files=() f c
+    if [ $# -gt 1 ]; then
+        echo "사용법: ppt  |  ppt \"파일명\"  |  ppt \"폴더명\"" >&2
         return 1
     fi
-    local files=() f
-    if [ -d "$1" ]; then
+    if [ -d "$target" ]; then
         shopt -s nullglob nocaseglob
-        files=("$1"/*.ppt "$1"/*.pptx)
+        for f in "$target"/*.ppt "$target"/*.pptx; do
+            [[ "$(basename "$f")" == '~$'* ]] || files+=("$f")
+        done
         shopt -u nullglob nocaseglob
         if [ ${#files[@]} -eq 0 ]; then
-            echo "ppt: '$1' 폴더에 .ppt/.pptx 파일이 없음" >&2
+            echo "ppt: '$(realpath "$target")' 폴더에 .ppt/.pptx 파일이 없음" >&2
             return 1
         fi
     else
-        files=("$1")
+        for c in "$target" "$target.pptx" "$target.ppt"; do
+            [ -f "$c" ] && { files=("$c"); break; }
+        done
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "ppt: '$PWD'에 '$target'(.pptx/.ppt) 없음" >&2
+            return 1
+        fi
     fi
     for f in "${files[@]}"; do
+        f=$(realpath "$f")
         echo "열기: $f"
-        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$(realpath "$f")")")
+        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$f")")
     done
 }
 ```
@@ -801,8 +823,8 @@ ppt() {
 
 검증:
 ```bash
-bash -ic 'type -t ppt; ppt 없는파일.pptx; echo "exit=$?"'
-# → function, 사용법 안내 메시지, exit=1
+bash -ic 'type -t ppt; ppt 없는파일; echo "exit=$?"'
+# → function, "없음" 안내 메시지, exit=1
 ```
 실제 사용: PPT 파일 하나로 `ppt "파일.pptx"` → PowerPoint 창이 뜨는지 확인 (`powershell.exe -c "(Get-Process POWERPNT).MainWindowTitle"`).
 적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
@@ -827,7 +849,7 @@ bash -ic 'type -t ppt; ppt 없는파일.pptx; echo "exit=$?"'
 - [ ] `watch_html 파일.html` 로 Windows 브라우저에 HTML이 열림
 - [ ] 터미널과 vim 배경이 검은색, 글자색은 Gruvbox 그대로
 - [ ] `viva` 입력 시 `/mnt/c/26_AI_CAMP/System_Verilog`로 이동
-- [ ] `ppt 파일.pptx` / `ppt 폴더` 로 Windows PowerPoint에 PPT가 열림
+- [ ] PPT 폴더에서 `ppt` / `ppt 파일` / `ppt 폴더` 로 Windows PowerPoint에 PPT가 열림
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
 
 ## 사용자에게 전달할 사용법 요약
@@ -845,7 +867,7 @@ bash -ic 'type -t ppt; ppt 없는파일.pptx; echo "exit=$?"'
 | Verilog 자동완성 후보 선택 (입력 모드) | `Tab` / `Shift+Tab` |
 | HTML 파일을 브라우저로 열기 | `watch_html "파일명.html"` |
 | System_Verilog 작업 폴더로 이동 | `viva` |
-| PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt "파일명"` / `ppt "폴더명"` |
+| PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
