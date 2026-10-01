@@ -2,13 +2,11 @@
   "design": {
     "design_info": {
       "boundary_crc": "0x0",
-      "device": "xc7a35tcpg236-1",
       "gen_directory": "../../../../project_0930.gen/sources_1/bd/design_2",
       "name": "design_2",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
-      "synth_flow_mode": "Singular",
-      "tool_version": "2020.2",
-      "validated": "true"
+      "synth_flow_mode": "Hierarchical",
+      "tool_version": "2020.2"
     },
     "design_tree": {}
   }
