@@ -13,15 +13,15 @@ module Full_Adder_8bit(
 		input i_cin,
 		
 		output o_c_out, 
-		output [7:0] o_s,
-		output [6:0] seg,
-		output [3:0] an
+		output [7:0] o_s
+//		output [6:0] seg,
+//		output [3:0] an
 
 );
 
 
 
-reg [6:0] r_txt = 7'b1000_110;
+//reg [6:0] r_txt = 7'b1000_110;
 
 
 wire w_fc;
@@ -29,8 +29,8 @@ wire w_c;
 
 
 
-assign an = 4'b1110;
-assign seg = w_fc ? r_txt : 7'b1111_111;
+//assign an = 4'b1110;
+//assign seg = w_fc ? r_txt : 7'b1111_111;
 assign o_c_out = w_fc;
 
 

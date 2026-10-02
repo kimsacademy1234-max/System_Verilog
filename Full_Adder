@@ -1,0 +1,175 @@
+[33mcommit c9ef6546a202802f093ec0571faa032f3c182643[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 19:41:37 2026 +0900
+
+    파일 삭제
+
+[33mcommit cccc075c82bc64dbcb40d738bc0eb9c0429c5601[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 19:16:44 2026 +0900
+
+    Update : Terminal-Setup (ls color, viva, black background, ppt, 2026-10-01 update log)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit ebfd07444e64cb2357ba4c7a7c8529db3004ced2[m
+Author: 정안성 <yns2027@naver.com>
+Date:   Thu Oct 1 17:08:57 2026 +0900
+
+    homework
+
+[33mcommit 44a6186e520c2443a45ffc8005e0ab39ebb13f79[m
+Author: 정안성 <yns2027@naver.com>
+Date:   Thu Oct 1 16:55:38 2026 +0900
+
+    Update
+
+[33mcommit 1be62d825e3339409904c7c68a50dce905f75088[m
+Author: 정안성 <yns2027@naver.com>
+Date:   Thu Oct 1 13:03:26 2026 +0900
+
+    Delete Recording
+
+[33mcommit 3d7f46425e5c9dd0700d96de8e97c2e66db5f381[m
+Author: 정안성 <yns2027@naver.com>
+Date:   Thu Oct 1 12:57:25 2026 +0900
+
+    Project Update : 10/01
+
+[33mcommit 705b030c8094a249293723b00d3733e7a8992c01[m
+Author: 정안성 <yns2027@naver.com>
+Date:   Thu Oct 1 09:12:03 2026 +0900
+
+    로컬 업데이트
+
+[33mcommit 5e5fc7735e5ee364af09f71a681ccb563c79e860[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 01:51:07 2026 +0900
+
+    Update : Terminal-Setup (watch_html, tmux cheatsheet)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 8b79863a222be8db39a0f4c86ac103be3cadc538[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:58:00 2026 +0900
+
+    연습
+
+[33mcommit 2009833ee9a6e2c63196e7d1b8beb0ee5df42787[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:47:34 2026 +0900
+
+    Update : Terminal-Setup (lint Verilog only on save)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 49af9045571bdf1ad79bab0fcf29e8f31349713c[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:41:29 2026 +0900
+
+    Update : Terminal-Setup (vim Verilog autocomplete + ALE/Verilator lint)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 0f789e2baf7758cbf053e86394ed9d352999fb44[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:35:58 2026 +0900
+
+    Update : Terminal-Setup (remove markdown preview, note alias reload)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 78c45d0f6b9ac1214214af9b4236385089cd899d[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:31:10 2026 +0900
+
+    Update : Terminal-Setup (markdown preview key m -> \m)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit db948d2ea4cc670cb1b70367396418ad130ba713[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:27:58 2026 +0900
+
+    Update : Terminal-Setup (replace glow with markdown-preview.nvim, m key)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 4bcbd9703625c9c993b498f99e792112a69d5183[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:19:20 2026 +0900
+
+    Update : Terminal-Setup (glow markdown viewer)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit d166771a9eb93d0af1b5d2a818f040f2deb1108c[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:14:50 2026 +0900
+
+    Update : Terminal-Setup (git status root-relative paths, drop vim Verilog step)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 591538f23ad0706930892a36db6ed6827147d3b4[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:05:27 2026 +0900
+
+    Update : Terminal-Setup (vim Verilog filetype detection)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 716503aecfe314460e23302b86c1b2064cc3fe77[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Thu Oct 1 00:04:07 2026 +0900
+
+    Update : Terminal-Setup (tmux split aliases t4/v/h)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 9659596bf0b228e331b3c86d867a84d17621d4a4[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Wed Sep 30 23:40:24 2026 +0900
+
+    Update : Terminal-Setup (prompt, vim swap)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 987e5b2a61a909841b4a6880b2958acb3eaab3b3[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Wed Sep 30 23:35:24 2026 +0900
+
+    Remove vim swap file, add .gitignore
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+
+[33mcommit 01bbb6fc5df31a4643054d122424051b3b5c1b8d[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Wed Sep 30 23:18:26 2026 +0900
+
+    D
+
+[33mcommit be5654c949a3d730e953518a3feab25f05747388[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Wed Sep 30 23:07:13 2026 +0900
+
+    README
+
+[33mcommit a42fbaa78faa6ffb6cc83d517081a0d69bb6dba5[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Wed Sep 30 23:04:17 2026 +0900
+
+    Readme
+
+[33mcommit 59b1f9438d10cb3235122a14197208aafd77067a[m
+Author: kimsacademy1234-max <kimsacademy1234@gmail.com>
+Date:   Wed Sep 30 22:40:16 2026 +0900
+
+    Update : Terminal-Setup
+
+[33mcommit f35b5624833cf161ca91c87c163d5974430973fa[m
+Author: kimsacademy1234-max <kimsacademy1234@gmaill.com>
+Date:   Wed Sep 30 22:13:20 2026 +0900
+
+    Setup : ubuntu Terminal Setup
