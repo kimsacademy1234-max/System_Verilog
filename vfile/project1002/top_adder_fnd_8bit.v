@@ -1,89 +1,66 @@
 `timescale 1ns / 1ps
+//==============================================================================
+// Module      : top_adder_fnd_8bit
+// Description : 8-bit adder 결과(0~510)를 10진수로 분리해 i_sel로 고른
+//               자리를 FND에 표시하는 top
+// Depends on  : full_adder_8bit, digit_splitter, mux_4x1, decoder_2x4,
+//               fnd_decoder
+//==============================================================================
 
+module top_adder_fnd_8bit (
+    input  wire [1:0] i_sel,
+    input  wire [7:0] i_a,
+    input  wire [7:0] i_b,
 
-module top_adder_fnd_8bit(
-
-input [1:0] i_sel,
-input [7:0] i_a, 
-input [7:0] i_b,
-
-
-output [3:0] o_an,
-output [7:0]fnd_out
-
-
-
+    output wire       o_cout,
+    output wire [3:0] o_fnd_com,
+    output wire [7:0] o_fnd_data
 );
 
 wire [7:0] w_sum;
-wire w_cout;
+wire [3:0] w_digit_1;
+wire [3:0] w_digit_10;
+wire [3:0] w_digit_100;
+wire [3:0] w_digit_1000;
+wire [3:0] w_digit_sel;
 
-
-
-wire [3:0] w_ds_1;
-wire [3:0] w_ds_2;
-wire [3:0] w_ds_3;
-wire [3:0] w_ds_4;
-wire [3:0] w_mux_out;
-wire [7:0] w_fnd_out;
-wire [3:0] w_an;
-
-Full_Adder_8bit ADD (
-
-		 .i_a(i_a),	
-		 .i_b(i_b),
-		 .i_cin(1'b0),
-		 .o_c_out(w_cout),
-		 .o_s(w_sum)
+full_adder_8bit U_ADD (
+    .i_a    (i_a),
+    .i_b    (i_b),
+    .i_cin  (1'b0),
+    .o_sum  (w_sum),
+    .o_cout (o_cout)
 );
 
-Digit_spliter SPLIT (
-
-	.i_D({w_cout,w_sum}),
-	.o_ds_1(w_ds_1),
-	.o_ds_2(w_ds_2),
-	.o_ds_3(w_ds_3),
-	.o_ds_4(w_ds_4)
-
+digit_splitter #(
+    .WIDTH (9)
+) U_SPLIT (
+    .i_data       ({o_cout, w_sum}),
+    .o_digit_1    (w_digit_1),
+    .o_digit_10   (w_digit_10),
+    .o_digit_100  (w_digit_100),
+    .o_digit_1000 (w_digit_1000)
 );
 
-
-mux4_1 MUX(
-
-     		
-	 .sel(i_sel),
-	 .i_ds_1(w_ds_1),	
-	 .i_ds_2(w_ds_2),
-	 .i_ds_3(w_ds_3),
-	 .i_ds_4(w_ds_4),
-	 .fnt_out(w_mux_out)
-		
-     		
+mux_4x1 #(
+    .WIDTH (4)
+) U_MUX (
+    .i_sel  (i_sel),
+    .i_d0   (w_digit_1),
+    .i_d1   (w_digit_10),
+    .i_d2   (w_digit_100),
+    .i_d3   (w_digit_1000),
+    .o_data (w_digit_sel)
 );
 
-  
-
-decoder2x4 Decoder(
-
-.i_sel(i_sel),	
-.o_an(w_an)
-
+decoder_2x4 U_DEC (
+    .i_sel   (i_sel),
+    .o_dec_n (o_fnd_com)
 );
 
-
-
-adder_fnd DUT_1(
-
-	.bin({4'b0000, w_mux_out}),
-	.fnd_font(w_fnd_out)
-
-
-	);
-
-assign o_an = w_an;
-assign fnd_out = w_fnd_out;
-assign Dp = w_fnd_out[7];
-assign o_cout = w_cout;
-
+fnd_decoder U_FND_DEC (
+    .i_hex      (w_digit_sel),
+    .o_fnd_data (o_fnd_data)
+);
 
 endmodule
