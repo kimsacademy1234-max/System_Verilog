@@ -6,8 +6,8 @@ module tb_fnd_clk_top();
 
 reg [7:0] i_a,i_b;
 reg i_clk;
-reg i_reset_n;
-
+reg i_reset;
+reg i_cin;
 
 
 wire o_cout;
@@ -31,10 +31,10 @@ assign w_bcd_sum = (r_fnd_out1000*1000 + r_fnd_out100*100 + r_fnd_out10*10 + r_f
 top_adder_fnd_for_clk_test U_FND_CLK(
 
      .i_clk(i_clk),
-     .i_reset_n(i_reset_n),
+     .i_reset_n(~i_reset),
      .i_a(i_a),
      .i_b(i_b),
-
+     .i_cin(i_cin),
      .o_cout(o_cout),
      .o_fnd_com(o_fnd_com),
      .o_fnd_data(o_fnd_data)
@@ -138,7 +138,8 @@ end
 
 
 integer err_cnt;
-integer i,j;
+integer err_cnt_cin;
+integer i,j,k;
 
 
 initial begin
@@ -149,39 +150,48 @@ initial begin
     r_fnd_out1000 = 4'b00;
     
     i_clk = 1'b1;
-    i_reset_n = 1'b0;
+    i_reset = 1'b0;
     
     #10;
     
-    i_reset_n = 1'b1;
+    i_reset = 1'b1;
 
     #10 
 
-    i_reset_n = 1'b0;
+    i_reset = 1'b0;
 
-
+   
 	err_cnt = 0;
-	for(i=0; i<256; i=i+1)begin
-			
-		for(j=0; j<256; j=j+1)begin
-			i_a = i;
-			i_b = j;
-			#40;
-		
+    for(k=0; k<2; k=k+1)begin
 
-			if({o_cout, (i_a+i_b)}!== w_bcd_sum)begin
-				err_cnt = err_cnt +1;
-				$display("[ERROR] a:%d +b: %d is not SEG DISPLAY{%d}!!",i_a,i_b,w_bcd_sum);
-			end
+        i_cin = k;
+        err_cnt_cin = 0;
+    	for(i=0; i<256; i=i+1)begin
+    			
+    		for(j=0; j<256; j=j+1)begin
+    			i_a = i;
+    			i_b = j;
+    			#40;
+    		
+    
+    			if((i_a + i_b + i_cin) !== w_bcd_sum)begin
+    				err_cnt_cin = err_cnt_cin +1;
+    				$display("[ERROR] a:%d + b:%d + cin:%b = %d, but SEG DISPLAY{%d}!!",i_a,i_b,i_cin,{1'b0,i_a}+i_b+i_cin,w_bcd_sum);
+    		    end
+    
+    	    end
+        end
 
-		end
+        // cin 값별 결과
+        if(err_cnt_cin == 0) $display("[PASS] : i_cin = %0d -> ALL BCD CORRECT!", k);
+        else                 $display("[FAIL] : i_cin = %0d -> %0d [ERROR]", k, err_cnt_cin);
 
+        err_cnt = err_cnt + err_cnt_cin;
+    end
 
-	end 
-
-	if(err_cnt ==0) $display("[PASS] : ALL BCD CORRECT!");
-	else $display("[FAIL] : Please Check %d [ERROR] Diagram",err_cnt);
-
+    // 전체 결과
+    if(err_cnt == 0) $display("[PASS] : ALL BCD CORRECT! (i_cin = 0, 1)");
+    else             $display("[FAIL] : Please Check total %0d [ERROR] Diagram", err_cnt);
 
 
 

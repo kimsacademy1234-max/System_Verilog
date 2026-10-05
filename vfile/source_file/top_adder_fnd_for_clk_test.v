@@ -10,6 +10,7 @@
 module top_adder_fnd_for_clk_test (
     input  i_clk,
     input  i_reset_n,
+    input  i_cin,
     input  wire [7:0] i_a,
     input  wire [7:0] i_b,
 
@@ -37,7 +38,7 @@ wire [3:0] w_digit_1000;
 full_adder_8bit U_ADD (
     .i_a    (i_a),
     .i_b    (i_b),
-    .i_cin  (1'b0),
+    .i_cin  (i_cin),
     .o_sum  (w_sum),
     .o_cout (o_cout)
 );
@@ -56,7 +57,7 @@ digit_splitter #(
 Fnd_Controller U_FND_CON(
 
      .i_clk(i_clk),
-     .i_reset_n(~i_reset_n),
+     .i_reset_n(i_reset_n),
      .i_digit_1(w_digit_1),
      .i_digit_10(w_digit_10),
      .i_digit_100(w_digit_100),
