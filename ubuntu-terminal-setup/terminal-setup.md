@@ -6,6 +6,17 @@
 
 ## 업데이트 이력
 
+### 2026-10-03 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| **변경** | 11-3단계 | 자동완성: 단어를 끝까지 치면 후보 목록 자동으로 닫힘 (`s:VerilogCloseDone` + `TextChangedP`) | `~/.vimrc` |
+| 추가 | 8-1단계 | vim끼리 `yy`→`p` 공유: `clipboard_provider` 없는 vim용 대체 블록 (`TextYankPost` + `p`/`P` 매핑, 같은 `~/.vim/.clipboard` 파일) | `~/.vimrc` |
+| 추가 | 11-6단계 | vim 명령줄 Tab: `:%s/w<Tab>`, `/as<Tab>` 처럼 패턴·검색 안에서 파일 속 단어로 자동완성 (`^I` 들어가던 문제) | `~/.vimrc` |
+| 추가 | 15단계 | 테마를 **Catppuccin Mocha**로 변경 + `theme` 명령(터미널·vim·tmux 동시 전환, 후보 8개). 1·2·3단계 Gruvbox 대체 | `~/.theme/theme.py`(저장소 `ubuntu-terminal-setup/theme.py`), `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, `settings.json` |
+| **변경** | 4-3단계 | `Ctrl+w w` 순환: vim 마지막 창에서 tmux로 나갈 때 첫 번째 vim 창으로 돌려놓음(`wincmd t`) → vsplit 후 다시 돌아와도 1 → 2 → tmux 순서 유지 | `~/.vimrc` |
+| **변경** | 11-3단계 | 자동완성 키: `↑`/`↓`로 고르고 `Tab`으로 완성 → 목록 닫히고 같은 단어에서 다시 안 뜸 (`s:VerilogAccepted` + `CompleteDone`). 기존 `Tab`/`Shift+Tab` 이동 매핑 교체 | `~/.vimrc` |
+
 ### 2026-10-01 업데이트
 
 > **Claude Code에게:** 2026-09-30까지의 설정(1~8단계)이 이미 적용된 PC라면 **아래 항목만** 적용하면 된다.
@@ -41,10 +52,11 @@
 | 8 | vim swap 파일(`.swp`)을 작업 폴더가 아닌 `~/.vim/swap/`에 저장 | `~/.vimrc` |
 | 9 | tmux 분할 alias: `t4`(한 번에 4분할), `v`(좌우 분할), `h`(상하 분할) | `~/.bashrc` |
 | 10 | 하위 폴더에서 `git status` 해도 폴더명이 보이게 (`./` 대신 `project_0930/`) | `~/.gitconfig` |
-| 11 | vim Verilog 편집: 입력 중 **자동완성 목록**(Tab 선택) + **문법 오류 표시**(ALE + Verilator) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
+| 11 | vim Verilog 편집: 입력 중 **자동완성 목록**(↑↓ 고르고 Tab 완성) + **문법 오류 표시**(ALE + Verilator) | `~/.vim/dict/`, `~/.vim/pack/`, `~/.vimrc` |
 | 12 | `watch_html "파일명"`으로 HTML 파일을 Windows 기본 브라우저에서 열기 | `~/.bashrc` |
 | 13 | `viva` 입력 시 System_Verilog 작업 폴더로 바로 이동 | `~/.bashrc` |
 | 14 | `ppt` (현재 폴더 전부) / `ppt "파일명"` (확장자 생략 가능) / `ppt "폴더명"`으로 PPT를 Windows PowerPoint에서 열기 | `~/.bashrc` |
+| 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
 
 ## 전제 환경
 
@@ -238,6 +250,8 @@ if exists('$TMUX')
         if winnr() < winnr('$')
             wincmd w
         elseif str2nr(system("tmux display -p '#{window_panes}'")) > 1
+            " 나가기 전에 첫 번째 vim 창으로 돌려놓음 → 돌아왔을 때 처음 창부터 다시 순환
+            wincmd t
             call system('tmux select-pane -t :.+')
         else
             wincmd w
@@ -259,6 +273,8 @@ endif
 > - `nnoremap <C-w>w ...` 방식은 쓰지 말 것 (1초 timeout 문제).
 > - `getcharstr()`는 vim 8.2.3xxx 이상 필요. 구버전이면 `nr2char(getchar())`로 대체.
 > - **이미 실행 중인 vim은 재시작해야 적용**된다.
+
+> - **`wincmd t`가 꼭 필요하다** (2026-10-03 수정). 없으면 vim을 `:vsplit`한 뒤 마지막 vim 창에서 tmux로 나갔다가 돌아왔을 때 커서가 그대로 마지막 창에 있어서, 다음 `Ctrl+w w`가 또 바로 tmux로 나가 버림 → 첫 번째 vim 창으로 다시는 못 감. 확인 순서: vim창 1 → 2 → tmux 터미널 → vim창 1 → 2 …
 
 ### 4-4. 동작 검증 (자동 테스트)
 `tmux send-keys`는 tmux 키 바인딩을 **거치지 않으므로** tmux 쪽 테스트에는 쓸 수 없다.
@@ -476,6 +492,44 @@ endif
 
 검증: tmux 2분할로 vim 두 개를 띄우고 한쪽에서 `yy`, 다른 쪽에서 `p` → 붙여넣어지면 성공.
 
+**`clipboard_provider`가 없는 vim이면** (`vim -Nu NONE -es -c 'echo has("clipboard_provider")'` → 0, 예: Debian vim 9.1 패치 1-16) 위 블록은 아무 일도 안 한다 (2026-10-04 이 PC에서 확인).
+→ 같은 파일·같은 형식으로 `TextYankPost` + `p`/`P` 매핑을 쓰는 대체 블록을 `~/.vimrc` 맨 아래에 추가 (두 블록이 함께 있어도 하나만 동작):
+```vim
+" ==========================================
+"  서로 다른 vim 끼리 yy → p 공유 (공용 파일 ~/.vim/.clipboard)
+" ==========================================
+" clipboard_provider 가 없는 vim (이 PC의 vim 9.1 패치 1-16) 용 대체 방식
+"  - y / d 로 기본 레지스터에 들어간 내용을 파일에 저장
+"  - p / P 는 파일의 최신 내용을 기본 레지스터로 읽어 온 뒤 붙여넣기 ("ap 처럼 레지스터 지정 시엔 그대로)
+if !has('clipboard_provider')
+    let s:clipfile = expand('~/.vim/.clipboard')
+    function! s:ClipSave()
+        if v:event.regname ==# '' && v:event.operator =~# '^[yd]$'
+            call writefile([v:event.regtype] + v:event.regcontents, s:clipfile)
+        endif
+    endfunction
+    function! s:ClipLoad()
+        if v:register ==# '"' && filereadable(s:clipfile)
+            let l:data = readfile(s:clipfile)
+            if len(l:data) > 1
+                call setreg('"', l:data[1:], l:data[0])
+            endif
+        endif
+        return ''
+    endfunction
+    augroup shared_clip
+        autocmd!
+        autocmd TextYankPost * call s:ClipSave()
+    augroup END
+    nnoremap <expr> p <SID>ClipLoad() . 'p'
+    nnoremap <expr> P <SID>ClipLoad() . 'P'
+    xnoremap <expr> p <SID>ClipLoad() . 'p'
+    xnoremap <expr> P <SID>ClipLoad() . 'P'
+endif
+```
+> - `"ap`처럼 레지스터를 지정한 붙여넣기와 `"ayy`는 공용 파일을 안 거친다 (vim 기본 동작 그대로).
+> - 검증 (tmux 2분할): 왼쪽 `yy` → 오른쪽 `p` (줄 단위), 왼쪽 `3yy` → 오른쪽 `2p` (6줄), 오른쪽 `yiw` → 왼쪽 `p` (글자 단위로 줄 끝에) 모두 확인.
+
 ---
 
 ## 9단계. tmux 분할 alias (`t4` / `v` / `h`)
@@ -570,7 +624,7 @@ git status --short                                # → ?? project_0930/  처럼
 
 ## 11단계. vim Verilog 편집 보조: 자동완성 목록 + 문법 오류 표시
 
-- **자동완성:** `.v`/`.sv` 파일에서 2글자 이상 입력하면 커서 아래에 후보 목록이 뜬다 (파일 안 단어 + Verilog/SystemVerilog 키워드). `Tab`/`Shift+Tab`으로 선택.
+- **자동완성:** `.v`/`.sv` 파일에서 2글자 이상 입력하면 커서 아래에 후보 목록이 뜬다 (파일 안 단어 + Verilog/SystemVerilog 키워드). `↑`/`↓`로 고르고 `Tab`으로 완성하면 목록이 닫히고 다시 뜨지 않는다.
 - **문법 오류:** **`:w` 저장할 때만** ALE 플러그인이 Verilator(`--lint-only`)로 검사해서 왼쪽에 `>>`(오류) / `--`(경고)를 표시하고, 해당 줄 끝에 `/* E: ... */` 주석처럼 메시지를 보여준다.
   사용자는 입력 중 실시간 검사를 **방해된다고 싫어한다** → 입력 중·파일 열 때 검사는 모두 끈다.
 
@@ -612,18 +666,43 @@ EOF
 " 2글자 이상 입력하면 아래에 후보 목록 표시 (파일 안 단어 + Verilog 키워드 사전)
 set completeopt=menuone,noinsert,noselect
 function! s:VerilogAutoComplete()
-    if !pumvisible() && getline('.')[: col('.') - 2] =~ '\k\k$'
+    let l:word = matchstr(getline('.')[: col('.') - 2], '\k\+$')
+    " Tab 으로 방금 완성한 단어면 목록 다시 띄우지 않음 (글자를 더 치거나 지우면 다시 동작)
+    if exists('b:vac_done')
+        if l:word ==# b:vac_done | return | endif
+        unlet b:vac_done
+    endif
+    if !pumvisible() && strchars(l:word) >= 2
         call feedkeys("\<C-n>", 'n')
     endif
+endfunction
+" 목록에서 단어를 골라 완성했을 때 그 단어를 기억
+function! s:VerilogAccepted()
+    if !empty(v:completed_item)
+        let b:vac_done = v:completed_item.word
+    endif
+endfunction
+" 단어를 다 쳐서 더 길게 이어지는 후보가 없으면 목록 닫기 (예: module 까지 치면 닫힘, end 는 endmodule 이 남아 유지)
+function! s:VerilogCloseDone()
+    if !pumvisible() | return | endif
+    let l:word = matchstr(getline('.')[: col('.') - 2], '\k\+$')
+    if empty(l:word) | return | endif
+    for l:it in get(complete_info(['items']), 'items', [])
+        if l:it.word !=# l:word && stridx(l:it.word, l:word) == 0 | return | endif
+    endfor
+    call feedkeys("\<C-e>", 'n')
 endfunction
 augroup verilog_edit
     autocmd!
     autocmd FileType verilog,systemverilog setlocal dictionary=~/.vim/dict/verilog.dict complete=.,w,b,k iskeyword+=$
     autocmd FileType verilog,systemverilog autocmd! verilog_edit TextChangedI <buffer> call s:VerilogAutoComplete()
+    " 목록이 떠 있는 동안의 입력은 TextChangedP 로 들어옴
+    autocmd FileType verilog,systemverilog autocmd! verilog_edit TextChangedP <buffer> call s:VerilogCloseDone()
+    autocmd FileType verilog,systemverilog autocmd! verilog_edit CompleteDone <buffer> call s:VerilogAccepted()
 augroup END
-" Tab / Shift+Tab : 목록이 떠 있으면 아래 / 위로 선택, 아니면 원래 Tab
-inoremap <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
-inoremap <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+" ↑ / ↓ : 목록에서 단어 고르기 (vim 기본 동작)
+" Tab     : 고른 단어로 완성 + 목록 닫기 (아무것도 안 골랐으면 첫 번째 후보로 완성), 목록이 없으면 원래 Tab
+inoremap <expr> <Tab> pumvisible() ? (complete_info(['selected']).selected == -1 ? "\<C-n>\<C-y>" : "\<C-y>") : "\<Tab>"
 
 " 문법 오류 표시 (ALE + Verilator): :w 저장 시 검사, 왼쪽에 >> 오류 / -- 경고 + 줄 끝에 메시지
 let g:ale_linters = {'verilog': ['verilator'], 'systemverilog': ['verilator']}
@@ -644,6 +723,8 @@ let g:ale_virtualtext_cursor = 'all'
 > - vim은 셸의 PATH를 물려받으므로, Verilator가 PATH에 있는 셸에서 vim을 실행해야 한다.
 > - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
 
+> - **단어를 끝까지 치면 목록이 닫혀야 한다** (사용자 요청 2026-10-03). `menuone` 때문에 후보가 자기 자신 하나만 남아도 목록이 계속 떠 있었음 → 목록이 떠 있을 때의 입력은 `TextChangedI`가 아니라 `TextChangedP`로 들어오므로 거기서 `s:VerilogCloseDone()`으로 닫는다. 확인: `modu` → 목록, `module` → 닫힘, `end` → `endcase`·`endmodule` 후보가 있어 유지. `en` → `↓↓` → `Tab` → `endcase`로 완성되고 목록이 다시 뜨지 않음.
+
 ### 11-4. 검증 (tmux 임시 세션에서 실제 화면 확인)
 ```bash
 SP=<스크래치패드>; cd "$SP"
@@ -653,8 +734,9 @@ tmux capture-pane -p -t vt | head -2          # → 파일만 열었을 땐 >> �
 tmux send-keys -t vt ':w' Enter; sleep 3
 tmux capture-pane -p -t vt | head -2          # → ">>  1 module(  /* E: syntax error ..." 가 보이면 문법 검사 성공
 tmux send-keys -t vt G o 'alw'; sleep 1
-tmux send-keys -t vt Tab; sleep 0.5
 tmux capture-pane -p -t vt | grep always      # → always / always_comb ... 후보 목록이 보이면 자동완성 성공
+tmux send-keys -t vt Down Down Tab; sleep 1
+tmux capture-pane -p -t vt | grep -c always   # → 1 (고른 단어로 완성되고 목록은 닫힘)
 tmux send-keys -t vt Escape ':q!' Enter; tmux kill-session -t vt 2>/dev/null
 ```
 
@@ -673,6 +755,44 @@ augroup verilog_template
 augroup END
 ```
 검증: `vim -es -u ~/.vimrc -c wq "$SP/My_Mux.v"; cat "$SP/My_Mux.v"` → `module My_Mux(` 가 들어 있으면 성공.
+
+---
+
+### 11-6. 명령줄 Tab: `:s` / `:g` 패턴과 `/` 검색에서 파일 속 단어로 자동완성
+vim 9.1(패치 1-16) 기본 기능으로는 `:%s/w<Tab>`의 패턴 자리에서 Tab이 자동완성되지 않고 `^I`가 그대로 들어간다 (사용자 요청 2026-10-03).
+→ 패턴·바꿀 말 자리와 `/` `?` 검색에서만 Tab을 가로채서 **현재 파일의 단어**로 완성, 계속 누르면 다음 후보 (한 바퀴 돌면 원래 글자). 그 밖의 명령줄은 `wildcharm`으로 원래 Tab 완성을 그대로 쓴다.
+`~/.vimrc` 맨 아래에 추가:
+```vim
+" ==========================================
+"  명령줄 Tab : :s / :g 패턴, / ? 검색 안에서 파일 속 단어로 자동완성
+" ==========================================
+" 예) :%s/w<Tab> → w_sum, <Tab> → w_cout ... (계속 누르면 다음 후보, 한 바퀴 돌면 원래 글자)
+" 그 밖의 명령줄(:e 파일 등)은 원래 Tab 자동완성 그대로
+set wildcharm=<C-z>
+function! s:CmdTab()
+    let l:type = getcmdtype()
+    let l:before = getcmdline()[: getcmdpos() - 2]
+    let l:in_pat = l:type =~# '[/?]' ||
+        \ (l:type ==# ':' && l:before =~# '\v^\s*[%.,$0-9'']*(s%[ubstitute]|g%[lobal]|v%[global])/[^/]*(/[^/]*)?$')
+    if !l:in_pat
+        return "\<C-z>"
+    endif
+    let l:word = matchstr(l:before, '\k*$')
+    " 방금 Tab 으로 넣은 단어 뒤라면 다음 후보로 교체
+    if exists('s:ct') && l:word ==# s:ct.list[s:ct.idx]
+        let s:ct.idx = (s:ct.idx + 1) % len(s:ct.list)
+        return repeat("\<BS>", strchars(l:word)) . s:ct.list[s:ct.idx]
+    endif
+    if empty(l:word) | return '' | endif
+    let l:words = split(join(getline(1, '$'), ' '), '\k\@!.')
+    let l:cands = uniq(sort(filter(l:words, 'v:val =~# "^" . l:word && v:val !=# l:word')))
+    if empty(l:cands) | return '' | endif
+    let s:ct = {'list': [l:word] + l:cands, 'idx': 1}
+    return repeat("\<BS>", strchars(l:word)) . s:ct.list[1]
+endfunction
+cnoremap <expr> <Tab> <SID>CmdTab()
+```
+검증 (tmux 임시 세션, `wire w_sum; wire w_cout;` 가 있는 파일): `:%s/w` + Tab → `:%s/w_cout` → Tab → `w_sum` → `wire` → `w` / `:%s/w_sum/w_c` + Tab → `w_cout` / `/as` + Tab → `/assign` / `:colo` + Tab → `:colorscheme` (원래 동작).
 
 ---
 
@@ -790,6 +910,70 @@ bash -ic 'type -t ppt; ppt 없는파일; echo "exit=$?"'
 
 ---
 
+## 15단계. 테마: Catppuccin Mocha + `theme` 명령으로 한 번에 전환
+
+사용자가 Gruvbox가 "구리다"고 해서 후보 7개를 하나씩 적용해 보고 **Catppuccin Mocha**로 정했다 (2026-10-03, 최종 후보: Catppuccin / One Dark / Everforest).
+터미널(Windows Terminal) 색 구성표, vim colorscheme, tmux 상태바를 **`theme` 명령 하나로 같이** 바꾼다. 1·2·3단계의 Gruvbox 설정은 이 단계로 대체된다.
+
+### 15-1. vim 테마 플러그인 설치
+```bash
+cd ~/.vim/pack/themes/start
+for r in catppuccin/vim:catppuccin ghifarit53/tokyonight-vim:tokyonight joshdick/onedark.vim:onedark nordtheme/vim:nord \
+         dracula/vim:dracula sainnhe/everforest:everforest rose-pine/vim:rose-pine; do
+  [ -d "${r##*:}" ] || git clone -q --depth 1 "https://github.com/${r%%:*}" "${r##*:}"
+done
+```
+
+### 15-2. 전환 스크립트 설치
+저장소의 `ubuntu-terminal-setup/theme.py`를 복사한다 (테마별 16색·vim·tmux 색이 모두 들어 있음, Windows Terminal 설정 파일 위치는 자동으로 찾음).
+```bash
+mkdir -p ~/.theme && cp <저장소>/ubuntu-terminal-setup/theme.py ~/.theme/theme.py
+```
+`~/.bashrc` 맨 아래에 추가:
+```bash
+# theme [이름|next|prev] : 터미널·vim·tmux 색 테마를 한 번에 바꾸기 (~/.theme/theme.py)
+theme() { python3 ~/.theme/theme.py "$@"; }
+```
+
+### 15-3. vim / tmux 가 테마 파일을 읽도록 교체 (백업 먼저)
+`~/.vimrc`: `let g:gruvbox_contrast_dark` ~ `augroup BlackBackground` ~ `colorscheme gruvbox` ~ `let g:terminal_ansi_colors = [...]` 블록을 **통째로** 아래로 교체:
+```vim
+" 테마 : 터미널·vim·tmux 색을 theme 명령으로 한 번에 바꿈 (~/.theme/theme.py)
+" 실제 colorscheme 설정은 자동 생성 파일 ~/.vim/theme.vim 에 있음
+if filereadable(expand('~/.vim/theme.vim'))
+    source ~/.vim/theme.vim
+else
+    colorscheme gruvbox
+endif
+```
+`~/.tmux.conf`: `#  Gruvbox 테마` 섹션(상태바 ~ `set -g mode-style ...`)을 통째로 아래로 교체:
+```bash
+# ==========================================
+#  테마 : theme 명령이 만드는 파일 (~/.theme/theme.py)
+# ==========================================
+source-file -q ~/.tmux/theme.conf
+```
+
+### 15-4. 적용
+```bash
+source ~/.bashrc
+theme catppuccin      # → ~/.vim/theme.vim, ~/.tmux/theme.conf 생성 + Windows Terminal 색 구성표 추가·기본값 지정
+```
+> - `theme.py`가 하는 일: ① `~/.vim/theme.vim` 생성 (colorscheme + `:term` 16색) ② `~/.tmux/theme.conf` 생성 후 `tmux source-file` ③ `settings.json`의 `schemes`에 색 구성표 추가하고 `profiles.defaults.colorScheme` 지정 (처음 한 번 `settings.json.bak_theme` 백업).
+> - Windows Terminal·tmux는 바로 바뀐다. **열려 있는 vim은 `:so ~/.vim/theme.vim`** 또는 다시 열어야 바뀐다.
+> - `settings.json`을 JSON으로 다시 쓰므로 그 안의 `//` 주석은 사라진다.
+> - Dracula는 vim에서 배경이 투명하게 나와서 `highlight Normal guibg=#282A36`을 덧붙여 둠.
+
+검증:
+```bash
+theme | head -2                                   # → "* catppuccin  Catppuccin Mocha"
+vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | echo g:colors_name synIDattr(hlID("Normal"),"bg#") | redir END | q'
+# → catppuccin_mocha #1e1e2e
+tmux show -g status-style                         # → bg=#181825,fg=#CDD6F4
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -809,6 +993,7 @@ bash -ic 'type -t ppt; ppt 없는파일; echo "exit=$?"'
 - [ ] `viva` 입력 시 `/mnt/c/26_AI_CAMP/System_Verilog`로 이동
 - [ ] PPT 폴더에서 `ppt` / `ppt 파일` / `ppt 폴더` 로 Windows PowerPoint에 PPT가 열림
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
+- [ ] `theme` 실행 시 `* catppuccin`, 터미널·vim·tmux가 Catppuccin Mocha 색
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -822,15 +1007,18 @@ bash -ic 'type -t ppt; ppt 없는파일; echo "exit=$?"'
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
-| Verilog 자동완성 후보 선택 (입력 모드) | `Tab` / `Shift+Tab` |
+| Verilog 자동완성 (입력 모드) | `↑`/`↓`로 고르고 `Tab`으로 완성 (선택 없이 `Tab` = 첫 후보) |
 | HTML 파일을 브라우저로 열기 | `watch_html "파일명.html"` |
 | System_Verilog 작업 폴더로 이동 | `viva` |
 | PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
+| 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
+| vim 바꾸기·검색에서 단어 자동완성 | `:%s/w` 또는 `/w` 입력 후 `Tab` (계속 누르면 다음 후보) |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
 
 ## 되돌리기
+- 테마: `theme gruvbox`로 원래 색으로 (완전히 되돌리려면 `~/.vimrc.bak7`, `~/.tmux.conf.bak_theme`, `settings.json.bak_theme` 복원, `~/.bashrc`의 `theme()` 줄 삭제)
 - Windows Terminal: `settings.json.bak` 복원
 - vim: `~/.vimrc.bak` 복원, `rm -rf ~/.vim/pack/themes/start/gruvbox ~/.vim/pack/plugins/start/vim-tmux-navigator`
 - tmux: `~/.tmux.conf`에서 해당 섹션 삭제 후 `tmux source-file ~/.tmux.conf`
