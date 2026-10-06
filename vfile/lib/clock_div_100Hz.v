@@ -25,9 +25,9 @@ always@(posedge i_clk or negedge i_reset_n)begin
 
     else begin
 
-        if(r_clk_count < 20'd100000)begin
+        if(r_clk_count < 20'd10000)begin
             r_clk_count <= r_clk_count +1;
-            if(r_clk_count < 20'd50000)begin
+            if(r_clk_count < 20'd5000)begin
                 o_clk_1kHz <= 1'b1;
             end
 
