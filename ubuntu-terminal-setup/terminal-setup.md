@@ -6,6 +6,12 @@
 
 ## 업데이트 이력
 
+### 2026-10-06 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 16단계 | `pdf` / `pdf "파일명"` / `pdf "폴더명"`: 현재 폴더 기준으로 PDF를 Windows 기본 PDF 뷰어로 열기 (확장자 생략 가능, `ppt`와 같은 방식) | `~/.bashrc` |
+
 ### 2026-10-03 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -57,6 +63,7 @@
 | 13 | `viva` 입력 시 System_Verilog 작업 폴더로 바로 이동 | `~/.bashrc` |
 | 14 | `ppt` (현재 폴더 전부) / `ppt "파일명"` (확장자 생략 가능) / `ppt "폴더명"`으로 PPT를 Windows PowerPoint에서 열기 | `~/.bashrc` |
 | 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
+| 16 | `pdf` (현재 폴더 전부) / `pdf "파일명"` (확장자 생략 가능) / `pdf "폴더명"`으로 PDF를 Windows 기본 뷰어에서 열기 | `~/.bashrc` |
 
 ## 전제 환경
 
@@ -974,6 +981,62 @@ tmux show -g status-style                         # → bg=#181825,fg=#CDD6F4
 
 ---
 
+## 16단계. `pdf [파일명|폴더명]`: PDF 파일을 Windows 기본 PDF 뷰어로 열기
+
+14단계 `ppt`와 같은 방식이다 (Windows 경로로 바꿔서 `cmd.exe /c start`). 인자 없이 `pdf`면 현재 폴더의 `.pdf` 전부, `pdf 이름`이면 그 파일(확장자 생략 가능), 폴더를 주면 그 안의 PDF 전부를 연다 (하위 폴더는 안 봄, 대소문자 무시).
+어떤 프로그램으로 열릴지는 Windows **기본 앱 설정**을 따른다 (이 PC는 Microsoft Edge). `assoc .pdf`에 연결이 안 나와도 설정 앱에서 정한 기본 앱으로 열린다.
+사전 확인: `type -t pdf` → 출력이 없어야 한다 (이름 충돌 없음).
+
+`~/.bashrc`의 `ppt()` 아래에 추가:
+```bash
+# ==========================================
+#  pdf [이름] : 현재 폴더의 PDF를 Windows 기본 PDF 뷰어로 열기
+#   - pdf            → 현재 폴더의 .pdf 전부
+#   - pdf 이름       → 현재 폴더의 "이름" / "이름.pdf" (확장자 생략 가능)
+#   - pdf 폴더명     → 그 폴더 안의 .pdf 전부
+# ==========================================
+pdf() {
+    local target="${1:-.}" files=() f c
+    if [ $# -gt 1 ]; then
+        echo "사용법: pdf  |  pdf \"파일명\"  |  pdf \"폴더명\"" >&2
+        return 1
+    fi
+    if [ -d "$target" ]; then
+        shopt -s nullglob nocaseglob
+        files=("$target"/*.pdf)
+        shopt -u nullglob nocaseglob
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "pdf: '$(realpath "$target")' 폴더에 .pdf 파일이 없음" >&2
+            return 1
+        fi
+    else
+        for c in "$target" "$target.pdf" "$target.PDF"; do
+            [ -f "$c" ] && { files=("$c"); break; }
+        done
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "pdf: '$PWD'에 '$target'(.pdf) 없음" >&2
+            return 1
+        fi
+    fi
+    for f in "${files[@]}"; do
+        f=$(realpath "$f")
+        echo "열기: $f"
+        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$f")")
+    done
+}
+```
+> - 파일 이름에 공백이 있으면 따옴표로 감싼다: `pdf "회로 설계 보고서"`
+
+검증:
+```bash
+bash -ic 'type -t pdf; pdf 없는파일; echo "exit=$?"'
+# → function, "없음" 안내 메시지, exit=1
+```
+실제 사용: PDF 하나로 `pdf "파일"` → 뷰어 창이 뜨는지 확인 (`powershell.exe -c "Get-Process | ? MainWindowTitle -like '*파일*'"`).
+적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -993,6 +1056,7 @@ tmux show -g status-style                         # → bg=#181825,fg=#CDD6F4
 - [ ] `viva` 입력 시 `/mnt/c/26_AI_CAMP/System_Verilog`로 이동
 - [ ] PPT 폴더에서 `ppt` / `ppt 파일` / `ppt 폴더` 로 Windows PowerPoint에 PPT가 열림
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
+- [ ] PDF 폴더에서 `pdf` / `pdf 파일` / `pdf 폴더` 로 Windows에서 PDF가 열림
 - [ ] `theme` 실행 시 `* catppuccin`, 터미널·vim·tmux가 Catppuccin Mocha 색
 
 ## 사용자에게 전달할 사용법 요약
@@ -1011,6 +1075,7 @@ tmux show -g status-style                         # → bg=#181825,fg=#CDD6F4
 | HTML 파일을 브라우저로 열기 | `watch_html "파일명.html"` |
 | System_Verilog 작업 폴더로 이동 | `viva` |
 | PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
+| PDF 파일(또는 폴더 안 PDF 전부) 열기 | `pdf` / `pdf "파일명"` / `pdf "폴더명"` |
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
 | vim 바꾸기·검색에서 단어 자동완성 | `:%s/w` 또는 `/w` 입력 후 `Tab` (계속 누르면 다음 후보) |
 
@@ -1030,4 +1095,5 @@ tmux show -g status-style                         # → bg=#181825,fg=#CDD6F4
 - watch_html: `~/.bashrc`의 "watch_html" 섹션 삭제
 - viva: `~/.bashrc`의 `alias viva` 줄 삭제
 - ppt: `~/.bashrc`의 "ppt" 섹션 삭제
+- pdf: `~/.bashrc`의 "pdf" 섹션 삭제
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
