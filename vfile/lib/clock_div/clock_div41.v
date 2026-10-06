@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 
-module clock_div(
+module clock_div41(
 
 input i_clk,
 input i_reset_n,
@@ -27,7 +27,7 @@ always@(posedge i_clk or negedge i_reset_n)begin
 
         if(r_clk_count < 20'd100000)begin
             r_clk_count <= r_clk_count +1;
-            if(r_clk_count < 20'd50000)begin
+            if(r_clk_count < 20'd80000)begin
                 o_clk_1kHz <= 1'b1;
             end
 

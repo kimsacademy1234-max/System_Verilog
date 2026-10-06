@@ -1,4 +1,7 @@
 `timescale 1ns / 1ps
+`define V3
+
+
 //==============================================================================
 // Testbench   : tb_fnd_clk_top_v2
 // DUT         : top_adder_fnd_for_clk_test (default, exhaustive 131,072 vectors)
@@ -33,11 +36,11 @@ wire       o_cout;
 wire [3:0] o_fnd_com;
 wire [7:0] o_fnd_data;
 
-`ifdef V3
-// top_adder_fnd_for_clk inverts its i_reset_n port internally -> connect button value (1 = reset) directly
+//`ifdef V3
+//top_adder_fnd_for_clk inverts its i_reset_n port internally -> connect button value (1 = reset) directly
 top_adder_fnd_for_clk DUT (
     .i_clk      (i_clk),
-    .i_reset_n  (i_reset),
+    .i_reset  (i_reset),
     .i_cin      (i_cin),
     .i_a        (i_a),
     .i_b        (i_b),
@@ -45,23 +48,23 @@ top_adder_fnd_for_clk DUT (
     .o_fnd_com  (o_fnd_com),
     .o_fnd_data (o_fnd_data)
 );
-`else
-top_adder_fnd_for_clk_test DUT (
-    .i_clk        (i_clk),
-    .i_reset_n    (~i_reset),
-    .i_cin        (i_cin),
-    .i_a          (i_a),
-    .i_b          (i_b),
-    .o_cout       (o_cout),
-    .o_fnd_com    (o_fnd_com),
-    .o_fnd_data   (o_fnd_data),
-    .o_digit_1    (),
-    .o_digit_10   (),
-    .o_digit_100  (),
-    .o_digit_1000 ()
-);
-`endif
-
+//`else
+//top_adder_fnd_for_clk_test DUT (
+//    .i_clk        (i_clk),
+//    .i_reset_n    (~i_reset),
+//    .i_cin        (i_cin),
+//    .i_a          (i_a),
+//    .i_b          (i_b),
+//    .o_cout       (o_cout),
+//    .o_fnd_com    (o_fnd_com),
+//    .o_fnd_data   (o_fnd_data),
+//    .o_digit_1    (),
+//    .o_digit_10   (),
+//    .o_digit_100  (),
+//    .o_digit_1000 ()
+//);
+//`endif
+//
 always #5 i_clk = ~i_clk;                      // 100 MHz
 
 //------------------------------------------------------------------ Golden model

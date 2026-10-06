@@ -16,7 +16,9 @@ module top_adder_fnd_for_clk (
 
     output wire       o_cout,
     output wire [3:0] o_fnd_com,
-    output wire [7:0] o_fnd_data
+    output wire [7:0] o_fnd_data,
+	output wire o_clk
+
 );
 
 wire [7:0] w_sum;
@@ -25,8 +27,11 @@ wire [3:0] w_digit_1;
 wire [3:0] w_digit_10;
 wire [3:0] w_digit_100;
 wire [3:0] w_digit_1000;
-wire w_clk_1kHz;
+wire w_clk;
 
+
+
+assign o_clk = w_clk;
 
 full_adder_8bit U_ADD (
     .i_a    (i_a),
@@ -49,8 +54,9 @@ digit_splitter #(
 clock_div U_CLK_DIV(
     .i_clk(i_clk),
     .i_reset_n(~i_reset),
-    .o_clk_1kHz(w_clk_1kHz)
+    .o_clk(w_clk)
 );
+
 
 
 
