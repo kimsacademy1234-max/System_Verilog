@@ -12,7 +12,7 @@ output reg o_clk_1kHz
 
 
 
-reg [19:0] r_clk_count;
+reg [31:0] r_clk_count;
 
 
 always@(posedge i_clk or negedge i_reset_n)begin
@@ -25,9 +25,9 @@ always@(posedge i_clk or negedge i_reset_n)begin
 
     else begin
 
-        if(r_clk_count < 20'd10000)begin
+        if(r_clk_count < 32'd1000000)begin
             r_clk_count <= r_clk_count +1;
-            if(r_clk_count < 20'd5000)begin
+            if(r_clk_count < 32'd500000)begin
                 o_clk_1kHz <= 1'b1;
             end
 
@@ -38,7 +38,7 @@ always@(posedge i_clk or negedge i_reset_n)begin
         end
 
         else begin
-              r_clk_count <=20'd0;
+              r_clk_count <=0;
         end 
    end 
 end
