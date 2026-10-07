@@ -2,7 +2,11 @@
 
 
 
-module counter_datapath_v2(
+module counter_datapath_v2#(
+parameter OFFSET = 0
+        )
+
+(
 input i_clk, 	
 input i_reset,
 
@@ -10,14 +14,20 @@ input  i_sw0, //run-stop
 input  i_sw1, //clear
 input  i_sw2, //up_down
 
-output [13:0] o_counter
-
+output [13:0] o_counter,
+output o_tic
 
 );
 
 wire w_tic;
+assign o_tic = w_tic;
 
-tick_counter TICK(
+
+tick_counter #(
+    .OFFSET(OFFSET)
+        )
+
+TICK(
 
 
 .i_sw0(i_sw0), //run-stop	
@@ -92,7 +102,9 @@ endmodule
 
 //////////////////////////////////////////////////////////////////////
 
-module tick_counter(
+module tick_counter#(
+        parameter OFFSET = 0 )
+    (
 
 input i_clk,
 input i_reset,
@@ -113,7 +125,7 @@ always@(posedge i_clk or posedge i_reset)begin
 
 
 	if(i_reset)begin
-		o_counter <= 0;
+		o_counter <= OFFSET;
 	end
 
 	else begin
@@ -132,21 +144,21 @@ always@(posedge i_clk or posedge i_reset)begin
 
 //////////////////////////////////////////////
 				3'b010 : begin
-					o_counter <= 0; 
+					o_counter <= OFFSET; 
 				end
 
 
 				3'b011 : begin
-					o_counter <= 0; 
+					o_counter <= OFFSET; 
 				end
 
 				3'b110 : begin
-					o_counter <= 0; 
+				    o_counter <= OFFSET; 
 				end
 
 				
 				3'b111 : begin
-					o_counter <= 0; 
+					o_counter <= OFFSET; 
 				end
 //////////////////////////////////////////////
 

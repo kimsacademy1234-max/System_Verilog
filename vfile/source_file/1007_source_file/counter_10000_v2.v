@@ -15,7 +15,11 @@ module counter_10000_v2
 	input  i_sw1, //clear
 	input  i_sw2, //up_down
     output wire [3:0] o_fnd_com,
-    output wire [7:0] o_fnd_data
+    output wire [7:0] o_fnd_data,
+    output wire [13:0] o_counter,
+    output wire         o_tic 
+
+
 );
 
 
@@ -28,9 +32,14 @@ wire [3:0] w_digit_100;
 wire [3:0] w_digit_1000;
 wire w_clk_1kHz;
 wire [13:0] w_counter;  /// 9999 = 10k -> 14bit 
+wire w_tic;
+
+
+assign o_counter = w_counter;
+assign o_tic = w_tic;
 
 counter_datapath_v2 #(
-		.COUNT_OFFSET()
+		.OFFSET(0)
 ) U_CNT_DATA(
 
  	.i_clk 		(i_clk),			
@@ -38,8 +47,8 @@ counter_datapath_v2 #(
 	.i_sw0(i_sw0),
 	.i_sw1(i_sw1),
 	.i_sw2(i_sw2),
-	.o_counter(w_counter)
-	
+	.o_counter(w_counter),
+    .o_tic  (w_tic)	
 
 
 );
