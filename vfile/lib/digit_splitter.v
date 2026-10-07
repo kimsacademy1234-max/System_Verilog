@@ -8,7 +8,7 @@
 //==============================================================================
 
 module digit_splitter #(
-    parameter WIDTH = 9
+    parameter WIDTH = 14
 ) (
     input  wire [WIDTH-1:0] i_data,
 
