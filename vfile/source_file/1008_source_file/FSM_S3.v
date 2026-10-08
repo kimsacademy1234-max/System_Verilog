@@ -58,7 +58,6 @@ always@(*)begin
 			 else if(i_sw == 2'b01)begin N_State = S1; end
 			 else if(i_sw == 2'b10)begin N_State = S4; end
 			 else begin N_State = S3; end
-
         S4 : if(i_sw==2'b00)begin N_State = S0; end
 			 else begin N_State = S4; end
 
@@ -76,14 +75,11 @@ always@(*)begin
 
         case(State)
                
-
         S0 : o_led = 3'b000;  
         S1 : o_led = 3'b001;  
         S2 : o_led = 3'b010;
         S3 : o_led = 3'b100;
         S4 : o_led = 3'b111;
-		
-
 
         default :  o_led = 3'b000;
         endcase 
