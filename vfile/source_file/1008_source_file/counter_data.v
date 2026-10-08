@@ -64,8 +64,8 @@ always@(posedge i_clk or posedge i_reset)begin
 
 	else begin
 		r_counter <= r_counter +1;
-		if(r_counter == FCOUNT -1)begin   // Muxer cell 
-			r_counter <= 0;  // Mux Connect
+		if(r_counter == FCOUNT -1)begin
+			r_counter <= 0;
 			o_tic <= 1;
 		end 
 		
