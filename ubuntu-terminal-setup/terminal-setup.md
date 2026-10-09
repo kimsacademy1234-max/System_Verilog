@@ -6,6 +6,14 @@
 
 ## 업데이트 이력
 
+### 2026-10-09 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 17단계 | `md` / `md "파일명"` / `md "폴더명"`: Markdown을 **VS Code 미리보기처럼** 브라우저로 보기 (GitHub 스타일 + 코드 색, 인터넷 없이 동작, `pdf`와 같은 방식) | `~/.mdview/`(저장소 `ubuntu-terminal-setup/mdview.py`), `~/.bashrc` |
+| 추가 | 17-3단계 | vim `:MdLive`: 편집 중인 md를 브라우저에서 **실시간 미리보기** (`:w` 안 해도 입력하는 대로 바뀜, vim 커서 위치를 따라 스크롤), `:MdLiveStop`으로 끄기 | `~/.vimrc`, `~/.mdview/mdview.py` |
+| 추가 | 18단계 | `iv`: 면접 포트폴리오 토론 전용 Claude 세션 (`homework/interview` 폴더). 처음이면 `interview` 이름으로 새 세션, 이후로는 마지막 대화 이어서 열기 | `~/.bashrc` |
+
 ### 2026-10-06 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -64,6 +72,7 @@
 | 14 | `ppt` (현재 폴더 전부) / `ppt "파일명"` (확장자 생략 가능) / `ppt "폴더명"`으로 PPT를 Windows PowerPoint에서 열기 | `~/.bashrc` |
 | 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
 | 16 | `pdf` (현재 폴더 전부) / `pdf "파일명"` (확장자 생략 가능) / `pdf "폴더명"`으로 PDF를 Windows 기본 뷰어에서 열기 | `~/.bashrc` |
+| 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 보기 + vim `:MdLive`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -1037,6 +1046,196 @@ bash -ic 'type -t pdf; pdf 없는파일; echo "exit=$?"'
 
 ---
 
+## 17단계. `md [파일명|폴더명]`: Markdown을 VS Code 미리보기처럼 보기
+
+`.md`를 GitHub/VS Code 미리보기와 같은 모양(제목·표·코드 블록 색)으로 **Windows 기본 브라우저**에서 연다. 사용법은 16단계 `pdf`와 같다: 인자 없이 `md`면 현재 폴더의 `.md` 전부, `md 이름`이면 그 파일(확장자 생략 가능), 폴더를 주면 그 안의 `.md` 전부.
+- 동작: `~/.mdview/mdview.py`가 md 내용 + 렌더러(marked, github-markdown-css, highlight.js)를 **HTML 한 파일에 모두 넣어** Windows `%TEMP%\mdview\이름.html`로 만들고 `cmd.exe /c start`로 연다 → 인터넷 없이 동작, 저장소 폴더에 파일이 안 생김.
+- 밝은/어두운 색은 Windows 테마를 따라간다. 코드 블록 ` ```verilog ` / ` ```v ` / ` ```sv `는 Verilog 색으로 나온다. md 안의 상대 경로 그림도 보인다 (`<base>`를 md 폴더로 지정).
+- 10/01에 되돌린 glow(터미널 안 표시)·markdown-preview.nvim(vim 플러그인)과는 다른 방식이다 (vim·터미널 설정은 건드리지 않음).
+
+사전 확인: `type -t md` → 출력이 없어야 한다 (이름 충돌 없음). `python3`, `curl` 필요 (추가 패키지 설치 없음).
+
+### 17-1. 렌더러 파일 받기 + 변환 스크립트 복사
+```bash
+mkdir -p ~/.mdview/assets && cd ~/.mdview/assets
+J=https://cdn.jsdelivr.net/npm
+curl -sfL -o marked.min.js       $J/marked@12.0.2/marked.min.js
+curl -sfL -o github-markdown.css $J/github-markdown-css@5.5.1/github-markdown.css
+curl -sfL -o highlight.min.js    $J/@highlightjs/cdn-assets@11.9.0/highlight.min.js
+curl -sfL -o verilog.min.js      $J/@highlightjs/cdn-assets@11.9.0/languages/verilog.min.js
+curl -sfL -o hl-light.css        $J/@highlightjs/cdn-assets@11.9.0/styles/github.min.css
+curl -sfL -o hl-dark.css         $J/@highlightjs/cdn-assets@11.9.0/styles/github-dark.min.css
+ls -l                            # 6개 파일, 크기 0 인 것 없어야 함
+cp <저장소>/ubuntu-terminal-setup/mdview.py ~/.mdview/mdview.py
+```
+
+### 17-2. `~/.bashrc`의 `pdf()` 아래에 추가
+```bash
+# ==========================================
+#  md [이름] : 현재 폴더의 Markdown을 VS Code 미리보기처럼 브라우저로 보기
+#   - md            → 현재 폴더의 .md 전부
+#   - md 이름       → 현재 폴더의 "이름" / "이름.md" (확장자 생략 가능)
+#   - md 폴더명     → 그 폴더 안의 .md 전부
+#   - ~/.mdview/mdview.py 가 Windows 임시 폴더(%TEMP%\mdview)에 HTML을 만들어 기본 브라우저로 염
+# ==========================================
+md() {
+    local target="${1:-.}" files=() f c out dir
+    if [ $# -gt 1 ]; then
+        echo "사용법: md  |  md \"파일명\"  |  md \"폴더명\"" >&2
+        return 1
+    fi
+    if [ -d "$target" ]; then
+        shopt -s nullglob nocaseglob
+        files=("$target"/*.md)
+        shopt -u nullglob nocaseglob
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "md: '$(realpath "$target")' 폴더에 .md 파일이 없음" >&2
+            return 1
+        fi
+    else
+        for c in "$target" "$target.md" "$target.MD"; do
+            [ -f "$c" ] && { files=("$c"); break; }
+        done
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "md: '$PWD'에 '$target'(.md) 없음" >&2
+            return 1
+        fi
+    fi
+    dir=$(wslpath "$(cd /mnt/c && cmd.exe /c echo %TEMP% 2>/dev/null | tr -d '\r')")/mdview || return 1
+    for f in "${files[@]}"; do
+        f=$(realpath "$f")
+        out="$dir/$(basename "${f%.*}").html"
+        python3 ~/.mdview/mdview.py "$f" "$out" || return 1
+        echo "열기: $f"
+        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$out")")
+    done
+}
+```
+> - 파일 이름에 공백이 있으면 따옴표로 감싼다: `md "회의 메모"`
+> - md 파일을 고친 뒤에는 `md 이름`을 다시 실행하면 새 내용으로 열린다 (브라우저 새로고침만으로는 안 바뀜).
+
+검증:
+```bash
+bash -ic 'type -t md; md 없는파일; echo "exit=$?"'
+# → function, "없음" 안내 메시지, exit=1
+```
+실제 사용: `cd <저장소>/ubuntu-terminal-setup && md terminal-setup` → 브라우저에 제목·표·코드 블록이 VS Code 미리보기처럼 보이는지 사용자에게 확인받는다.
+적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
+
+### 17-3. vim `:MdLive`: 편집하면서 실시간 미리보기
+vim에서 md를 고치는 동안 브라우저 미리보기가 **입력하는 대로 바로** 바뀐다 (`:w` 저장 안 해도 됨). 브라우저는 vim 커서가 있는 줄을 따라 스크롤된다 (VS Code 미리보기처럼).
+- 동작: vim이 입력·커서 이동 때마다 버퍼 내용을 `~/.mdview/live/<vim pid>_<버퍼번호>.md`(+ `.pos`에 커서 줄)에 쓰고, `mdview.py serve`가 `http://localhost:<빈 포트>/`로 브라우저에 바로 보낸다 (SSE). 원본 md 파일은 건드리지 않는다.
+- 서버는 vim job이라 `:MdLiveStop`, 버퍼 닫기, vim 종료 때 같이 꺼진다. 꺼지면 브라우저 탭 제목에 `(연결 끊김)`이 붙는다.
+- md 안의 상대 경로 그림은 서버가 md 폴더 아래 파일만 보내준다 (`127.0.0.1`에서만 열림).
+- 키 매핑은 추가하지 않는다 (명령만). 미리보기를 켠 버퍼에서만 동작하고, 다른 파일 편집에는 영향 없음.
+
+`~/.vimrc` 맨 아래에 추가 (17-1의 `mdview.py`가 `serve` 기능이 있는 최신 버전이어야 함):
+```vim
+" ==========================================
+"  :MdLive : 편집 중인 md 를 브라우저에서 실시간 미리보기 (VS Code 처럼)
+" ==========================================
+" 입력할 때마다 버퍼 내용을 ~/.mdview/live/ 에 쓰면 mdview.py 서버가 브라우저로 바로 보냄 (:w 안 해도 됨)
+" 브라우저는 vim 커서 위치를 따라 스크롤. :MdLiveStop 또는 버퍼/vim 을 닫으면 서버 종료
+function! s:MdLivePush(force)
+    if empty(get(b:, 'mdlive', {})) | return | endif
+    if a:force || b:mdlive.tick != b:changedtick
+        call writefile(getline(1, '$'), b:mdlive.file)
+        let b:mdlive.tick = b:changedtick
+    endif
+    let l:line = line('.') - 1
+    if a:force || l:line != b:mdlive.line
+        call writefile([l:line], b:mdlive.file . '.pos')
+        let b:mdlive.line = l:line
+    endif
+endfunction
+function! s:MdLiveUrl(d, ch, msg)
+    let a:d.url = a:msg
+    echo 'MdLive: ' . a:msg . ' (브라우저에서 열림, 끄기 :MdLiveStop)'
+endfunction
+function! s:MdLiveStop(buf)
+    let l:d = getbufvar(a:buf, 'mdlive', {})
+    if empty(l:d) | return | endif
+    call job_stop(l:d.job)
+    call delete(l:d.file) | call delete(l:d.file . '.pos')
+    call setbufvar(a:buf, 'mdlive', {})
+    execute 'autocmd! mdlive * <buffer=' . a:buf . '>'
+endfunction
+function! s:MdLiveStart()
+    if !empty(get(b:, 'mdlive', {})) && job_status(b:mdlive.job) ==# 'run'
+        echo 'MdLive: 이미 실행 중 ' . b:mdlive.url | return
+    endif
+    call mkdir(expand('~/.mdview/live'), 'p')
+    let b:mdlive = {'file': expand('~/.mdview/live/') . getpid() . '_' . bufnr() . '.md', 'tick': -1, 'line': -1, 'url': ''}
+    call s:MdLivePush(1)
+    let b:mdlive.job = job_start(['python3', expand('~/.mdview/mdview.py'), 'serve',
+        \ b:mdlive.file, expand('%:p:h'), expand('%:t')],
+        \ {'out_cb': function('s:MdLiveUrl', [b:mdlive]), 'err_io': 'null'})
+    augroup mdlive
+        autocmd! * <buffer>
+        autocmd TextChanged,TextChangedI,CursorMoved,CursorMovedI <buffer> call s:MdLivePush(0)
+        autocmd BufUnload <buffer> call s:MdLiveStop(str2nr(expand('<abuf>')))
+    augroup END
+endfunction
+command! MdLive call s:MdLiveStart()
+command! MdLiveStop call s:MdLiveStop(bufnr())
+```
+> - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
+> - 브라우저 창을 Windows에서 터미널 옆에 놓고 쓰면 된다 (`Win+←` / `Win+→`로 화면 반씩).
+
+검증 (별도 tmux 서버 + 가짜 `cmd.exe`로 브라우저를 띄우지 않고 확인):
+```bash
+SP=<스크래치패드>; mkdir -p $SP/fakebin; rm -f $SP/open.log
+printf '#!/bin/sh\necho "$@" >> %s/open.log\n' $SP > $SP/fakebin/cmd.exe; chmod +x $SP/fakebin/cmd.exe
+printf '# 테스트\n\n첫 문단\n' > $SP/test.md
+T="tmux -L mdtest"
+$T new-session -d -s m -x 120 -y 30 "env PATH=\"$SP/fakebin:\$PATH\" vim $SP/test.md"; sleep 1.5
+$T send-keys -t m ':MdLive' Enter; sleep 1.5
+URL=$(awk '{print $NF}' $SP/open.log | tail -1); echo "$URL"          # → http://localhost:<포트>/
+(timeout 4 curl -sN "${URL}events" > $SP/ev.txt &); sleep 1
+$T send-keys -t m G o '## 실시간 제목'; sleep 1; $T send-keys -t m Escape gg; sleep 2
+grep -c '실시간 제목' $SP/ev.txt                                        # → 1 이상 (저장 안 했는데 전달됨)
+$T send-keys -t m ':q!' Enter; sleep 1; curl -s -m 2 "$URL" >/dev/null || echo "서버 종료 OK"
+$T kill-server
+```
+Windows 브라우저가 WSL 서버에 닿는지: 서버 실행 중 `powershell.exe -c "(Invoke-WebRequest -UseBasicParsing '<URL>').StatusCode"` → `200`.
+
+---
+
+## 18단계. `iv`: 면접 포트폴리오 토론 전용 Claude 세션
+
+`homework/interview/` 폴더(`inter_view.md` + 토론 규칙 `CLAUDE.md`)에서만 Claude를 실행해서 토론 세션을 하나로 유지한다.
+`claude -c`는 **현재 폴더**의 마지막 대화를 이어 열기 때문에, 전용 폴더에서 실행하면 다른 작업 세션과 섞이지 않는다.
+
+사전 확인: `type -t iv` → 출력이 없어야 한다. `homework/interview/` 폴더가 있어야 한다 (저장소에 포함).
+경로는 PC마다 다를 수 있으니, 다른 PC에서는 `D`를 실제 경로로 바꾼다.
+
+`~/.bashrc` 맨 아래에 없으면 추가:
+```bash
+# iv : 면접 포트폴리오 토론 전용 Claude 세션 (homework/interview 폴더)
+#   처음이면 'interview' 이름으로 새 세션, 이후로는 그 폴더의 마지막 대화를 이어서 열기
+iv() {
+    local D=/mnt/c/26_AI_CAMP/System_Verilog/homework/interview
+    local S="$HOME/.claude/projects/$(echo "$D" | sed 's#[/_]#-#g')"
+    cd "$D" || return
+    if ls "$S"/*.jsonl >/dev/null 2>&1; then
+        claude -c --add-dir .. "$@"
+    else
+        claude -n interview --add-dir .. "$@"
+    fi
+}
+```
+- `--add-dir ..`: 상위 `homework/`의 숙제 PDF, `homework.md`를 권한 확인 없이 읽기 위함
+- Claude Code는 세션 기록을 `~/.claude/projects/<경로의 / 와 _ 를 - 로 바꾼 이름>/`에 저장 → 그 폴더에 기록이 있으면 이어 열기
+
+검증:
+```bash
+bash -ic 'type -t iv'
+# → function
+```
+적용: `source ~/.bashrc`
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1058,6 +1257,9 @@ bash -ic 'type -t pdf; pdf 없는파일; echo "exit=$?"'
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
 - [ ] PDF 폴더에서 `pdf` / `pdf 파일` / `pdf 폴더` 로 Windows에서 PDF가 열림
 - [ ] `theme` 실행 시 `* catppuccin`, 터미널·vim·tmux가 Catppuccin Mocha 색
+- [ ] md 폴더에서 `md` / `md 파일` / `md 폴더` 로 브라우저에 VS Code 미리보기 모양으로 열림
+- [ ] vim에서 md 열고 `:MdLive` → 브라우저가 열리고, 입력하는 대로(`:w` 없이) 미리보기가 바뀌고 커서를 따라 스크롤됨
+- [ ] `iv` 입력 시 `homework/interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -1076,6 +1278,9 @@ bash -ic 'type -t pdf; pdf 없는파일; echo "exit=$?"'
 | System_Verilog 작업 폴더로 이동 | `viva` |
 | PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
 | PDF 파일(또는 폴더 안 PDF 전부) 열기 | `pdf` / `pdf "파일명"` / `pdf "폴더명"` |
+| Markdown을 VS Code 미리보기처럼 보기 | `md` / `md "파일명"` / `md "폴더명"` |
+| vim에서 md 편집하면서 실시간 미리보기 | `:MdLive` (끄기 `:MdLiveStop`) |
+| 면접 포트폴리오 토론 세션 열기 (이어서) | `iv` |
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
 | vim 바꾸기·검색에서 단어 자동완성 | `:%s/w` 또는 `/w` 입력 후 `Tab` (계속 누르면 다음 후보) |
 
@@ -1096,4 +1301,6 @@ bash -ic 'type -t pdf; pdf 없는파일; echo "exit=$?"'
 - viva: `~/.bashrc`의 `alias viva` 줄 삭제
 - ppt: `~/.bashrc`의 "ppt" 섹션 삭제
 - pdf: `~/.bashrc`의 "pdf" 섹션 삭제
+- md: `~/.bashrc`의 "md" 섹션 삭제, `~/.vimrc`의 ":MdLive" 섹션 삭제, `rm -rf ~/.mdview` (만들어진 HTML은 Windows `%TEMP%\mdview`)
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
+- 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
