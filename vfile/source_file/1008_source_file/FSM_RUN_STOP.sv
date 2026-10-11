@@ -3,16 +3,16 @@
 
 
 
-module FSM_RUN_STOP#(
+module FSM_RUN_STOP/*#(
 
 
-parameter clear =3'd0, // 000
-parameter stop =3'd1, // 001
-parameter run =3'd2 // 010
+//parameter clear =3'd0, // 000
+//parameter stop =3'd1, // 001
+//parameter run =3'd2 // 010
 
 
 
-        )(
+        )*/(
 
     input i_clk,
     input i_reset,
@@ -21,8 +21,13 @@ parameter run =3'd2 // 010
     
 );
 
+typedef enum logic [2:0]{clear = 3'd0, stop =3'd1 , run = 3'd2} state_t;
 
-reg [2:0] state, n_state;
+state_t  state, n_state;
+
+
+
+//reg [2:0] state, n_state;
 
 always@(posedge i_clk or posedge i_reset)begin
 
@@ -76,10 +81,6 @@ always@(*)begin
 
 end
     
- 
-
-
-
 
 endmodule
 
