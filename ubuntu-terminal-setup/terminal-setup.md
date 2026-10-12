@@ -6,6 +6,12 @@
 
 ## 업데이트 이력
 
+### 2026-10-13 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 20단계 | tmux: `Ctrl+b` + 화살표 창 이동은 유지하고, 그 뒤에 **화살표만** 눌러도 창이 바뀌던 반복(`-r`)은 끄기 | `~/.tmux.conf` |
+
 ### 2026-10-10 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -81,6 +87,7 @@
 | 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 보기 + vim `:MdLive`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
 | 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`homework/interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
 | 19 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
+| 20 | tmux에서 화살표만으로 창이 바뀌지 않게 (`Ctrl+b` + 화살표만 이동) | `~/.tmux.conf` |
 
 ## 전제 환경
 
@@ -1297,6 +1304,40 @@ $T kill-server
 
 ---
 
+## 20단계. tmux: 화살표만 눌러서 창이 바뀌는 것 끄기 (`Ctrl+b` + 화살표는 유지)
+
+화살표만 눌렀는데 tmux 창이 바뀌는 문제 (2026-10-13).
+- 원인: tmux 기본 키 `Ctrl+b` + `←↑↓→`는 `-r`(반복) 옵션이 붙어 있다. `Ctrl+b ←`를 누르고 나서 `repeat-time`(0.5초) 동안은 `Ctrl+b` 없이 **화살표만 눌러도** 창이 계속 바뀐다. 그래서 창을 옮긴 직후 셸 기록(↑)이나 vim 커서를 움직이면 창이 다시 바뀐다.
+- 해결: 같은 키를 `-r` 없이 다시 지정한다. `Ctrl+b` + 화살표는 **한 번 누르면 한 번만** 이동하고, 그다음 화살표는 창 안의 프로그램(셸, vim)으로 간다.
+- 그대로인 것: `Ctrl+h/j/k/l`, `Ctrl+w w`, 마우스 클릭, 창 크기 조절(`Ctrl+b` 다음 `Ctrl+화살표`/`Alt+화살표`), 복사 모드 안의 화살표.
+
+사전 확인: `tmux list-keys -T prefix | grep -E ' (Up|Down|Left|Right) '` → 줄 앞에 `-r`이 있으면 적용 전이다.
+
+`~/.tmux.conf` 백업(`cp ~/.tmux.conf ~/.tmux.conf.bak_arrow`) 후, `set -sg escape-time 10` 줄 아래에 추가:
+```bash
+# Ctrl+b 다음 화살표(←↑↓→) 창 이동: 한 번 누를 때 한 번만 이동
+#  기본 키는 -r(반복)이라 Ctrl+b ← 후 0.5초 동안 화살표만 눌러도 창이 계속 바뀜 → -r 없이 다시 지정
+bind-key Up    select-pane -U
+bind-key Down  select-pane -D
+bind-key Left  select-pane -L
+bind-key Right select-pane -R
+```
+적용: `tmux source-file ~/.tmux.conf`
+
+검증 (별도 tmux 서버에 클라이언트를 붙여서 실제 키 입력, `send-keys -K`는 tmux 3.4 이상):
+```bash
+T="tmux -L arrowtest -f $HOME/.tmux.conf"
+$T new-session -d -s a -x 120 -y 30; $T split-window -h -t a; $T select-pane -t a:0.1
+(script -qfc "tmux -L arrowtest attach -t a" /dev/null >/dev/null 2>&1 &); sleep 1
+C=$($T list-clients -F '#{client_name}' | head -1); p(){ $T display -p -t a '#{pane_index}'; }
+$T send-keys -K -c "$C" C-b Left; sleep 0.2; echo "C-b Left: $(p)"     # → 0 (이동함)
+$T send-keys -K -c "$C" Right;     sleep 0.2; echo "Right: $(p)"        # → 0 (화살표만으로는 안 바뀜)
+$T send-keys -K -c "$C" C-b Right; sleep 0.2; echo "C-b Right: $(p)"    # → 1
+$T kill-server
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1321,6 +1362,7 @@ $T kill-server
 - [ ] md 폴더에서 `md` / `md 파일` / `md 폴더` 로 브라우저에 VS Code 미리보기 모양으로 열림
 - [ ] vim에서 md 열고 `:MdLive` → 브라우저가 열리고, 입력하는 대로(`:w` 없이) 미리보기가 바뀌고 커서를 따라 스크롤됨
 - [ ] Caps Lock 켜고 vim에서 `:W` / `:WQ` / `:Q!` / `:SET NU` → 소문자 명령처럼 실행 (E492 없음), normal 모드 `A` `O` `G`는 원래대로
+- [ ] tmux에서 `Ctrl+b` + 화살표로 창이 한 번 이동하고, 바로 이어서 화살표만 누르면 창이 안 바뀜
 - [ ] `iv` 입력 시 `homework/interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 
 ## 사용자에게 전달할 사용법 요약
@@ -1332,6 +1374,7 @@ $T kill-server
 | tmux 4분할 세션 한 번에 열기 | `t4` |
 | 창 순서대로 이동 (vim 창 → tmux 창) | `Ctrl+w w` |
 | 방향으로 이동 | `Ctrl+h/j/k/l` 또는 `Ctrl+w` 다음 `h/j/k/l` |
+| 화살표 방향으로 이동 (한 번 누르면 한 번만) | `Ctrl+b` 다음 `←↑↓→` (화살표만으로는 이동 안 함) |
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
@@ -1367,4 +1410,5 @@ $T kill-server
 - md: `~/.bashrc`의 "md" 섹션 삭제, `~/.vimrc`의 ":MdLive" 섹션 삭제, `rm -rf ~/.mdview` (만들어진 HTML은 Windows `%TEMP%\mdview`)
 - 대문자 명령: `~/.vimrc`의 "대문자 명령 → 소문자 명령" 섹션 삭제 (또는 `~/.vimrc.bak_capscmd` 복원)
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
+- 화살표 반복 끄기: `~/.tmux.conf`의 "Ctrl+b 다음 화살표" 4줄 삭제 후 `tmux kill-server`로 재시작 (기본 `-r` 키로 돌아옴) (또는 `~/.tmux.conf.bak_arrow` 복원)
 - 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
