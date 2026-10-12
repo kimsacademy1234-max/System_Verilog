@@ -10,7 +10,7 @@
 
 | 구분 | 단계 | 내용 | 수정 대상 |
 |---|---|---|---|
-| 추가 | 18단계 | vim 대문자 `:` 명령을 소문자처럼 (`:W` `:WQ` `:Q!` `:SET NU` `:%S/…`), Caps Lock 켜진 채 쳐도 E492 안 남. normal 모드 키는 그대로 | `~/.vimrc` |
+| 추가 | 19단계 | vim 대문자 `:` 명령을 소문자처럼 (`:W` `:WQ` `:Q!` `:SET NU` `:%S/…`), Caps Lock 켜진 채 쳐도 E492 안 남. normal 모드 키는 그대로 | `~/.vimrc` |
 
 ### 2026-10-09 업데이트
 
@@ -79,7 +79,8 @@
 | 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
 | 16 | `pdf` (현재 폴더 전부) / `pdf "파일명"` (확장자 생략 가능) / `pdf "폴더명"`으로 PDF를 Windows 기본 뷰어에서 열기 | `~/.bashrc` |
 | 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 보기 + vim `:MdLive`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
-| 18 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
+| 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`homework/interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
+| 19 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
 
 ## 전제 환경
 
@@ -1243,7 +1244,7 @@ bash -ic 'type -t iv'
 
 ---
 
-## 18단계. vim 대문자 `:` 명령을 소문자처럼 (`:W` `:WQ` `:Q!` …)
+## 19단계. vim 대문자 `:` 명령을 소문자처럼 (`:W` `:WQ` `:Q!` …)
 
 Caps Lock이 켜진 채로 `:W`, `:WQ`, `:Q!`를 치면 `E492: Not an editor command`가 나서 불편하다는 요청 (2026-10-10).
 → `:` 명령줄에서 Enter를 누를 때 **명령 이름만** 소문자로 바꿔서 실행한다.
