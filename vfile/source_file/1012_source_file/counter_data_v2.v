@@ -131,7 +131,7 @@ always@(posedge i_clk or posedge i_reset)begin
 	else begin
 	
 		if(i_tick)begin
-			
+////////////////// STOP ///////////////////////
 			case({i_sw2,i_sw1,i_sw0})
 				
 				3'b001 : begin 
@@ -142,7 +142,7 @@ always@(posedge i_clk or posedge i_reset)begin
 					o_counter <= o_counter;
 				end
 
-//////////////////////////////////////////////
+////////////////Clear//////////////////////////
 				3'b010 : begin
 					o_counter <= OFFSET; 
 				end
@@ -160,7 +160,7 @@ always@(posedge i_clk or posedge i_reset)begin
 				3'b111 : begin
 					o_counter <= OFFSET; 
 				end
-//////////////////////////////////////////////
+////////////////UP-DOWN////////////////////////////////////
 
 				3'b100 : begin
 
@@ -168,7 +168,8 @@ always@(posedge i_clk or posedge i_reset)begin
 					else begin o_counter <= o_counter -1 ; end
 
 				end
-	
+
+///////////////////RUN///////////////////////////////////
 				default : begin	
 
 					o_counter <= o_counter + 1;

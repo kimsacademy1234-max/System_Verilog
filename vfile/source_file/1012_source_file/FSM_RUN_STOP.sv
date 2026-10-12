@@ -16,8 +16,8 @@ module FSM_RUN_STOP/*#(
 
     input i_clk,
     input i_reset,
-    input i_bts_L, // clear 
-	input i_bts_R, // run_stop
+    input i_btn_L, // clear 
+	input i_btn_R, // run_stop
 	input i_sw,  //mode 
     output reg[2:0] o_sw    
     
@@ -53,8 +53,8 @@ always@(*)begin
 
         case(state)
 
-		stop : begin if(i_bts_R) n_state = run;
-					 else if(i_bts_L) n_state = clear ;
+		stop : begin if(i_btn_R) n_state = run;
+					 else if(i_btn_L) n_state = clear ;
 					 else n_state = stop;
 					 o_sw = 3'b001;                  //  00 -> stop
 			   end 
@@ -65,7 +65,7 @@ always@(*)begin
 
 				end
 
-		run: begin if(i_bts_R) n_state = stop;  
+		run: begin if(i_btn_R) n_state = stop;  
 				   else  n_state = stop;  
 				   o_sw = 3'b000;              // 10 run 
 

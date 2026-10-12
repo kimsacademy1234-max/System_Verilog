@@ -49,38 +49,43 @@ always@(*)begin
         case(state)
 
 
-		S0		: if(!i_din_bit) n_state = S1;  
+		S0		:begin if(!i_din_bit) n_state = S1;  
 				  else if (i_din_bit) n_state = S0;  
-				  else  n_state = S0; 
+				  else  n_state = S0;
+				  o_dout_bit = 0; end
  				
 
-		S1		: if (!i_din_bit) n_state = S1;  
+		S1		: begin if (!i_din_bit) n_state = S1;  
 				  else if (i_din_bit) n_state = S2;  
 				  else  n_state = S1;  
+				  o_dout_bit = 0; end
 
-		S2		: if (!i_din_bit) n_state = S3;  
+		S2		: begin if (!i_din_bit) n_state = S3;  
 				  else if (i_din_bit) n_state = S0;  
-				  else  n_state = S2;  
-		S3		: if (!i_din_bit) n_state = S1;  
-				  else if  (i_din_bit) n_state = S0;  
+				  else  n_state = S2; 
+				  o_dout_bit = 0; end
+
+
+		S3		: begin if (!i_din_bit) n_state = S1;  
+				  else if  (i_din_bit) n_state = S4;  
 				   else  n_state = S3;  
+				  o_dout_bit = 0; end
 
 
-		default : n_state = S0;
+
+		S4		: begin if (!i_din_bit) n_state = S1;  
+				  else if  (i_din_bit) n_state = S0;  
+				   else  n_state = S4;  
+				  o_dout_bit = 1; end
+
+
+		default : begin	n_state = S0;
+				  o_dout_bit = 0; end
 
         endcase 
 
 end
     
 
-
-
-assign o_dout_bit =((state == S3) && (i_din_bit == 1))? 1:0;
-
-
-
-
-
-
-
 endmodule
+

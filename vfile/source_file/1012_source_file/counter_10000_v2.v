@@ -22,9 +22,9 @@ module counter_10000_v2
 (
     input  i_clk,
     input  i_reset,
-	input  i_bts, //stop
-	
-	
+    input i_btn_L, // clear 
+	input i_btn_R, // run_stop
+	input i_sw, //mode	
     output wire [3:0] o_fnd_com,
     output wire [7:0] o_fnd_data
 
@@ -50,6 +50,25 @@ wire w_sw1;
 wire w_sw2;
 
 
+wire w_btn_L;
+wire w_btn_R;
+
+
+
+button_debouncer DUT_BTN_L(
+.i_clk   (i_clk),
+.i_reset (i_reset),
+.i_btn	 (i_btn_L),
+.o_btn   (w_btn_L)
+);
+
+button_debouncer DUT_BTN_R(
+.i_clk   (i_clk),
+.i_reset (i_reset),
+.i_btn	 (i_btn_R),
+.o_btn   (w_btn_R)
+);
+
 
 
 
@@ -58,9 +77,11 @@ FSM_RUN_STOP uut(
 
     .i_clk(i_clk),
     .i_reset(i_reset),
-    .i_sw({i_sw2,i_sw1,i_sw0}), 
-    .o_sw({w_sw2,w_sw1,w_sw0})    
-
+    .i_sw(i_sw), 
+    .o_sw({w_sw2,w_sw1,w_sw0}), 
+    .i_btn_L(w_btn_L), // clear 
+	.i_btn_R(w_btn_R) // run_stop
+	
 
 );
 
