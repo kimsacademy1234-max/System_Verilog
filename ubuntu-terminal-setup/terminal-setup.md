@@ -11,6 +11,8 @@
 | 구분 | 단계 | 내용 | 수정 대상 |
 |---|---|---|---|
 | 추가 | 20단계 | tmux: `Ctrl+b` + 화살표 창 이동은 유지하고, 그 뒤에 **화살표만** 눌러도 창이 바뀌던 반복(`-r`)은 끄기 | `~/.tmux.conf` |
+| 추가 | 21단계 | tmux: Caps Lock 켜진 채 `Ctrl+B`도 prefix로 인식(`prefix2`), `P`(이전 window) / `W`(window 목록)도 소문자처럼 동작. `~/.tmux.conf` |
+| 추가 | 22단계 | vim 줄번호 색: 일반 줄번호는 회보라, 커서가 있는 줄 번호만 주황 (모든 테마에서 유지) | `~/.vimrc` |
 
 ### 2026-10-10 업데이트
 
@@ -88,6 +90,8 @@
 | 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`homework/interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
 | 19 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
 | 20 | tmux에서 화살표만으로 창이 바뀌지 않게 (`Ctrl+b` + 화살표만 이동) | `~/.tmux.conf` |
+| 21 | tmux에서 Caps Lock이 켜진 채 `Ctrl+B P` / `Ctrl+B W`를 눌러도 `Ctrl+b p` / `Ctrl+b w`처럼 동작 | `~/.tmux.conf` |
+| 22 | vim 줄번호 색을 회보라(`#7f849c`), 커서 줄 번호는 주황(`#fab387`)으로. `theme`로 테마를 바꿔도 유지 | `~/.vimrc` |
 
 ## 전제 환경
 
@@ -1338,6 +1342,68 @@ $T kill-server
 
 ---
 
+## 21단계. tmux: Caps Lock 켜진 채 `Ctrl+B P` / `Ctrl+B W`도 소문자처럼
+
+Caps Lock이 켜진 채로 `Ctrl+b p`(이전 window), `Ctrl+b w`(window 목록)를 누르면 대문자 `P`/`W`가 가서 아무 일도 안 일어나는 문제 (2026-10-13).
+- prefix도 대문자로 와도 되게 `prefix2`를 `C-B`로 지정한다 (`prefix`는 `C-b` 그대로). `Ctrl+b`/`Ctrl+B` 어느 쪽으로 눌러도 prefix가 된다.
+- tmux 3.6 기본 설정에서 prefix 다음 `P`, `W`는 비어 있다 (사전 확인으로 확인). 그래서 소문자와 같은 명령을 그대로 붙이면 다른 기능과 겹치지 않는다.
+- 뒤 글자는 요청한 `p`, `w` 두 키만 추가한다. 다른 글자(`c`, `n`, `d` …)는 그대로.
+
+사전 확인: `tmux show -g prefix2` → `None`이어야 하고, `tmux list-keys -T prefix | grep -E ' (P|W) +'` → 출력이 없어야 한다 (비어 있음). 이미 `C-B` / `previous-window` / `choose-tree -Zw`가 나오면 적용된 것.
+
+`~/.tmux.conf` 백업(`cp ~/.tmux.conf ~/.tmux.conf.bak_caps`) 후, 20단계의 `bind-key Right select-pane -R` 줄 아래에 추가:
+```bash
+# Caps Lock 켜진 채 Ctrl+B / Ctrl+b P / W 도 소문자처럼 (prefix2: Ctrl+B, p: 이전 window, w: window 목록)
+set -g prefix2 C-B
+bind-key P previous-window
+bind-key W choose-tree -Zw
+```
+적용: `tmux source-file ~/.tmux.conf`
+
+검증 (별도 tmux 서버에 클라이언트를 붙여서 실제 키 입력):
+```bash
+T="tmux -L capstest -f $HOME/.tmux.conf"
+$T new-session -d -s a -x 120 -y 30; $T new-window -t a; $T new-window -t a
+(script -qfc "tmux -L capstest attach -t a" /dev/null >/dev/null 2>&1 &); sleep 1
+C=$($T list-clients -F '#{client_name}' | head -1)
+for k in "C-b p" "C-B P" "C-b P" "C-B p"; do
+    $T select-window -t a:2; $T send-keys -K -c "$C" $k; sleep 0.3
+    echo "$k → $($T display -p -t a '#{window_index}')"                          # → 모두 1 (2에서 이전으로)
+done
+$T send-keys -K -c "$C" C-B W; sleep 0.5; $T display -p -t a '#{pane_mode}'      # → tree-mode
+$T kill-server
+```
+
+---
+
+## 22단계. vim 줄번호 색 (회보라 + 커서 줄만 주황, 모든 테마에서 유지)
+
+테마(Catppuccin Mocha)의 기본 줄번호 색(`#45475a`)이 배경과 거의 구분이 안 될 만큼 어두워서 바꾼다 (2026-10-13).
+- 일반 줄번호: Overlay1 `#7f849c` (회보라). 커서가 있는 줄 번호: Peach `#fab387` (주황, 굵게).
+- `cursorline`이 꺼져 있으면 `CursorLineNr` 색이 화면에 안 보인다. `cursorlineopt=number`로 켜면 줄 전체가 아니라 **번호만** 강조된다.
+- `theme` 명령이 colorscheme을 바꿀 때마다 색이 덮어써지므로, `ColorScheme` 이벤트에서 다시 칠한다 → 8개 테마 모두 같은 색.
+
+`~/.vimrc` 백업(`cp ~/.vimrc ~/.vimrc.bak_linenr`) 후, "테마" 섹션의 `if filereadable(expand('~/.vim/theme.vim'))` **바로 위**에 추가 (colorscheme을 읽기 전에 autocmd가 먼저 등록돼야 함):
+```vim
+" 줄번호 색: 어떤 테마든 colorscheme 적용 뒤에 다시 칠함 (회보라 #7f849c, 커서 줄 번호만 주황 #fab387)
+set cursorline cursorlineopt=number   " 줄 전체가 아니라 커서 줄 번호만 강조
+augroup linenr_color
+    autocmd!
+    autocmd ColorScheme * highlight LineNr       guifg=#7f849c ctermfg=103 guibg=NONE ctermbg=NONE
+                      \ | highlight CursorLineNr guifg=#fab387 ctermfg=216 guibg=NONE ctermbg=NONE gui=bold cterm=bold
+augroup END
+```
+> **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열거나 `:source ~/.vimrc` 후 `:colorscheme <현재 테마>`를 실행한다.
+
+검증 (8개 테마 모두 같은 색이 나와야 함):
+```bash
+for t in catppuccin_mocha onedark gruvbox nord dracula everforest rosepine tokyonight; do
+  vim -Nu ~/.vimrc -es +"colorscheme $t" +'redir! > /dev/stdout | hi LineNr | hi CursorLineNr | redir END' +q | grep -o 'guifg=#[0-9a-f]*' | tr '\n' ' '; echo
+done   # → 줄마다 guifg=#7f849c guifg=#fab387
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1363,6 +1429,8 @@ $T kill-server
 - [ ] vim에서 md 열고 `:MdLive` → 브라우저가 열리고, 입력하는 대로(`:w` 없이) 미리보기가 바뀌고 커서를 따라 스크롤됨
 - [ ] Caps Lock 켜고 vim에서 `:W` / `:WQ` / `:Q!` / `:SET NU` → 소문자 명령처럼 실행 (E492 없음), normal 모드 `A` `O` `G`는 원래대로
 - [ ] tmux에서 `Ctrl+b` + 화살표로 창이 한 번 이동하고, 바로 이어서 화살표만 누르면 창이 안 바뀜
+- [ ] Caps Lock 켜고 tmux에서 `Ctrl+B P` → 이전 window, `Ctrl+B W` → window 목록 (소문자와 같음)
+- [ ] vim 줄번호가 회보라, 커서가 있는 줄 번호만 주황색 (`theme next`로 테마를 바꿔도 같음)
 - [ ] `iv` 입력 시 `homework/interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 
 ## 사용자에게 전달할 사용법 요약
@@ -1375,6 +1443,7 @@ $T kill-server
 | 창 순서대로 이동 (vim 창 → tmux 창) | `Ctrl+w w` |
 | 방향으로 이동 | `Ctrl+h/j/k/l` 또는 `Ctrl+w` 다음 `h/j/k/l` |
 | 화살표 방향으로 이동 (한 번 누르면 한 번만) | `Ctrl+b` 다음 `←↑↓→` (화살표만으로는 이동 안 함) |
+| 이전 window / window 목록 (Caps Lock 켜져 있어도 됨) | `Ctrl+b` 다음 `p` / `w` (`Ctrl+B`, `P` / `W`) |
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
@@ -1411,4 +1480,6 @@ $T kill-server
 - 대문자 명령: `~/.vimrc`의 "대문자 명령 → 소문자 명령" 섹션 삭제 (또는 `~/.vimrc.bak_capscmd` 복원)
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
 - 화살표 반복 끄기: `~/.tmux.conf`의 "Ctrl+b 다음 화살표" 4줄 삭제 후 `tmux kill-server`로 재시작 (기본 `-r` 키로 돌아옴) (또는 `~/.tmux.conf.bak_arrow` 복원)
+- Caps Lock `P`/`W`: `~/.tmux.conf`의 "Caps Lock 켜진 채 Ctrl+B / Ctrl+b P / W" 4줄 삭제 후 `tmux set -gu prefix2 \; unbind P \; unbind W` (또는 `~/.tmux.conf.bak_caps` 복원)
+- 줄번호 색: `~/.vimrc`의 "줄번호 색" 7줄(`set cursorline` ~ `augroup END`) 삭제 (또는 `~/.vimrc.bak_linenr` 복원)
 - 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
