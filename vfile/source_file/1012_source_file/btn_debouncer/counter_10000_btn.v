@@ -24,7 +24,7 @@ module counter_10000_v2
     input  i_reset,
     input i_btn_L, // clear 
 	input i_btn_R, // run_stop
-	input i_sw, //mode	
+	input i_btn_U, // 이것만 따로 처리한다.
     output wire [3:0] o_fnd_com,
     output wire [7:0] o_fnd_data
 
@@ -45,13 +45,20 @@ wire w_clk_1kHz;
 wire [13:0] w_counter;  /// 9999 = 10k -> 14bit 
 wire w_tic;
 
-wire w_sw0; 
-wire w_sw1;
-wire w_sw2;
 
 
 wire w_btn_L;
 wire w_btn_R;
+wire w_btn_U;
+
+
+
+
+wire  w_run_stop; //run-stop	
+wire  w_clear;//clear
+wire  w_mode; //up_down
+
+
 
 
 
@@ -72,13 +79,25 @@ button_debouncer DUT_BTN_R(
 
 
 
+button_debouncer DUT_BTN_U(
+.i_clk   (i_clk),
+.i_reset (i_reset),
+.i_btn	 (i_btn_U),
+.o_btn   (w_btn_U)
+);
+
+
+
+
 
 FSM_RUN_STOP uut(
 
     .i_clk(i_clk),
     .i_reset(i_reset),
-    .i_sw(i_sw), 
-    .o_sw({w_sw2,w_sw1,w_sw0}), 
+    .i_btn_U(w_btn_U),
+	.o_run_stop(w_run_stop), 	
+	.o_clear(w_clear), 
+	.o_mode(w_mode), 
     .i_btn_L(w_btn_L), // clear 
 	.i_btn_R(w_btn_R) // run_stop
 	
@@ -95,10 +114,10 @@ counter_datapath_v2 #(
 
  	.i_clk 		(i_clk),			
 	.i_reset	(i_reset),
-	.i_sw0(w_sw0),
-	.i_sw1(w_sw1),
-	.i_sw2(w_sw2),
-	.o_counter(w_counter),
+	.i_run_stop    (w_run_stop), 	
+	.i_clear    (w_clear), 
+	.i_mode    (w_mode ),
+	.o_counter(w_counter),	
     .o_tic  (w_tic)	
 
 
