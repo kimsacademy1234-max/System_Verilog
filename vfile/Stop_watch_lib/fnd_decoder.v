@@ -22,7 +22,9 @@ output reg [7:0] o_fnd_data
 			4'h6: o_fnd_data = 8'h82;
 			4'h7: o_fnd_data = 8'hF8;
 			4'h8: o_fnd_data = 8'h80;
-			4'h9: o_fnd_data = 8'h90;	
+			4'h9: o_fnd_data = 8'h90;
+			4'b1110: o_fnd_data = 8'b0111_1111;
+			4'b1111: o_fnd_data = 8'b1111_1111;
 			default : o_fnd_data = 8'hC0;
 		endcase
 
