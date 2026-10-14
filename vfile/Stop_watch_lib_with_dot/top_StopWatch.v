@@ -98,7 +98,7 @@ Control_unit U_STOPWATCH_CONTROL_UNIT(
 );
 
 
-Fnd_Controller U_FND_CONTROLLER(
+Fnd_Controller_dot U_FND_CONTROLLER(
 
 
     .i_clk (i_clk),

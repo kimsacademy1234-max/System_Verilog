@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 
-module dot_comprator(
+module dot(
 
 	input [6:0] i_msec,
 	output o_dot_onoff

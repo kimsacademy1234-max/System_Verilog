@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 
 
-module Fnd_Controller#(
+module Fnd_Controller_dot#(
 
 parameter MSEC_BIT_WIDTH = 7,
 parameter SEC_BIT_WIDTH = 6,
@@ -94,7 +94,7 @@ wire w_clk_1kHz;
 clock_tick_generator#(
 
 .CLK_FRQ(2000)  // 2KHz
-) U_CLK_GEN_1KHZ (
+) U_CLK_GEN (
 
 .i_clk(i_clk),
 .i_reset(i_reset),
@@ -131,7 +131,7 @@ wire w_dot_onoff;
 
 
 
-dot_comparator U_DOT(
+dot U_DOT(
 
 .i_msec(i_msec),
 .o_dot_onoff(w_dot_onoff)
