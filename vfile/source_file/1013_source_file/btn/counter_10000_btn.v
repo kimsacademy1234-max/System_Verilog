@@ -46,14 +46,9 @@ wire [13:0] w_counter;  /// 9999 = 10k -> 14bit
 wire w_tic;
 
 
-
 wire w_btn_L;
 wire w_btn_R;
 wire w_btn_U;
-
-
-
-
 wire  w_run_stop; //run-stop	
 wire  w_clear;//clear
 wire  w_mode; //up_down
@@ -75,8 +70,6 @@ button_debouncer_1MHz DUT_BTN_R(
 .i_btn	 (i_btn_R),
 .o_btn   (w_btn_R)
 );
-
-
 
 
 button_debouncer_1MHz DUT_BTN_U(

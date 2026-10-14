@@ -23,45 +23,46 @@ always@(posedge i_clk or posedge i_reset)begin
 
 		if(i_mode)begin
 
-		 if(i_tick)begin
-		 	r_counter_reg <= r_counter_reg -1;
-			
-			if(r_counter_reg == 0)begin
-				r_counter_reg <= COUNT -1;
-				o_time_tic <= 1;
+			 if(i_tick)begin
+				r_counter_reg <= r_counter_reg -1;
+				
+				if(r_counter_reg == 0)begin
+					r_counter_reg <= COUNT -1;
+					o_time_tic <= 1;
+				end
+
+			end
+			else begin 
+					o_time_tic <=0;
 			end
 
-			else begin
-				o_time_tic <= 0;
-			end
 
 		end
 
 		else begin
 
-		 if(i_tick)begin
-		 	r_counter_reg <= r_counter_reg +1;
-			
-			if(r_counter_reg == COUNT -1)begin
-				r_counter_reg <= 0;
-				o_time_tic <= 1;
-			end
+			 if(i_tick)begin
+				r_counter_reg <= r_counter_reg +1;
+				
+				if(r_counter_reg == COUNT -1)begin
+					r_counter_reg <= 0;
+					o_time_tic <= 1;
+				end
+			 end
 
-			else begin
-				o_time_tic <= 0;
-		
-			end
+			 else begin
+					o_time_tic <= 0;
+			
+		      end
 		end		
 
 			
-		end
+	end
 end
 
 
 
 assign o_time = r_counter_reg; 
-
-
 
 
 endmodule
