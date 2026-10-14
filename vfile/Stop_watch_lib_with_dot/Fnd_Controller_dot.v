@@ -30,8 +30,6 @@ parameter HOUR_BIT_WIDTH =5
 
 wire [3:0] w_ds1_msec;
 wire [3:0] w_ds10_msec;
-
-
 wire [3:0] w_ds1_sec;
 wire [3:0] w_ds10_sec;
 
