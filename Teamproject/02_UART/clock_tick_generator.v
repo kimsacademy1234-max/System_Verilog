@@ -2,8 +2,7 @@
 
 
 //////////////////////////////////////////////////////////////
-module clock_tick_generator
-#( parameter CLK_FRQ =1000
+module clock_tick_generator#( parameter CLK_FRQ =1000 // 1khz
 )(
 input i_clk,
 input i_reset,
