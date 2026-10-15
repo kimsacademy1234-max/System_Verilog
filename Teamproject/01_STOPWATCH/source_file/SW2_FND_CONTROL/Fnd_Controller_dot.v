@@ -17,8 +17,10 @@ parameter HOUR_BIT_WIDTH =5
 	input  [MIN_BIT_WIDTH -1:0]  i_min,
 	input  [HOUR_BIT_WIDTH -1:0] i_hour,
 	input  i_sw_display_mode,
-
-
+	input  i_btn_R,
+	input  i_btn_L,
+	input  i_sw_0,
+	input  i_sw_2,
 
     output wire [3:0] o_fnd_com,
     output wire [7:0] o_fnd_data
@@ -35,7 +37,6 @@ wire [3:0] w_ds10_sec;
 
 wire [3:0] w_ds1_min;
 wire [3:0] w_ds10_min;
-
 wire [3:0] w_ds1_hour;
 wire [3:0] w_ds10_hour;
 /////////////////////////////////////////////////////////////////////////////
@@ -86,7 +87,7 @@ digit_splitter #(
 
 //////////////////////////////////////////////////////////////////
 
-wire w_clk_1kHz;
+wire w_clk_2kHz;
 
 //////////////////////////////////////////////////////////////////
 clock_tick_generator#(
@@ -96,13 +97,13 @@ clock_tick_generator#(
 
 .i_clk(i_clk),
 .i_reset(i_reset),
-.o_clk(w_clk_1kHz)
+.o_clk(w_clk_2kHz)
 
 );
 
 counter8 U_COUNTER8(
 
-.i_clk(w_clk_1kHz),
+.i_clk(w_clk_2kHz),
 .i_reset(i_reset),
 .o_sel(w_sel)
 
@@ -133,6 +134,91 @@ dot U_DOT(
 
 .i_msec(i_msec),
 .o_dot_onoff(w_dot_onoff)
+
+);
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+
+wire [1:0] w_state_sel;
+
+
+
+SW2_FSM_Change U_FSM(
+
+.i_clk(w_clk_2kHz),
+.i_reset(i_reset),
+.i_btnR(i_btn_R),
+.i_btnL(i_btn_L),
+.o_sel(w_state_sel)
+
+
+);
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+
+wire [3:0] w_decode_ds1_msec;
+wire [3:0] w_decode_ds10_msec;
+wire [3:0] w_decode_ds1_sec;
+wire [3:0] w_decode_ds10_sec;
+
+wire [3:0] w_decode_ds1_min;
+wire [3:0] w_decode_ds10_min;
+wire [3:0] w_decode_ds1_hour;
+wire [3:0] w_decode_ds10_hour;
+
+
+
+
+///////////////////////////////////////////////////////////////////////
+
+
+
+
+anode_choice U_ANODE_CHOICE_TO_MUX1(
+
+
+	i_sw_0(i_sw_0),
+	i_sw_2(i_sw_2),
+	i_sel(w_state_sel),
+	i_dot(w_dot_onoff), 
+	i_ds1(w_ds1_msec),
+	i_ds2(w_ds10_msec),
+	i_ds3(w_ds1_sec),
+	i_ds4(w_ds10_sec),
+
+	o_ds1(w_decode_ds1_msec),
+	o_ds2(w_decode_ds10_msec),
+	o_ds3(w_decode_ds1_sec),
+	o_ds4(w_decode_ds10_sec)
+
+
+);
+
+
+
+anode_choice U_ANODE_CHOICE_TO_MUX2(
+
+
+	.i_sw_0(i_sw_0),
+	.i_sw_2(i_sw_2),
+	.i_sel(w_state_sel),
+	.i_dot(w_dot_onoff), 
+	.i_ds1(w_ds1_min),
+	.i_ds2(w_ds10_min),
+	.i_ds3(w_ds1_hour),
+	.i_ds4(w_ds10_hour),
+	.o_ds1(w_decode_ds1_min),
+	.o_ds2(w_decode_ds10_min),
+	.o_ds3(w_decode_ds1_hour),
+	.o_ds4(w_decode_ds10_hour)
+
 
 );
 
@@ -170,8 +256,6 @@ mux_8x1 U_MIN_MUXER(
     .i_d7  (4'hf),
 	.o_data (w_min_hour)
 );
-
-
 
 
 
