@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Markdown 을 VS Code 미리보기처럼 보여주기 (bash 의 md 명령, vim 의 :MdLive 가 사용).
+"""Markdown 을 VS Code 미리보기처럼 보여주기 (bash 의 md 명령, vim 의 :Md 가 사용).
 
 사용:
   python3 mdview.py <입력.md> <출력.html>             → HTML 한 파일로 변환 (md 명령)
-  python3 mdview.py serve <실시간.md> <원본폴더> <제목>  → 실시간 미리보기 서버 + 브라우저 열기 (:MdLive)
+  python3 mdview.py serve <실시간.md> <원본폴더> <제목>  → 실시간 미리보기 서버 + 브라우저 열기 (:Md)
      - vim 이 입력할 때마다 <실시간.md> 에 버퍼 내용을, <실시간.md>.pos 에 커서 줄을 씀
      - 서버가 바뀐 내용을 브라우저로 바로 보냄 (SSE) → 저장(:w) 안 해도 미리보기가 바뀜
  - ~/.mdview/assets/ 의 marked(마크다운 해석), github-markdown-css, highlight.js 를

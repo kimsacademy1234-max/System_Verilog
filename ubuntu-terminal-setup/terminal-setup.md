@@ -6,6 +6,13 @@
 
 ## 업데이트 이력
 
+### 2026-10-16 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 변경 | 17-3단계 | vim `:MdLive` / `:MdLiveStop` 을 **`:md` / `:mdstop`** 으로 통합 (소문자·대문자 모두 가능, 실제 사용자 명령 이름은 `:Md` / `:MdStop`). 기능은 동일 | `~/.vimrc`, `~/.mdview/mdview.py` |
+| 변경 | 19단계 | `s:CmdLower()`가 `:md` / `:mdstop` 을 `:Md` / `:MdStop` 으로 바꿔 줌 (`<CR>` 매핑이 abbreviation을 막아서 여기서 처리) | `~/.vimrc` |
+
 ### 2026-10-13 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -25,7 +32,7 @@
 | 구분 | 단계 | 내용 | 수정 대상 |
 |---|---|---|---|
 | 추가 | 17단계 | `md` / `md "파일명"` / `md "폴더명"`: Markdown을 **VS Code 미리보기처럼** 브라우저로 보기 (GitHub 스타일 + 코드 색, 인터넷 없이 동작, `pdf`와 같은 방식) | `~/.mdview/`(저장소 `ubuntu-terminal-setup/mdview.py`), `~/.bashrc` |
-| 추가 | 17-3단계 | vim `:MdLive`: 편집 중인 md를 브라우저에서 **실시간 미리보기** (`:w` 안 해도 입력하는 대로 바뀜, vim 커서 위치를 따라 스크롤), `:MdLiveStop`으로 끄기 | `~/.vimrc`, `~/.mdview/mdview.py` |
+| 추가 | 17-3단계 | vim `:Md`: 편집 중인 md를 브라우저에서 **실시간 미리보기** (`:w` 안 해도 입력하는 대로 바뀜, vim 커서 위치를 따라 스크롤), `:MdStop`으로 끄기 | `~/.vimrc`, `~/.mdview/mdview.py` |
 | 추가 | 18단계 | `iv`: 면접 포트폴리오 토론 전용 Claude 세션 (`homework/interview` 폴더). 처음이면 `interview` 이름으로 새 세션, 이후로는 마지막 대화 이어서 열기 | `~/.bashrc` |
 
 ### 2026-10-06 업데이트
@@ -86,7 +93,7 @@
 | 14 | `ppt` (현재 폴더 전부) / `ppt "파일명"` (확장자 생략 가능) / `ppt "폴더명"`으로 PPT를 Windows PowerPoint에서 열기 | `~/.bashrc` |
 | 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
 | 16 | `pdf` (현재 폴더 전부) / `pdf "파일명"` (확장자 생략 가능) / `pdf "폴더명"`으로 PDF를 Windows 기본 뷰어에서 열기 | `~/.bashrc` |
-| 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 보기 + vim `:MdLive`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
+| 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 보기 + vim `:Md`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
 | 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`homework/interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
 | 19 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
 | 20 | tmux에서 화살표만으로 창이 바뀌지 않게 (`Ctrl+b` + 화살표만 이동) | `~/.tmux.conf` |
@@ -1141,21 +1148,21 @@ bash -ic 'type -t md; md 없는파일; echo "exit=$?"'
 실제 사용: `cd <저장소>/ubuntu-terminal-setup && md terminal-setup` → 브라우저에 제목·표·코드 블록이 VS Code 미리보기처럼 보이는지 사용자에게 확인받는다.
 적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
 
-### 17-3. vim `:MdLive`: 편집하면서 실시간 미리보기
+### 17-3. vim `:Md`: 편집하면서 실시간 미리보기
 vim에서 md를 고치는 동안 브라우저 미리보기가 **입력하는 대로 바로** 바뀐다 (`:w` 저장 안 해도 됨). 브라우저는 vim 커서가 있는 줄을 따라 스크롤된다 (VS Code 미리보기처럼).
 - 동작: vim이 입력·커서 이동 때마다 버퍼 내용을 `~/.mdview/live/<vim pid>_<버퍼번호>.md`(+ `.pos`에 커서 줄)에 쓰고, `mdview.py serve`가 `http://localhost:<빈 포트>/`로 브라우저에 바로 보낸다 (SSE). 원본 md 파일은 건드리지 않는다.
-- 서버는 vim job이라 `:MdLiveStop`, 버퍼 닫기, vim 종료 때 같이 꺼진다. 꺼지면 브라우저 탭 제목에 `(연결 끊김)`이 붙는다.
+- 서버는 vim job이라 `:MdStop`, 버퍼 닫기, vim 종료 때 같이 꺼진다. 꺼지면 브라우저 탭 제목에 `(연결 끊김)`이 붙는다.
 - md 안의 상대 경로 그림은 서버가 md 폴더 아래 파일만 보내준다 (`127.0.0.1`에서만 열림).
 - 키 매핑은 추가하지 않는다 (명령만). 미리보기를 켠 버퍼에서만 동작하고, 다른 파일 편집에는 영향 없음.
 
 `~/.vimrc` 맨 아래에 추가 (17-1의 `mdview.py`가 `serve` 기능이 있는 최신 버전이어야 함):
 ```vim
 " ==========================================
-"  :MdLive : 편집 중인 md 를 브라우저에서 실시간 미리보기 (VS Code 처럼)
+"  :Md : 편집 중인 md 를 브라우저에서 실시간 미리보기 (VS Code 처럼)
 " ==========================================
 " 입력할 때마다 버퍼 내용을 ~/.mdview/live/ 에 쓰면 mdview.py 서버가 브라우저로 바로 보냄 (:w 안 해도 됨)
-" 브라우저는 vim 커서 위치를 따라 스크롤. :MdLiveStop 또는 버퍼/vim 을 닫으면 서버 종료
-function! s:MdLivePush(force)
+" 브라우저는 vim 커서 위치를 따라 스크롤. :MdStop 또는 버퍼/vim 을 닫으면 서버 종료
+function! s:MdPush(force)
     if empty(get(b:, 'mdlive', {})) | return | endif
     if a:force || b:mdlive.tick != b:changedtick
         call writefile(getline(1, '$'), b:mdlive.file)
@@ -1167,11 +1174,11 @@ function! s:MdLivePush(force)
         let b:mdlive.line = l:line
     endif
 endfunction
-function! s:MdLiveUrl(d, ch, msg)
+function! s:MdUrl(d, ch, msg)
     let a:d.url = a:msg
-    echo 'MdLive: ' . a:msg . ' (브라우저에서 열림, 끄기 :MdLiveStop)'
+    echo 'Md: ' . a:msg . ' (브라우저에서 열림, 끄기 :MdStop)'
 endfunction
-function! s:MdLiveStop(buf)
+function! s:MdStop(buf)
     let l:d = getbufvar(a:buf, 'mdlive', {})
     if empty(l:d) | return | endif
     call job_stop(l:d.job)
@@ -1179,25 +1186,28 @@ function! s:MdLiveStop(buf)
     call setbufvar(a:buf, 'mdlive', {})
     execute 'autocmd! mdlive * <buffer=' . a:buf . '>'
 endfunction
-function! s:MdLiveStart()
+function! s:MdStart()
     if !empty(get(b:, 'mdlive', {})) && job_status(b:mdlive.job) ==# 'run'
-        echo 'MdLive: 이미 실행 중 ' . b:mdlive.url | return
+        echo 'Md: 이미 실행 중 ' . b:mdlive.url | return
     endif
     call mkdir(expand('~/.mdview/live'), 'p')
     let b:mdlive = {'file': expand('~/.mdview/live/') . getpid() . '_' . bufnr() . '.md', 'tick': -1, 'line': -1, 'url': ''}
-    call s:MdLivePush(1)
+    call s:MdPush(1)
     let b:mdlive.job = job_start(['python3', expand('~/.mdview/mdview.py'), 'serve',
         \ b:mdlive.file, expand('%:p:h'), expand('%:t')],
-        \ {'out_cb': function('s:MdLiveUrl', [b:mdlive]), 'err_io': 'null'})
+        \ {'out_cb': function('s:MdUrl', [b:mdlive]), 'err_io': 'null'})
     augroup mdlive
         autocmd! * <buffer>
-        autocmd TextChanged,TextChangedI,CursorMoved,CursorMovedI <buffer> call s:MdLivePush(0)
-        autocmd BufUnload <buffer> call s:MdLiveStop(str2nr(expand('<abuf>')))
+        autocmd TextChanged,TextChangedI,CursorMoved,CursorMovedI <buffer> call s:MdPush(0)
+        autocmd BufUnload <buffer> call s:MdStop(str2nr(expand('<abuf>')))
     augroup END
 endfunction
-command! MdLive call s:MdLiveStart()
-command! MdLiveStop call s:MdLiveStop(bufnr())
+command! Md call s:MdStart()
+command! MdStop call s:MdStop(bufnr())
+" 소문자 :md / :mdstop 도 동작 → 아래 s:CmdLower() 가 Enter 때 :Md / :MdStop 으로 바꿔줌
+" (vim 사용자 명령은 대문자로 시작해야 하고, <CR> 매핑이 abbreviation 을 막아서 여기서 처리)
 ```
+> - 소문자 `:md` / `:mdstop` 은 19단계의 `s:CmdLower()`(`<CR>` 매핑)가 `:Md` / `:MdStop` 으로 바꿔서 동작한다. 19단계까지 적용해야 소문자로 쳐진다 (그 전에는 `:Md` / `:MdStop`).
 > - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
 > - 브라우저 창을 Windows에서 터미널 옆에 놓고 쓰면 된다 (`Win+←` / `Win+→`로 화면 반씩).
 
@@ -1208,7 +1218,7 @@ printf '#!/bin/sh\necho "$@" >> %s/open.log\n' $SP > $SP/fakebin/cmd.exe; chmod 
 printf '# 테스트\n\n첫 문단\n' > $SP/test.md
 T="tmux -L mdtest"
 $T new-session -d -s m -x 120 -y 30 "env PATH=\"$SP/fakebin:\$PATH\" vim $SP/test.md"; sleep 1.5
-$T send-keys -t m ':MdLive' Enter; sleep 1.5
+$T send-keys -t m ':md' Enter; sleep 1.5
 URL=$(awk '{print $NF}' $SP/open.log | tail -1); echo "$URL"          # → http://localhost:<포트>/
 (timeout 4 curl -sN "${URL}events" > $SP/ev.txt &); sleep 1
 $T send-keys -t m G o '## 실시간 제목'; sleep 1; $T send-keys -t m Escape gg; sleep 2
@@ -1261,7 +1271,7 @@ Caps Lock이 켜진 채로 `:W`, `:WQ`, `:Q!`를 치면 `E492: Not an editor com
 → `:` 명령줄에서 Enter를 누를 때 **명령 이름만** 소문자로 바꿔서 실행한다.
 - 터미널 vim은 Caps Lock으로 친 `J`와 Shift+`j`를 구분할 수 없다. 그래서 **normal 모드 키는 건드리지 않는다** (Shift+글자 기능 `A` `O` `G` `J` … 그대로). 사용자가 명령줄만 바꾸기로 선택했다.
 - 바뀌는 것: 명령 이름 (`:W` → `:w`, `:WQ` → `:wq`, `:Q!` → `:q!`, `:1,2S/…` → `:1,2s/…`, `:'<,'>S/…`도 됨). `:set` 계열(`:SET NU`)은 옵션 이름도 소문자로.
-- 그대로인 것: 명령 뒤 인자 (`:%S/CLEAR/STOP/`의 `CLEAR`/`STOP` 대소문자 유지), 정확히 있는 대문자 명령(`:MdLive`, `:X`), 없는 명령(`:FOO` → 여전히 E492), `/` `?` 검색.
+- 그대로인 것: 명령 뒤 인자 (`:%S/CLEAR/STOP/`의 `CLEAR`/`STOP` 대소문자 유지), 정확히 있는 대문자 명령(`:Md`, `:X`), 없는 명령(`:FOO` → 여전히 E492), `/` `?` 검색.
 - `exists(':S')`가 1인 이유: netrw의 `:Sexplore` 같은 사용자 명령의 앞부분이라서. 그래서 **2(정확히 일치)일 때만** 실제 대문자 명령으로 보고 그대로 둔다.
 - `setcmdline()` 필요 (vim 9.0.1238 이상, 이 PC의 vim 9.1 패치 1-16에 있음): `vim -Nu NONE -es -c 'echo exists("*setcmdline")'`
 
@@ -1273,12 +1283,18 @@ Caps Lock이 켜진 채로 `:W`, `:WQ`, `:Q!`를 치면 `E492: Not an editor com
 " Caps Lock 이 켜진 채로 : 명령을 쳐도 소문자 명령처럼 실행 (E492 방지)
 "  - 명령 이름만 소문자로 바꿈 (:%S/CLEAR/STOP/ 처럼 뒤의 인자 대소문자는 그대로)
 "  - :set 계열은 옵션 이름도 소문자로 (:SET NU → :set nu)
-"  - :MdLive 처럼 실제로 있는 대문자 사용자 명령은 그대로
+"  - :Md 처럼 실제로 있는 대문자 사용자 명령은 그대로
 "  - normal 모드 키(J, K, A, O ...)는 건드리지 않음
 function! s:CmdLower()
     if getcmdtype() !=# ':' | return | endif
     let l:m = matchlist(getcmdline(), '^\([[:space:]:]*[0-9.,$%;''<>+-]*\)\(\a\+\)\(.*\)$')
-    if empty(l:m) || l:m[2] !~# '\u' | return | endif
+    if empty(l:m) | return | endif
+    " :md / :mdstop (대소문자 무관, 인자 없을 때) → :Md / :MdStop
+    let l:alias = {'md': 'Md', 'mdstop': 'MdStop'}
+    if has_key(l:alias, tolower(l:m[2])) && l:m[3] =~# '^[[:space:]]*$'
+        call setcmdline(l:m[1] . l:alias[tolower(l:m[2])]) | return
+    endif
+    if l:m[2] !~# '\u' | return | endif
     let l:name = tolower(l:m[2])
     " 대문자 이름이 정확히 있는 명령(2)이면 그대로, 소문자 이름이 명령이 아니면 그대로
     if exists(':' . l:m[2]) == 2 || !exists(':' . l:name) | return | endif
@@ -1299,7 +1315,7 @@ SP=<스크래치패드>; printf 'AA aa\nAA zz\nline3\n' > $SP/t.txt
 T="tmux -L capsfull"
 $T new-session -d -s c -x 200 -y 30 "vim $SP/t.txt; echo VIMEXIT; sleep 5"; sleep 1.2
 k(){ $T send-keys -t c "$@"; sleep 0.6; }
-k ':SET NU' Enter; k ':1,2S/AA/BB/' Enter; k ':MdLiveStop' Enter
+k ':SET NU' Enter; k ':1,2S/AA/BB/' Enter; k ':MdStop' Enter
 k ':call writefile(["nu=".&nu, "err=".v:errmsg], "'$SP'/out.txt")' Enter
 k ':W' Enter; cat $SP/out.txt $SP/t.txt     # → nu=1, err= (빈칸), 파일 1·2줄이 BB 로 저장됨
 k ':WQ' Enter; sleep 0.5; $T capture-pane -p -t c | grep -q VIMEXIT && echo ":WQ 로 종료 OK"
@@ -1426,7 +1442,7 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 - [ ] PDF 폴더에서 `pdf` / `pdf 파일` / `pdf 폴더` 로 Windows에서 PDF가 열림
 - [ ] `theme` 실행 시 `* catppuccin`, 터미널·vim·tmux가 Catppuccin Mocha 색
 - [ ] md 폴더에서 `md` / `md 파일` / `md 폴더` 로 브라우저에 VS Code 미리보기 모양으로 열림
-- [ ] vim에서 md 열고 `:MdLive` → 브라우저가 열리고, 입력하는 대로(`:w` 없이) 미리보기가 바뀌고 커서를 따라 스크롤됨
+- [ ] vim에서 md 열고 `:md` → 브라우저가 열리고, 입력하는 대로(`:w` 없이) 미리보기가 바뀌고 커서를 따라 스크롤됨
 - [ ] Caps Lock 켜고 vim에서 `:W` / `:WQ` / `:Q!` / `:SET NU` → 소문자 명령처럼 실행 (E492 없음), normal 모드 `A` `O` `G`는 원래대로
 - [ ] tmux에서 `Ctrl+b` + 화살표로 창이 한 번 이동하고, 바로 이어서 화살표만 누르면 창이 안 바뀜
 - [ ] Caps Lock 켜고 tmux에서 `Ctrl+B P` → 이전 window, `Ctrl+B W` → window 목록 (소문자와 같음)
@@ -1453,7 +1469,7 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 | PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
 | PDF 파일(또는 폴더 안 PDF 전부) 열기 | `pdf` / `pdf "파일명"` / `pdf "폴더명"` |
 | Markdown을 VS Code 미리보기처럼 보기 | `md` / `md "파일명"` / `md "폴더명"` |
-| vim에서 md 편집하면서 실시간 미리보기 | `:MdLive` (끄기 `:MdLiveStop`) |
+| vim에서 md 편집하면서 실시간 미리보기 | `:md` (끄기 `:mdstop`) |
 | Caps Lock 켜진 채 `:` 명령 | `:W` `:WQ` `:Q!` `:SET NU` 등 그대로 쳐도 소문자 명령처럼 실행 |
 | 면접 포트폴리오 토론 세션 열기 (이어서) | `iv` |
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
@@ -1476,7 +1492,7 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 - viva: `~/.bashrc`의 `alias viva` 줄 삭제
 - ppt: `~/.bashrc`의 "ppt" 섹션 삭제
 - pdf: `~/.bashrc`의 "pdf" 섹션 삭제
-- md: `~/.bashrc`의 "md" 섹션 삭제, `~/.vimrc`의 ":MdLive" 섹션 삭제, `rm -rf ~/.mdview` (만들어진 HTML은 Windows `%TEMP%\mdview`)
+- md: `~/.bashrc`의 "md" 섹션 삭제, `~/.vimrc`의 ":Md" 섹션 삭제, `rm -rf ~/.mdview` (만들어진 HTML은 Windows `%TEMP%\mdview`)
 - 대문자 명령: `~/.vimrc`의 "대문자 명령 → 소문자 명령" 섹션 삭제 (또는 `~/.vimrc.bak_capscmd` 복원)
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
 - 화살표 반복 끄기: `~/.tmux.conf`의 "Ctrl+b 다음 화살표" 4줄 삭제 후 `tmux kill-server`로 재시작 (기본 `-r` 키로 돌아옴) (또는 `~/.tmux.conf.bak_arrow` 복원)
