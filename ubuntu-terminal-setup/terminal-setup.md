@@ -6,6 +6,15 @@
 
 ## 업데이트 이력
 
+### 2026-10-22 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 23단계 | vim에서 md 그대로 보기 좋게: 제목 단계별 색, `**` `` ` `` 링크 url 숨김(커서 줄은 원래대로), 코드 블록 언어 색, 표 `\|` 흐리게 (플러그인 없음) | `~/.vimrc`, `~/.vim/after/syntax/markdown.vim` |
+| 추가 | 24단계 | glow(터미널 md 뷰어) 설치 + vim `:glow`로 화면 전체에 렌더링 보기 (`q`로 편집 화면 복귀), 기본 테마 dracula | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
+| 변경 | 19단계 | `s:CmdLower()`가 `:glow`도 `:Glow`로 바꿔 줌 | `~/.vimrc` |
+| 변경 | 11-3단계 | ALE Verilator에 `--timing` 추가: TB의 `always #5 clk = ~clk;`에 뜨던 `NEEDTIMINGOPT` 오류 제거 (Verilator 5부터 지연 처리 방식을 꼭 지정해야 함). TB 파일(`tb_*.v`, `sim_file/`)은 `BLKSEQ` 경고도 끔 | `~/.vimrc` |
+
 ### 2026-10-16 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -99,6 +108,8 @@
 | 20 | tmux에서 화살표만으로 창이 바뀌지 않게 (`Ctrl+b` + 화살표만 이동) | `~/.tmux.conf` |
 | 21 | tmux에서 Caps Lock이 켜진 채 `Ctrl+B P` / `Ctrl+B W`를 눌러도 `Ctrl+b p` / `Ctrl+b w`처럼 동작 | `~/.tmux.conf` |
 | 22 | vim 줄번호 색을 회보라(`#7f849c`), 커서 줄 번호는 주황(`#fab387`)으로. `theme`로 테마를 바꿔도 유지 | `~/.vimrc` |
+| 23 | vim에서 md를 열면 제목·굵게·코드·표가 색으로 구분되고 `**` 같은 기호는 숨겨져서 읽기 좋게 | `~/.vimrc`, `~/.vim/after/syntax/markdown.vim` |
+| 24 | vim에서 `:glow` → md를 렌더링한 화면을 vim 화면 전체로 보기 (`q`로 복귀) | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -759,6 +770,14 @@ let g:ale_lint_on_enter = 0
 let g:ale_lint_on_filetype_changed = 0
 let g:ale_lint_on_save = 1
 let g:ale_virtualtext_cursor = 'all'
+" --timing : #5 / @(posedge clk) / wait 같은 지연 문법을 시뮬레이터처럼 이해 (Verilator 5 는 안 주면 NEEDTIMINGOPT 오류)
+let g:ale_verilog_verilator_options = '--timing'
+" TB 파일(tb_*.v, sim_file/ 안)은 always #5 clk = ~clk 같은 블로킹(=) 이 정상이라 BLKSEQ 경고 끔 (RTL 은 그대로 검사)
+augroup ale_tb
+    autocmd!
+    autocmd BufRead,BufNewFile tb_*.v,tb_*.sv,*/sim_file/*.v,*/sim_file/*.sv
+        \ let b:ale_verilog_verilator_options = '--timing -Wno-BLKSEQ'
+augroup END
 ```
 > - 자동완성은 Verilog 파일에서만 켜진다. 키워드 사전은 `iskeyword+=$`로 `$display` 같은 시스템 함수도 포함.
 > - ALE는 Verilator를 `-Wall`로 돌리므로 오류뿐 아니라 "사용 안 한 신호" 같은 경고(`--`)도 나온다.
@@ -1289,8 +1308,8 @@ function! s:CmdLower()
     if getcmdtype() !=# ':' | return | endif
     let l:m = matchlist(getcmdline(), '^\([[:space:]:]*[0-9.,$%;''<>+-]*\)\(\a\+\)\(.*\)$')
     if empty(l:m) | return | endif
-    " :md / :mdstop (대소문자 무관, 인자 없을 때) → :Md / :MdStop
-    let l:alias = {'md': 'Md', 'mdstop': 'MdStop'}
+    " :md / :mdstop / :glow (대소문자 무관, 인자 없을 때) → :Md / :MdStop / :Glow
+    let l:alias = {'md': 'Md', 'mdstop': 'MdStop', 'glow': 'Glow'}
     if has_key(l:alias, tolower(l:m[2])) && l:m[3] =~# '^[[:space:]]*$'
         call setcmdline(l:m[1] . l:alias[tolower(l:m[2])]) | return
     endif
@@ -1420,6 +1439,169 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 
 ---
 
+## 23단계. vim에서 md 그대로 보기 좋게 (플러그인 없이)
+
+vim 내장 markdown 문법만 써서, md를 편집 화면 그대로 읽기 좋게 만든다 (2026-10-22).
+- `conceallevel=2`: `**굵게**` `` `코드` `` `[링크](url)`의 기호·url을 숨긴다. **커서가 있는 줄은 원래대로** 보여서 편집에는 지장 없다 (`concealcursor=` 비움).
+- 제목 `#`~`######`는 단계별 색(빨강→주황→노랑→초록→파랑→보라, 굵게), `#` 기호는 흐리게.
+- ```` ```verilog ```` 등 코드 블록 안을 해당 언어 색으로 칠한다 (`g:markdown_fenced_languages`).
+- 표: 내장 문법에는 표 규칙이 없어서 `~/.vim/after/syntax/markdown.vim`에 추가 (`|`와 `---` 줄 흐리게, 머리줄 굵게).
+- 색은 22단계처럼 `ColorScheme` 이벤트에서 다시 칠한다 → `theme`로 바꿔도 유지.
+
+`~/.vimrc` 백업(`cp ~/.vimrc ~/.vimrc.bak_mdview`) 후 맨 아래에 추가:
+```vim
+" ==========================================
+"  md 파일을 vim 안에서 보기 좋게 (플러그인 없이 vim 내장 markdown 문법 사용)
+" ==========================================
+" ```verilog 같은 코드 블록 안도 해당 언어 색으로 칠함
+let g:markdown_fenced_languages = ['verilog', 'systemverilog', 'python', 'bash=sh', 'sh', 'c', 'cpp', 'tcl', 'vim']
+" conceallevel=2 : **굵게** `코드` [링크](url) 의 기호를 숨김 (커서가 있는 줄은 원래대로 보임)
+" wrap + linebreak : 긴 문장을 단어 단위로 줄바꿈, breakindent : 목록 들여쓰기 유지
+augroup md_view
+    autocmd!
+    autocmd FileType markdown setlocal conceallevel=2 concealcursor= wrap linebreak breakindent
+augroup END
+" 제목 단계별 색 (catppuccin 팔레트) + 굵게/기울임/코드/표 색 : 어떤 테마든 colorscheme 뒤에 다시 칠함
+function! s:MdColors()
+    highlight markdownH1 guifg=#f38ba8 gui=bold ctermfg=211 cterm=bold
+    highlight markdownH2 guifg=#fab387 gui=bold ctermfg=216 cterm=bold
+    highlight markdownH3 guifg=#f9e2af gui=bold ctermfg=223 cterm=bold
+    highlight markdownH4 guifg=#a6e3a1 gui=bold ctermfg=150 cterm=bold
+    highlight markdownH5 guifg=#89b4fa gui=bold ctermfg=111 cterm=bold
+    highlight markdownH6 guifg=#cba6f7 gui=bold ctermfg=183 cterm=bold
+    highlight markdownHeadingDelimiter guifg=#6c7086 ctermfg=242
+    highlight markdownBold       guifg=#f5c2e7 gui=bold ctermfg=218 cterm=bold
+    highlight markdownItalic     guifg=#94e2d5 gui=italic ctermfg=116 cterm=italic
+    highlight markdownCode       guifg=#a6e3a1 guibg=#313244 ctermfg=150 ctermbg=236
+    highlight markdownCodeBlock  guifg=#a6e3a1 ctermfg=150
+    highlight markdownListMarker guifg=#fab387 gui=bold ctermfg=216 cterm=bold
+    highlight markdownOrderedListMarker guifg=#fab387 gui=bold ctermfg=216 cterm=bold
+    highlight markdownBlockquote guifg=#7f849c gui=italic ctermfg=103 cterm=italic
+    highlight markdownLinkText   guifg=#89b4fa gui=underline ctermfg=111 cterm=underline
+    highlight markdownRule       guifg=#6c7086 ctermfg=242
+    highlight mdTablePipe        guifg=#6c7086 ctermfg=242
+    highlight mdTableSep         guifg=#6c7086 ctermfg=242
+    highlight mdTableHead        guifg=#89dceb gui=bold ctermfg=117 cterm=bold
+endfunction
+augroup md_colors
+    autocmd!
+    autocmd ColorScheme * call s:MdColors()
+augroup END
+call s:MdColors()
+```
+
+`~/.vim/after/syntax/markdown.vim` 새로 만들기 (`mkdir -p ~/.vim/after/syntax`):
+```vim
+" 내장 markdown 문법에 표(|) 색 추가 : ~/.vimrc 의 s:MdColors() 에서 색 지정
+" 표 구분 줄 |---|:---:|  → 흐리게
+syntax match mdTableSep  /^\s*|\?\s*:\?-\{3,}:\?\s*\(|\s*:\?-\{3,}:\?\s*\)*|\?\s*$/
+" 표 칸 구분 |  → 흐리게 (코드 블록 안은 제외)
+syntax match mdTablePipe /|/ containedin=ALLBUT,markdownCode,markdownCodeBlock,mdTableSep
+" 표 머리줄 (바로 다음 줄이 구분 줄인 | 줄) → 굵게
+syntax match mdTableHead /^\s*|.*|\s*\ze\n\s*|\?\s*:\?-\{3,}/ contains=mdTablePipe
+```
+> - 기호를 전부 보면서 편집하고 싶을 때는 `:set conceallevel=0`, 다시 숨기기 `:set conceallevel=2`.
+> - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
+
+검증:
+```bash
+printf '# 제목\n\n| a | b |\n|---|---|\n| 1 | 2 |\n' > /tmp/t.md
+vim -Nu ~/.vimrc -es +'e /tmp/t.md' +'redir! > /dev/stdout | echo &conceallevel &ft | hi markdownH1 | hi mdTablePipe | redir END' +'qa!'; rm /tmp/t.md
+# → "2 markdown", markdownH1 guifg=#f38ba8, mdTablePipe guifg=#6c7086
+```
+
+---
+
+## 24단계. glow: vim `:glow`로 md 렌더링 화면 보기
+
+[glow](https://github.com/charmbracelet/glow)는 md를 터미널에서 렌더링하는 뷰어다 (표 정렬, 제목·코드 색). vim 안에서 `:glow`를 치면 편집 중인 md를 **vim 화면 전체**에 렌더링해서 보여주고, `q`를 누르면 원래 편집 화면(커서 위치 그대로)으로 돌아온다 (2026-10-22).
+- 분할 창이 아니라 새 탭에 띄우고 탭 줄(`showtabline`)을 잠깐 숨김 → 화면엔 렌더링만 보인다. 닫을 때 탭 줄 설정과 원래 창을 되돌린다.
+- 저장 안 한 버퍼 내용을 임시 파일에 써서 렌더링한다 (원본 md 안 건드림). `glow -p`가 `less -R`로 띄워서 `j`/`k`, `Space`/`b`, `/검색`이 된다.
+- 색 테마: 기본 **dracula**. `:glow 이름`으로 바꿔볼 수 있다 (`Tab` 자동완성: catppuccin, dracula, tokyo-night, pink, dark, light). 고른 테마는 vim이 켜져 있는 동안 유지된다.
+- `catppuccin`은 vim 테마와 같은 색으로 만든 사용자 테마 파일(`~/.config/glow/catppuccin.json`).
+
+### 24-1. glow 설치 (sudo 없이 `~/.local/bin`에)
+`apt install glow`도 되지만 sudo가 필요해서, GitHub 릴리스 바이너리를 받는다:
+```bash
+D=$(mktemp -d) && cd $D
+URL=$(curl -s https://api.github.com/repos/charmbracelet/glow/releases/latest | grep -o 'https://[^"]*Linux_x86_64.tar.gz' | head -1)
+curl -sL "$URL" -o glow.tgz && tar xzf glow.tgz
+mkdir -p ~/.local/bin && install -m 755 $(find . -name glow -type f) ~/.local/bin/glow
+cd ~ && rm -rf $D
+glow --version   # → glow version 3.x
+```
+> `~/.local/bin`이 `PATH`에 있어야 한다 (`echo $PATH | tr : '\n' | grep local/bin`). Ubuntu는 기본 `~/.profile`이 폴더가 있으면 넣어 준다 → 없었으면 터미널을 새로 연다.
+
+### 24-2. catppuccin 테마 파일 복사
+이 문서 폴더의 `glow-catppuccin.json`을 복사:
+```bash
+mkdir -p ~/.config/glow && cp <이 문서 폴더>/glow-catppuccin.json ~/.config/glow/catppuccin.json
+```
+
+### 24-3. `~/.vimrc` 맨 아래에 추가
+백업(`cp ~/.vimrc ~/.vimrc.bak_glow`) 후 23단계 아래에 추가:
+```vim
+" ==========================================
+"  :Glow : 편집 중인 md 를 vim 화면 전체에 렌더링해서 보기 (터미널용 md 뷰어 glow)
+" ==========================================
+" 저장 안 한 내용도 보임. j/k·Space/b 로 스크롤, q 로 닫으면 원래 편집 화면으로 돌아옴
+" 렌더링 화면은 새 탭에 띄우고 탭 줄은 숨김 → 화면에는 렌더링만 보임
+function! s:GlowClose(tmp, win, stal)
+    call delete(a:tmp)
+    let &showtabline = a:stal
+    call win_gotoid(a:win)
+endfunction
+" 색 테마: 기본 dracula, :Glow <이름> 으로 바꿔보기 (Tab 자동완성, vim 켜져 있는 동안 유지)
+"   catppuccin = vim 테마(catppuccin mocha)와 같은 색 (~/.config/glow/catppuccin.json)
+let s:glow_styles = {'catppuccin': expand('~/.config/glow/catppuccin.json'),
+    \ 'dracula': 'dracula', 'tokyo-night': 'tokyo-night', 'pink': 'pink', 'dark': 'dark', 'light': 'light'}
+let g:glow_style = get(g:, 'glow_style', 'dracula')
+function! s:GlowComplete(lead, line, pos)
+    return filter(sort(keys(s:glow_styles)), 'v:val =~# "^" . a:lead')
+endfunction
+function! s:Glow(...)
+    if a:0 && !empty(a:1)
+        if !has_key(s:glow_styles, a:1)
+            echo 'Glow: 없는 테마 ' . a:1 . ' (' . join(sort(keys(s:glow_styles)), ', ') . ')' | return
+        endif
+        let g:glow_style = a:1
+    endif
+    if !executable('glow')
+        echo 'Glow: glow 가 없음 (~/.local/bin/glow)' | return
+    endif
+    let l:tmp = tempname() . '.md'
+    call writefile(getline(1, '$'), l:tmp)
+    let l:win = win_getid()
+    let l:stal = &showtabline
+    tabnew
+    setlocal bufhidden=wipe
+    set showtabline=0
+    " 창이 닫힌 뒤에 원래 창으로 가야 해서 timer 로 한 박자 늦춤
+    call term_start(['glow', '-p', '-s', s:glow_styles[g:glow_style], '-w', string(winwidth(0) - 4), l:tmp],
+        \ {'curwin': 1, 'term_name': 'Glow', 'term_finish': 'close',
+        \  'env': {'PAGER': 'less -R'},
+        \  'exit_cb': {j, s -> timer_start(10, {-> s:GlowClose(l:tmp, l:win, l:stal)})}})
+endfunction
+command! -nargs=? -complete=customlist,s:GlowComplete Glow call s:Glow(<q-args>)
+```
+> - 소문자 `:glow`는 19단계 `s:CmdLower()`의 `l:alias`에 `'glow': 'Glow'`가 있어야 동작한다 (19단계 코드에 포함됨). `:glow dracula`처럼 인자가 있으면 `:Glow dracula`로 친다.
+> - glow는 한 줄에 `~`가 두 번 있으면(`1215~1462줄과 1465~1712줄`) 그 사이를 취소선으로 처리해서 `~`가 사라진다. 그런 곳은 `-`나 `–`를 쓴다.
+> - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
+
+검증 (별도 tmux 서버에서 실제 화면 확인):
+```bash
+SP=<스크래치패드>; printf '# 테스트 제목\n\n| a | b |\n|---|---|\n| 1 | 2 |\n' > $SP/t.md
+T="tmux -L gt"
+$T new-session -d -x 120 -y 20 "vim -n $SP/t.md"; sleep 2
+$T send-keys ':glow' Enter; sleep 3; $T capture-pane -p | head -8      # → 줄번호 없이 렌더링된 제목·표만 보임
+$T send-keys q; sleep 1
+$T send-keys ':echo tabpagenr("$") winnr("$") &stal g:glow_style' Enter; sleep 1
+$T capture-pane -p | tail -1                                            # → 1 1 1 dracula (원래 화면 복귀)
+$T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1447,6 +1629,8 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 - [ ] tmux에서 `Ctrl+b` + 화살표로 창이 한 번 이동하고, 바로 이어서 화살표만 누르면 창이 안 바뀜
 - [ ] Caps Lock 켜고 tmux에서 `Ctrl+B P` → 이전 window, `Ctrl+B W` → window 목록 (소문자와 같음)
 - [ ] vim 줄번호가 회보라, 커서가 있는 줄 번호만 주황색 (`theme next`로 테마를 바꿔도 같음)
+- [ ] vim으로 md를 열면 제목이 단계별 색, `**`·`` ` ``·링크 url이 숨겨지고 커서 줄에서만 보임, 표의 `|`가 흐림
+- [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
 - [ ] `iv` 입력 시 `homework/interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 
 ## 사용자에게 전달할 사용법 요약
@@ -1470,6 +1654,8 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 | PDF 파일(또는 폴더 안 PDF 전부) 열기 | `pdf` / `pdf "파일명"` / `pdf "폴더명"` |
 | Markdown을 VS Code 미리보기처럼 보기 | `md` / `md "파일명"` / `md "폴더명"` |
 | vim에서 md 편집하면서 실시간 미리보기 | `:md` (끄기 `:mdstop`) |
+| vim에서 md 렌더링 화면 보기 (화면 전체) | `:glow` (닫기 `q`, 테마 바꾸기 `:glow 이름` + `Tab`) |
+| vim에서 md 기호(`**` 등) 전부 보이기 / 다시 숨기기 | `:set conceallevel=0` / `:set conceallevel=2` |
 | Caps Lock 켜진 채 `:` 명령 | `:W` `:WQ` `:Q!` `:SET NU` 등 그대로 쳐도 소문자 명령처럼 실행 |
 | 면접 포트폴리오 토론 세션 열기 (이어서) | `iv` |
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
@@ -1499,3 +1685,5 @@ done   # → 줄마다 guifg=#7f849c guifg=#fab387
 - Caps Lock `P`/`W`: `~/.tmux.conf`의 "Caps Lock 켜진 채 Ctrl+B / Ctrl+b P / W" 4줄 삭제 후 `tmux set -gu prefix2 \; unbind P \; unbind W` (또는 `~/.tmux.conf.bak_caps` 복원)
 - 줄번호 색: `~/.vimrc`의 "줄번호 색" 7줄(`set cursorline` ~ `augroup END`) 삭제 (또는 `~/.vimrc.bak_linenr` 복원)
 - 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
+- md 보기 좋게: `~/.vimrc`의 "md 파일을 vim 안에서 보기 좋게" 섹션 삭제, `rm ~/.vim/after/syntax/markdown.vim` (또는 `~/.vimrc.bak_mdview` 복원)
+- glow: `~/.vimrc`의 ":Glow" 섹션 삭제, 19단계 `l:alias`에서 `'glow': 'Glow'` 삭제, `rm ~/.local/bin/glow`, `rm -rf ~/.config/glow` (또는 `~/.vimrc.bak_glow` 복원)

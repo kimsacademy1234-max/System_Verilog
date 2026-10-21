@@ -437,7 +437,17 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
 
 > 결론 전에 끊긴 토론의 현재 상태 (다른 PC·새 세션에서 여기서부터 이어감)
 
-- 없음
+**검증 계획서(verification plan)의 목표 · 구성** — 대상 : `Teamproject/02_UART` uart_loopback
+- 합의 : 육안 확인 한계 → self-checking TB (scoreboard) 필요
+- 합의 : 입력 공간 축 = 데이터 값(256) · start 엣지 위상(b_tick 대비) · baud 오차 · back-to-back · 비정상 입력
+- 합의 : 비정상 입력 = glitch로 인한 false start (START cnt==7에서 rx 재확인 없음), stop bit=0 (framing error 미검출)
+- 합의 : 기대값은 DUT와 독립 (TB가 보낸 값) ↔ 실제값은 TB monitor가 tx에서 복원한 값
+- 합의 : exhaustive는 일반적으로 불가 → functional coverage(bin) 기반, 핵심 cross = 위상 × baud 오차
+- 합의 : "밀려 들어옴" 3분류 — back-to-back(정상, 병목은 TX) / PC baud 빠름(throughput 문제, FIFO·flow control·스펙 제한) / stop bit 단축(프로토콜 위반, 처리 방식은 스펙으로 정의)
+- 합의 : 계획서에 DUT 보장 범위(baud 오차 %, 연속 프레임 수) 먼저 정의 → coverage bin 경계
+- 계획서 초안 작성 완료 : `Teamproject/02_UART/verification_plan.md` (스펙 · sign-off · 테스트 · coverage · 허용 baud 오차 계산 포함)
+- 남은 것 : 사용자가 허용 baud 오차를 직접 계산해 부록 A와 대조, [제안] 스펙 항목 팀 결정, 토론 결론을 Q 항목(검증 대제목)으로 정리
+- 확인 필요 가설 : back-to-back + PC baud가 약간 빠를 때 rx_done(1clk 펄스)이 TX STOP 중 도착 → 프레임 유실 가능성 (tx_busy 미연결)
 
 ---
 
