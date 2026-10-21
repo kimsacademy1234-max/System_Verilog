@@ -16,6 +16,13 @@ module tb_uart ();
     );
 
     always #5 clk = ~clk;
+/*
+Sender - > rx 모듈에 입력을 넣어준다. 
+
+
+
+
+*/
 
     task sender_uart(input [7:0] send_data);
         integer i;
@@ -52,11 +59,27 @@ module tb_uart ();
     endtask
 
 
+	task score_board(input [7:0] result,expected);
+	begin
+
+        if (result == expected) $display("pass!!!");
+        else $display("fail!!!");
+
+	end
+
+	endtask
+
+
+
+
     initial begin
         clk  = 0;
         rst  = 1;
         rx = 1;
-        expected_data = 8'h30;
+		// random - 256번 자동 검증 해봐라 ACKII table 전송 해봐라 128개 
+		// 이런 상황에 맞춰서 패턴을 다양하게 넣어야 한다. 
+		// faster frame, slower frame-> 이런 경우에 대해 테스트 해봐라.
+        expected_data = $random()/256;
 
         #10 rst = 0;
 
@@ -65,8 +88,9 @@ module tb_uart ();
 
         #100;
         // to compare result data with expected data 
-        if (result_data == expected_data) $display("pass!!!");
-        else $display("fail!!!");
+		score_board(result_data,expected_data);
+
+
         $stop;
     end
 endmodule

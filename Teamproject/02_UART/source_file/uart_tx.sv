@@ -10,8 +10,19 @@ module uart_tx (
     output       tx_busy
 );
 
-    localparam [1:0] IDLE = 0, START = 1, DATA = 2, STOP = 3;
-    reg [1:0] c_state, n_state;
+/*    localparam [1:0] IDLE = 0, START = 1, DATA = 2, STOP = 3;
+    reg [1:0] c_state, n_state;*/
+
+typedef enum{
+IDLE = 1, 
+START = 2, 
+DATA = 3, 
+STOP = 4}
+state_t;
+state_t c_state, n_state;
+
+
+
     reg tx_reg, tx_next;
     reg tx_busy_reg, tx_busy_next;
     reg [2:0] bit_count_reg, bit_count_next;

@@ -4,7 +4,13 @@ module uart_loopback (
     input clk,
     input rst,
     input rx, // from PC
-    output tx
+    output tx,
+	// 아스키
+	output [7:0] o_rx_data,
+	output o_rx_done
+
+
+
 );
 
     wire w_b_tick, w_rx_done;
@@ -34,6 +40,12 @@ module uart_loopback (
         .rst   (rst),
         .b_tick(w_b_tick)
     );
+
+	assign o_rx_data = w_rx_data;
+	assign o_rx_done = w_rx_done;
+	
+
+
 
 endmodule
 

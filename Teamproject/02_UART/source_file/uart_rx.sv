@@ -10,9 +10,21 @@ module uart_rx (
     output [7:0] rx_data,
     output       rx_done
 );
-    localparam [1:0] IDLE = 2'b00, START = 2'b01, DATA = 2'b10, STOP = 2'b11;
+  /*localparam [1:0] IDLE = 2'b00, START = 2'b01, DATA = 2'b10, STOP = 2'b11;
+    reg [1:0] c_state, n_state;*/
 
-    reg [1:0] c_state, n_state;
+
+typedef enum{
+IDLE = 1, 
+START = 2, 
+DATA = 3, 
+STOP = 4}
+state_t;
+state_t c_state, n_state;
+
+
+
+
     reg [3:0] b_tick_cnt, b_tick_cnt_next;
     reg [2:0] bit_cnt, bit_cnt_next;
     reg [7:0] data_reg, data_next;
