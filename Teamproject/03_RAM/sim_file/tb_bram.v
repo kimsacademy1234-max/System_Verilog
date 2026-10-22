@@ -38,26 +38,26 @@ addr =0;
 wdata =0;
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 we =1 ;
 addr =10;
 wdata = 8'h0a;
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 we =1 ;
 addr =11;
 wdata = 8'h0b;
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 we =1 ;
 addr =31;
 wdata = 8'h0c;
 
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 we =1 ;
 addr =32;
 wdata = 8'h0d;
@@ -65,27 +65,27 @@ wdata = 8'h0d;
 
 
 // read_to_ram 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 we = 0;
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 addr = 10;
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 addr = 11;
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 addr = 31;
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 addr = 32;
 
 
 
-@(posedge i_clk) #1;  // 5ns
+@(negedge i_clk);  // 5ns
 $stop;
 end
 

@@ -62,8 +62,13 @@ Sender - > rx 모듈에 입력을 넣어준다.
 	task score_board(input [7:0] result,expected);
 	begin
 
-        if (result == expected) $display("pass!!!");
-        else $display("fail!!!");
+        if (result !== expected)begin
+			
+			err_cnt = err_cnt +1;
+			$display("%04d ns : ERROR - Result Data : %d / Expect data : %d",$time,result,expected);
+			
+		end
+
 
 	end
 
@@ -71,26 +76,34 @@ Sender - > rx 모듈에 입력을 넣어준다.
 
 
 
+	integer i;
+	integer err_cnt;
+
 
     initial begin
+		err_cnt = 0;
         clk  = 0;
         rst  = 1;
         rx = 1;
 		// random - 256번 자동 검증 해봐라 ACKII table 전송 해봐라 128개 
 		// 이런 상황에 맞춰서 패턴을 다양하게 넣어야 한다. 
 		// faster frame, slower frame-> 이런 경우에 대해 테스트 해봐라.
-        expected_data = $random()/256;
 
         #10 rst = 0;
 
+		for(i=0; i<256; i=i+1)begin
+		expected_data = i;
         sender_uart(expected_data);
         receive_uart(result_data);
-
         #100;
         // to compare result data with expected data 
 		score_board(result_data,expected_data);
-
+		end
+		
+		if(!err_cnt) $display("pass!!");
+		else $display("fail!");
 
         $stop;
+
     end
 endmodule

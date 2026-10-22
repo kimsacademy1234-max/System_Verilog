@@ -3,8 +3,9 @@
 module tb_uart_loopback ();
 
     parameter BAUD_BIT_PERIOD = 100_000_000 / 9600 * 10;
-	parameter MONITER_BIT_PERIOD = 100_000_000 / (9600 * 16);
-	parameter DRIVER_BIT_PERIOD = 100_000_000 / (9600 * (16-1));
+	parameter MONITER_BIT_PERIOD = (100_000_000 / (9600 * 16))*16*10;
+	parameter real  DRIVER_BIT_PERIOD = MONITER_BIT_PERIOD*(1+0.02);
+
     // 1 frame = 10 bit, 5단계 256 frame + 여유 → 300 frame
     parameter WATCHDOG_TIMEOUT = 300 * (BAUD_BIT_PERIOD * 10);
 
@@ -14,8 +15,8 @@ module tb_uart_loopback ();
 	reg clk, rst, rx;
     reg [7:0] result_data, expected_data;
     wire tx;
-	wire [7:0] o_rx_data,
-	wire o_rx_done
+	wire [7:0] o_rx_data;
+	wire o_rx_done;
 
     uart_loopback dut (
         .clk(clk),
@@ -31,6 +32,30 @@ module tb_uart_loopback ();
     always #5 clk = ~clk;
 
 
+integer err_rst_cnt;
+
+task async_reset;
+begin
+	
+	rst = 1;
+	
+	if({tx,o_rx_done}!==2'b10)begin
+		err_rst_cnt = err_rst_cnt +1;
+	end
+	
+	repeat(2) @(negedge clk);
+	
+	rst = 0;
+	
+
+end
+endtask 
+
+
+
+
+
+
 //watchdog : 제한시간 초과시 에러 출력 후 강제 종료하는 모듈   - 메인 흐름과 따로 살아 있다가 시간이 넘으면 끼어들어야 함
 initial begin
     #(WATCHDOG_TIMEOUT);
@@ -39,12 +64,18 @@ initial begin
 end
 
 initial begin
-
-	rst = 1;
+	clk = 0; 
 	rx  = 1; 
-	
-	repeat(2) @(negedge clk);
-	rst = 0; //release
+	async_reset;	
+
+
+
+
+
+	$display("Reset ERROR ",err_rst_cnt);
+
+
+	$finish;
 
 
 
@@ -56,13 +87,6 @@ end
 
 
 
-initial begin
-
-
-
-
-
-end
 
 
 
