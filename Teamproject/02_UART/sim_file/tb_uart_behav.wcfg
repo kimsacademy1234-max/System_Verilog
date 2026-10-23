@@ -11,9 +11,9 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="493879025000fs"></ZoomStartTime>
-      <ZoomEndTime time="497991025001fs"></ZoomEndTime>
-      <Cursor1Time time="497147025000fs"></Cursor1Time>
+      <ZoomStartTime time="496608758000fs"></ZoomStartTime>
+      <ZoomEndTime time="496609169201fs"></ZoomEndTime>
+      <Cursor1Time time="496609116400fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="316"></NameColumnWidth>
@@ -55,7 +55,7 @@
       <wvobject fp_name="/tb_uart/dut/U_UART_RX/rx_data" type="array">
          <obj_property name="ElementShortName">rx_data[7:0]</obj_property>
          <obj_property name="ObjectShortName">rx_data[7:0]</obj_property>
-         <obj_property name="Radix">BINARYRADIX</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
       <wvobject fp_name="/tb_uart/dut/U_UART_RX/rx_done" type="logic">
          <obj_property name="ElementShortName">rx_done</obj_property>
