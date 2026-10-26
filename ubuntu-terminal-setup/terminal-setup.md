@@ -6,6 +6,13 @@
 
 ## 업데이트 이력
 
+### 2026-10-24 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 변경 | 17단계 | `md`가 **실시간 미리보기**로 바뀜: 파일이 디스크에서 바뀌면(vim `:w`, Claude 수정 등) 브라우저에 바로 반영, 새로고침·재실행 필요 없음. 파일마다 localhost 서버(`mdview.py serve ... --idle-exit`)를 띄우고, 브라우저 탭을 닫으면 약 15~20초 뒤 서버가 스스로 종료 (탭이 60초 안에 안 붙어도 종료). Windows `%TEMP%\mdview` HTML은 더 이상 만들지 않음 | `~/.bashrc`, `~/.mdview/mdview.py` |
+| 변경 | 17-3단계 | `mdview.py serve`: 2초마다 빈 메시지(ping)로 탭 닫힘 감지, `.pos` 파일이 없으면 스크롤 위치를 건드리지 않음. vim `:Md` 동작은 그대로 | `~/.mdview/mdview.py` |
+
 ### 2026-10-22 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -102,7 +109,7 @@
 | 14 | `ppt` (현재 폴더 전부) / `ppt "파일명"` (확장자 생략 가능) / `ppt "폴더명"`으로 PPT를 Windows PowerPoint에서 열기 | `~/.bashrc` |
 | 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
 | 16 | `pdf` (현재 폴더 전부) / `pdf "파일명"` (확장자 생략 가능) / `pdf "폴더명"`으로 PDF를 Windows 기본 뷰어에서 열기 | `~/.bashrc` |
-| 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 보기 + vim `:Md`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
+| 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 **실시간**으로 보기 (파일이 바뀌면 바로 반영) + vim `:Md`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
 | 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`homework/interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
 | 19 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
 | 20 | tmux에서 화살표만으로 창이 바뀌지 않게 (`Ctrl+b` + 화살표만 이동) | `~/.tmux.conf` |
@@ -1094,8 +1101,11 @@ bash -ic 'type -t pdf; pdf 없는파일; echo "exit=$?"'
 ## 17단계. `md [파일명|폴더명]`: Markdown을 VS Code 미리보기처럼 보기
 
 `.md`를 GitHub/VS Code 미리보기와 같은 모양(제목·표·코드 블록 색)으로 **Windows 기본 브라우저**에서 연다. 사용법은 16단계 `pdf`와 같다: 인자 없이 `md`면 현재 폴더의 `.md` 전부, `md 이름`이면 그 파일(확장자 생략 가능), 폴더를 주면 그 안의 `.md` 전부.
-- 동작: `~/.mdview/mdview.py`가 md 내용 + 렌더러(marked, github-markdown-css, highlight.js)를 **HTML 한 파일에 모두 넣어** Windows `%TEMP%\mdview\이름.html`로 만들고 `cmd.exe /c start`로 연다 → 인터넷 없이 동작, 저장소 폴더에 파일이 안 생김.
-- 밝은/어두운 색은 Windows 테마를 따라간다. 코드 블록 ` ```verilog ` / ` ```v ` / ` ```sv `는 Verilog 색으로 나온다. md 안의 상대 경로 그림도 보인다 (`<base>`를 md 폴더로 지정).
+- 동작: `md`가 파일마다 `~/.mdview/mdview.py serve <원본.md> <md 폴더> <제목> --idle-exit`를 `setsid`로 띄운다. 서버는 `http://localhost:<빈 포트>/`를 Windows 기본 브라우저로 열고, 원본 파일이 바뀔 때마다(0.1초 간격 확인) 새 내용을 브라우저로 보낸다 (SSE) → **vim 저장, Claude 수정 등 무엇으로 고쳐도 바로 반영**, 새로고침이나 `md` 재실행 필요 없음.
+- 렌더러(marked, github-markdown-css, highlight.js)는 `~/.mdview/assets/`에서 페이지에 그대로 넣음 → 인터넷 없이 동작, 저장소 폴더에 파일이 안 생김.
+- 서버는 브라우저 탭을 닫으면 약 15~20초 뒤 스스로 꺼진다 (2초마다 빈 메시지로 탭 닫힘 확인). `md`만 치고 탭이 60초 안에 안 붙어도 꺼진다. 터미널을 닫아도 탭이 열려 있으면 계속 동작한다.
+- (2026-10-24 이전에는 Windows `%TEMP%\mdview\이름.html` 한 번 만들고 끝이라 고칠 때마다 `md`를 다시 쳐야 했다.)
+- 밝은/어두운 색은 Windows 테마를 따라간다. 코드 블록 ` ```verilog ` / ` ```v ` / ` ```sv `는 Verilog 색으로 나온다. md 안의 상대 경로 그림(SVG 포함)도 보인다 (서버가 md 폴더 아래 파일만 보내줌, `127.0.0.1`에서만 열림).
 - 10/01에 되돌린 glow(터미널 안 표시)·markdown-preview.nvim(vim 플러그인)과는 다른 방식이다 (vim·터미널 설정은 건드리지 않음).
 
 사전 확인: `type -t md` → 출력이 없어야 한다 (이름 충돌 없음). `python3`, `curl` 필요 (추가 패키지 설치 없음).
@@ -1117,14 +1127,15 @@ cp <저장소>/ubuntu-terminal-setup/mdview.py ~/.mdview/mdview.py
 ### 17-2. `~/.bashrc`의 `pdf()` 아래에 추가
 ```bash
 # ==========================================
-#  md [이름] : 현재 폴더의 Markdown을 VS Code 미리보기처럼 브라우저로 보기
+#  md [이름] : Markdown을 VS Code 미리보기처럼 브라우저에서 실시간으로 보기
 #   - md            → 현재 폴더의 .md 전부
 #   - md 이름       → 현재 폴더의 "이름" / "이름.md" (확장자 생략 가능)
 #   - md 폴더명     → 그 폴더 안의 .md 전부
-#   - ~/.mdview/mdview.py 가 Windows 임시 폴더(%TEMP%\mdview)에 HTML을 만들어 기본 브라우저로 염
+#   - 파일이 바뀌면(vim 저장, Claude 수정 등) 브라우저에 바로 반영, 새로고침 필요 없음
+#   - ~/.mdview/mdview.py serve 가 파일마다 localhost 서버를 띄움, 브라우저 탭을 닫으면 15초 뒤 자동 종료
 # ==========================================
 md() {
-    local target="${1:-.}" files=() f c out dir
+    local target="${1:-.}" files=() f c log url i
     if [ $# -gt 1 ]; then
         echo "사용법: md  |  md \"파일명\"  |  md \"폴더명\"" >&2
         return 1
@@ -1146,23 +1157,44 @@ md() {
             return 1
         fi
     fi
-    dir=$(wslpath "$(cd /mnt/c && cmd.exe /c echo %TEMP% 2>/dev/null | tr -d '\r')")/mdview || return 1
+    mkdir -p ~/.mdview/live || return 1
     for f in "${files[@]}"; do
         f=$(realpath "$f")
-        out="$dir/$(basename "${f%.*}").html"
-        python3 ~/.mdview/mdview.py "$f" "$out" || return 1
-        echo "열기: $f"
-        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$out")")
+        log=$(mktemp ~/.mdview/live/md_XXXXXX.log) || return 1
+        # 터미널을 닫아도 서버가 남도록 setsid 로 분리 (서버가 브라우저도 염)
+        setsid -f python3 ~/.mdview/mdview.py serve "$f" "$(dirname "$f")" "$(basename "$f")" --idle-exit \
+            >"$log" 2>&1 </dev/null
+        url=
+        for i in $(seq 30); do
+            url=$(head -1 "$log" 2>/dev/null)
+            [ -n "$url" ] && break
+            sleep 0.1
+        done
+        if [ -z "$url" ]; then
+            echo "md: 미리보기 서버 실행 실패: $f" >&2
+            cat "$log" >&2; rm -f "$log"
+            return 1
+        fi
+        rm -f "$log"
+        echo "열기: $f → $url (실시간, 탭 닫으면 자동 종료)"
     done
 }
 ```
 > - 파일 이름에 공백이 있으면 따옴표로 감싼다: `md "회의 메모"`
-> - md 파일을 고친 뒤에는 `md 이름`을 다시 실행하면 새 내용으로 열린다 (브라우저 새로고침만으로는 안 바뀜).
+> - 파일을 고치면 열린 탭이 바로 바뀐다 (다시 실행할 필요 없음). 같은 파일을 `md`로 또 열면 탭과 서버가 하나 더 생긴다 (각자 탭을 닫으면 꺼짐).
+> - 17-1의 `mdview.py`가 `--idle-exit` 기능이 있는 최신 버전이어야 한다 (저장소 `ubuntu-terminal-setup/mdview.py`를 다시 복사).
 
 검증:
 ```bash
 bash -ic 'type -t md; md 없는파일; echo "exit=$?"'
 # → function, "없음" 안내 메시지, exit=1
+
+# 실시간 반영 + 자동 종료 (가짜 cmd.exe로 브라우저를 띄우지 않고 확인, SP/fakebin 은 17-3 검증과 같음)
+printf '# v1\n' > $SP/a.md; cd $SP
+URL=$(PATH=$SP/fakebin:$PATH bash -ic 'md a' 2>/dev/null | grep -o 'http://localhost:[0-9]*/')
+(timeout 5 curl -sN "${URL}events" > $SP/ev.txt &); sleep 1
+printf '# v2\n' > $SP/a.md; sleep 4.5; grep -c 'v2' $SP/ev.txt      # → 1 (디스크 수정이 전달됨)
+sleep 25; ps -eo args | grep -c '[s]erve .*a.md'                    # → 0 (탭 닫힘 → 서버 종료)
 ```
 실제 사용: `cd <저장소>/ubuntu-terminal-setup && md terminal-setup` → 브라우저에 제목·표·코드 블록이 VS Code 미리보기처럼 보이는지 사용자에게 확인받는다.
 적용: `source ~/.bashrc` (이미 열린 창에서는 이걸 실행해야 함)
@@ -1623,7 +1655,7 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 - [ ] vim으로 `.v` 파일을 열고 입력하면 후보 목록이 뜨고, `:w` 저장 후에만 문법 오류 줄에 `>>` + 주석 메시지가 나옴
 - [ ] PDF 폴더에서 `pdf` / `pdf 파일` / `pdf 폴더` 로 Windows에서 PDF가 열림
 - [ ] `theme` 실행 시 `* catppuccin`, 터미널·vim·tmux가 Catppuccin Mocha 색
-- [ ] md 폴더에서 `md` / `md 파일` / `md 폴더` 로 브라우저에 VS Code 미리보기 모양으로 열림
+- [ ] md 폴더에서 `md` / `md 파일` / `md 폴더` 로 브라우저에 VS Code 미리보기 모양으로 열리고, 파일을 고치면 탭이 바로 바뀜
 - [ ] vim에서 md 열고 `:md` → 브라우저가 열리고, 입력하는 대로(`:w` 없이) 미리보기가 바뀌고 커서를 따라 스크롤됨
 - [ ] Caps Lock 켜고 vim에서 `:W` / `:WQ` / `:Q!` / `:SET NU` → 소문자 명령처럼 실행 (E492 없음), normal 모드 `A` `O` `G`는 원래대로
 - [ ] tmux에서 `Ctrl+b` + 화살표로 창이 한 번 이동하고, 바로 이어서 화살표만 누르면 창이 안 바뀜
@@ -1652,7 +1684,7 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 | System_Verilog 작업 폴더로 이동 | `viva` |
 | PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
 | PDF 파일(또는 폴더 안 PDF 전부) 열기 | `pdf` / `pdf "파일명"` / `pdf "폴더명"` |
-| Markdown을 VS Code 미리보기처럼 보기 | `md` / `md "파일명"` / `md "폴더명"` |
+| Markdown을 VS Code 미리보기처럼 실시간으로 보기 (탭 닫으면 자동 종료) | `md` / `md "파일명"` / `md "폴더명"` |
 | vim에서 md 편집하면서 실시간 미리보기 | `:md` (끄기 `:mdstop`) |
 | vim에서 md 렌더링 화면 보기 (화면 전체) | `:glow` (닫기 `q`, 테마 바꾸기 `:glow 이름` + `Tab`) |
 | vim에서 md 기호(`**` 등) 전부 보이기 / 다시 숨기기 | `:set conceallevel=0` / `:set conceallevel=2` |
@@ -1678,7 +1710,7 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 - viva: `~/.bashrc`의 `alias viva` 줄 삭제
 - ppt: `~/.bashrc`의 "ppt" 섹션 삭제
 - pdf: `~/.bashrc`의 "pdf" 섹션 삭제
-- md: `~/.bashrc`의 "md" 섹션 삭제, `~/.vimrc`의 ":Md" 섹션 삭제, `rm -rf ~/.mdview` (만들어진 HTML은 Windows `%TEMP%\mdview`)
+- md: `~/.bashrc`의 "md" 섹션 삭제, `~/.vimrc`의 ":Md" 섹션 삭제, `rm -rf ~/.mdview` (2026-10-24 이전 방식으로 만들어진 HTML은 Windows `%TEMP%\mdview`). 실시간 `md`만 되돌리려면 `~/.bashrc.bak_mdlive`, `~/.mdview/mdview.py.bak_mdlive` 복원
 - 대문자 명령: `~/.vimrc`의 "대문자 명령 → 소문자 명령" 섹션 삭제 (또는 `~/.vimrc.bak_capscmd` 복원)
 - Verilog 편집 보조: `rm -rf ~/.vim/pack/plugins/start/ale ~/.vim/dict`, `~/.vimrc`의 "Verilog 편집 보조" 섹션 삭제
 - 화살표 반복 끄기: `~/.tmux.conf`의 "Ctrl+b 다음 화살표" 4줄 삭제 후 `tmux kill-server`로 재시작 (기본 `-r` 키로 돌아옴) (또는 `~/.tmux.conf.bak_arrow` 복원)

@@ -28,12 +28,14 @@ state_t c_state, n_state;
     reg [3:0] b_tick_cnt, b_tick_cnt_next;
     reg [2:0] bit_cnt, bit_cnt_next;
     reg [7:0] data_reg, data_next;
+
     reg rx_done_reg, rx_done_next;
 
 
     assign rx_done = rx_done_reg;
     assign rx_data = data_reg;
-
+  
+     
     // 상태 업데이트
     always @(posedge clk, posedge rst) begin
         if (rst) begin
@@ -70,7 +72,33 @@ state_t c_state, n_state;
                 end
             end
             START: begin
-                if (b_tick) begin
+               if(!rx)begin
+                 if (b_tick) begin
+                    
+                    if (b_tick_cnt == 7 ) begin
+                        b_tick_cnt_next = 0;
+                        bit_cnt_next    = 0;
+                        data_next       = 8'h00;
+                        n_state         = DATA;
+                    end 
+
+                    else begin
+                        b_tick_cnt_next = b_tick_cnt + 1;
+                    end
+
+               end
+               end
+               else begin
+                        b_tick_cnt_next = 0;
+                        bit_cnt_next    = 0;
+                        data_next       = 8'h00;
+                        n_state         = IDLE;
+
+               end
+
+            end
+            
+            /*   if (b_tick) begin
                     if (b_tick_cnt == 7) begin
                         b_tick_cnt_next = 0;
                         bit_cnt_next    = 0;
@@ -80,23 +108,33 @@ state_t c_state, n_state;
                         b_tick_cnt_next = b_tick_cnt + 1;
                     end
                 end
-            end
+            end*/
             DATA: begin
-                if (b_tick) begin
-                    if (b_tick_cnt == 15) begin
-                        b_tick_cnt_next = 0;
-                        data_next = {rx, data_reg[7:1]};
-                        if (bit_cnt == 7) begin
-                            n_state = STOP;
-                        end else begin
-                            // DATA state
-                            bit_cnt_next = bit_cnt + 1;
+                    if (b_tick) begin
+                        
+                        if (b_tick_cnt == 15) begin
+                            b_tick_cnt_next = 0;
+                            data_next = {rx, data_reg[7:1]};
+                            
+                            if (bit_cnt == 7) begin
+                                n_state = STOP;
+                            end 
+
+                            else begin
+                                // DATA state
+                                bit_cnt_next = bit_cnt + 1;
+                            end
+         
                         end
-                    end else begin
-                        b_tick_cnt_next = b_tick_cnt + 1;
+                    
+                        else begin
+                            b_tick_cnt_next = b_tick_cnt + 1;
+                        end
+                    
                     end
-                end
-            end
+               end
+
+            
             STOP: begin
                 if (b_tick) begin
                     if (b_tick_cnt == 15) begin

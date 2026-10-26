@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" font-family="'Malgun Gothic','맑은 고딕',sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>
+<rect width="960" height="500" fill="#FFFFFF"/>
+<text x="24.0" y="34.0" font-size="18" fill="#0F172A" text-anchor="start" font-weight="bold" >그림 Q3-1. 샘플 위치에 따른 마진 (1 bit = 16 tick)</text>
+<text x="24.0" y="56.0" font-size="12.5" fill="#64748B" text-anchor="start" font-weight="normal" >보라색 = 실제 샘플이 찍힐 수 있는 범위 (async 검출 지연 0~1 tick) · 마진 = 앞/뒤 여유 중 작은 쪽</text>
+<line x1="230.0" y1="92.0" x2="230.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="230.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >0</text>
+<line x1="264.0" y1="92.0" x2="264.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="264.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >1</text>
+<line x1="298.0" y1="92.0" x2="298.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="298.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >2</text>
+<line x1="332.0" y1="92.0" x2="332.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="332.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >3</text>
+<line x1="366.0" y1="92.0" x2="366.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="366.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >4</text>
+<line x1="400.0" y1="92.0" x2="400.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="400.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >5</text>
+<line x1="434.0" y1="92.0" x2="434.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="434.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >6</text>
+<line x1="468.0" y1="92.0" x2="468.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="468.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >7</text>
+<line x1="502.0" y1="92.0" x2="502.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="502.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >8</text>
+<line x1="536.0" y1="92.0" x2="536.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="536.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >9</text>
+<line x1="570.0" y1="92.0" x2="570.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="570.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >10</text>
+<line x1="604.0" y1="92.0" x2="604.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="604.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >11</text>
+<line x1="638.0" y1="92.0" x2="638.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="638.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >12</text>
+<line x1="672.0" y1="92.0" x2="672.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="672.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >13</text>
+<line x1="706.0" y1="92.0" x2="706.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="706.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >14</text>
+<line x1="740.0" y1="92.0" x2="740.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="740.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >15</text>
+<line x1="774.0" y1="92.0" x2="774.0" y2="98.0" stroke="#64748B" stroke-width="1"/>
+<text x="774.0" y="88.0" font-size="11" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >16</text>
+<text x="218.0" y="94.0" font-size="11" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >tick</text>
+<text x="28.0" y="134.0" font-size="14" fill="#0F172A" text-anchor="start" font-weight="bold" >START 4 tick</text>
+<text x="28.0" y="154.0" font-size="12" fill="#64748B" text-anchor="start" font-weight="normal" font-family="Consolas,'Courier New',monospace" >b_tick_cnt == 3</text>
+<rect x="190.0" y="118.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<rect x="774.0" y="118.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<text x="210.0" y="135.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >이전</text>
+<text x="794.0" y="135.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >다음</text>
+<rect x="230.0" y="118.0" width="544.0" height="26.0" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1" rx="0" />
+<line x1="502.0" y1="118.0" x2="502.0" y2="144.0" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="366.0" y="114.0" width="34.0" height="34.0" fill="#7C3AED" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<line x1="232.0" y1="162.0" x2="364.0" y2="162.0" stroke="#0F766E" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="298.0" y="157.0" font-size="12" fill="#0F766E" text-anchor="middle" font-weight="bold" >앞 4</text>
+<line x1="402.0" y1="162.0" x2="772.0" y2="162.0" stroke="#B45309" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="587.0" y="157.0" font-size="12" fill="#B45309" text-anchor="middle" font-weight="bold" >뒤 11</text>
+<text x="930.0" y="134.0" font-size="12" fill="#64748B" text-anchor="end" font-weight="normal" >마진</text>
+<text x="930.0" y="158.0" font-size="17" fill="#0F172A" text-anchor="end" font-weight="bold" font-family="Consolas,'Courier New',monospace" >4 tick</text>
+<text x="930.0" y="176.0" font-size="12" fill="#0F172A" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >(25.00%)</text>
+<text x="28.0" y="226.0" font-size="14" fill="#0F172A" text-anchor="start" font-weight="bold" >START 7 tick</text>
+<text x="28.0" y="246.0" font-size="12" fill="#64748B" text-anchor="start" font-weight="normal" font-family="Consolas,'Courier New',monospace" >b_tick_cnt == 6</text>
+<rect x="190.0" y="210.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<rect x="774.0" y="210.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<text x="210.0" y="227.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >이전</text>
+<text x="794.0" y="227.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >다음</text>
+<rect x="230.0" y="210.0" width="544.0" height="26.0" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1" rx="0" />
+<line x1="502.0" y1="210.0" x2="502.0" y2="236.0" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="468.0" y="206.0" width="34.0" height="34.0" fill="#7C3AED" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<line x1="232.0" y1="254.0" x2="466.0" y2="254.0" stroke="#0F766E" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="349.0" y="249.0" font-size="12" fill="#0F766E" text-anchor="middle" font-weight="bold" >앞 7</text>
+<line x1="504.0" y1="254.0" x2="772.0" y2="254.0" stroke="#B45309" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="638.0" y="249.0" font-size="12" fill="#B45309" text-anchor="middle" font-weight="bold" >뒤 8</text>
+<text x="930.0" y="226.0" font-size="12" fill="#64748B" text-anchor="end" font-weight="normal" >마진</text>
+<text x="930.0" y="250.0" font-size="17" fill="#0F172A" text-anchor="end" font-weight="bold" font-family="Consolas,'Courier New',monospace" >7 tick</text>
+<text x="930.0" y="268.0" font-size="12" fill="#0F172A" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >(43.75%)</text>
+<rect x="14.0" y="290.0" width="932.0" height="82.0" fill="#F5F3FF" stroke="#7C3AED" stroke-width="1.2" rx="8" />
+<text x="28.0" y="318.0" font-size="14" fill="#0F172A" text-anchor="start" font-weight="bold" >START 8 tick</text>
+<text x="28.0" y="338.0" font-size="12" fill="#64748B" text-anchor="start" font-weight="normal" font-family="Consolas,'Courier New',monospace" >b_tick_cnt == 7</text>
+<text x="28.0" y="358.0" font-size="12" fill="#7C3AED" text-anchor="start" font-weight="bold" >현재 설계</text>
+<rect x="190.0" y="302.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<rect x="774.0" y="302.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<text x="210.0" y="319.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >이전</text>
+<text x="794.0" y="319.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >다음</text>
+<rect x="230.0" y="302.0" width="544.0" height="26.0" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1" rx="0" />
+<line x1="502.0" y1="302.0" x2="502.0" y2="328.0" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="502.0" y="298.0" width="34.0" height="34.0" fill="#7C3AED" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<line x1="232.0" y1="346.0" x2="500.0" y2="346.0" stroke="#0F766E" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="366.0" y="341.0" font-size="12" fill="#0F766E" text-anchor="middle" font-weight="bold" >앞 8</text>
+<line x1="538.0" y1="346.0" x2="772.0" y2="346.0" stroke="#B45309" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="655.0" y="341.0" font-size="12" fill="#B45309" text-anchor="middle" font-weight="bold" >뒤 7</text>
+<text x="930.0" y="318.0" font-size="12" fill="#64748B" text-anchor="end" font-weight="normal" >마진</text>
+<text x="930.0" y="342.0" font-size="17" fill="#7C3AED" text-anchor="end" font-weight="bold" font-family="Consolas,'Courier New',monospace" >7 tick</text>
+<text x="930.0" y="360.0" font-size="12" fill="#7C3AED" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >(43.75%)</text>
+<text x="28.0" y="410.0" font-size="14" fill="#0F172A" text-anchor="start" font-weight="bold" >START 12 tick</text>
+<text x="28.0" y="430.0" font-size="12" fill="#64748B" text-anchor="start" font-weight="normal" font-family="Consolas,'Courier New',monospace" >b_tick_cnt == 11</text>
+<rect x="190.0" y="394.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<rect x="774.0" y="394.0" width="40.0" height="26.0" fill="#E2E8F0" stroke="none" stroke-width="1" rx="0" />
+<text x="210.0" y="411.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >이전</text>
+<text x="794.0" y="411.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" >다음</text>
+<rect x="230.0" y="394.0" width="544.0" height="26.0" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1" rx="0" />
+<line x1="502.0" y1="394.0" x2="502.0" y2="420.0" stroke="#CBD5E1" stroke-width="1" stroke-dasharray="3,3"/>
+<rect x="638.0" y="390.0" width="34.0" height="34.0" fill="#7C3AED" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<line x1="232.0" y1="438.0" x2="636.0" y2="438.0" stroke="#0F766E" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="434.0" y="433.0" font-size="12" fill="#0F766E" text-anchor="middle" font-weight="bold" >앞 12</text>
+<line x1="674.0" y1="438.0" x2="772.0" y2="438.0" stroke="#B45309" stroke-width="1.6" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="723.0" y="433.0" font-size="12" fill="#B45309" text-anchor="middle" font-weight="bold" >뒤 3</text>
+<text x="930.0" y="410.0" font-size="12" fill="#64748B" text-anchor="end" font-weight="normal" >마진</text>
+<text x="930.0" y="434.0" font-size="17" fill="#0F172A" text-anchor="end" font-weight="bold" font-family="Consolas,'Courier New',monospace" >3 tick</text>
+<text x="930.0" y="452.0" font-size="12" fill="#0F172A" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >(18.75%)</text>
+<text x="24.0" y="486.0" font-size="12" fill="#64748B" text-anchor="start" font-weight="normal" >7 tick과 8 tick이 마진 7 tick으로 같음 → 지연이 뒤로만 생기므로 이론상 균형점은 7.5 tick, 중앙에서 멀어질수록 작은 쪽 여유가 줄어듦</text>
+</svg>

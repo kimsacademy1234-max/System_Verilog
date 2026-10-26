@@ -2,15 +2,18 @@
 """Markdown 을 VS Code 미리보기처럼 보여주기 (bash 의 md 명령, vim 의 :Md 가 사용).
 
 사용:
-  python3 mdview.py <입력.md> <출력.html>             → HTML 한 파일로 변환 (md 명령)
+  python3 mdview.py <입력.md> <출력.html>             → HTML 한 파일로 변환
   python3 mdview.py serve <실시간.md> <원본폴더> <제목>  → 실시간 미리보기 서버 + 브라우저 열기 (:Md)
      - vim 이 입력할 때마다 <실시간.md> 에 버퍼 내용을, <실시간.md>.pos 에 커서 줄을 씀
      - 서버가 바뀐 내용을 브라우저로 바로 보냄 (SSE) → 저장(:w) 안 해도 미리보기가 바뀜
+  python3 mdview.py serve <원본.md> <원본폴더> <제목> --idle-exit  → md 명령
+     - 원본 파일이 디스크에서 바뀔 때마다 브라우저에 반영 (다른 프로그램이 고쳐도 됨)
+     - 브라우저 탭을 닫으면 15초 뒤 서버 스스로 종료 (처음 60초 안에 탭이 안 붙어도 종료)
  - ~/.mdview/assets/ 의 marked(마크다운 해석), github-markdown-css, highlight.js 를
    HTML 안에 그대로 넣음 → 인터넷 없이 열림
  - 밝은/어두운 색은 Windows 설정을 따라감
 """
-import json, os, sys, html, time, subprocess
+import json, os, sys, html, time, subprocess, threading
 from urllib.parse import quote, unquote, urlparse
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
@@ -120,9 +123,12 @@ def mtime(path):
         return 0
 
 
-def serve(live, srcdir, title):
+def serve(live, srcdir, title, idle_exit=False):
     pos = live + '.pos'
     srcdir = os.path.realpath(srcdir)
+    # 연결된 브라우저 탭 수 (idle_exit 용)
+    tabs = {'n': 0, 'seen': False, 'since': time.time()}
+    lock = threading.Lock()
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -158,19 +164,33 @@ def serve(live, srcdir, title):
             self.send_header('Cache-Control', 'no-store')
             self.end_headers()
             seen_t = seen_p = -1
+            ping = time.time()
+            with lock:
+                tabs['n'] += 1
+                tabs['seen'] = True
             try:
                 while True:
                     mt, mp = mtime(live), mtime(pos)
                     if mt != seen_t or mp != seen_p:
                         text = read(live) if mt != seen_t else None
-                        line = read(pos, '0').strip()
+                        # .pos 가 없으면(md 명령) 스크롤은 사용자에게 맡김
+                        line = read(pos, '').strip()
                         msg = {'text': text, 'line': int(line) if line.isdigit() else None}
                         self.wfile.write(b'data: ' + json.dumps(msg, ensure_ascii=False).encode() + b'\n\n')
                         self.wfile.flush()
                         seen_t, seen_p = mt, mp
+                    elif time.time() - ping > 2:
+                        # 탭이 닫혔는지 알기 위한 빈 메시지 (닫혔으면 여기서 BrokenPipe)
+                        self.wfile.write(b': ping\n\n')
+                        self.wfile.flush()
+                        ping = time.time()
                     time.sleep(0.1)
             except (BrokenPipeError, ConnectionResetError):
                 pass
+            finally:
+                with lock:
+                    tabs['n'] -= 1
+                    tabs['since'] = time.time()
 
     srv = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
     srv.daemon_threads = True
@@ -178,12 +198,20 @@ def serve(live, srcdir, title):
     print(url, flush=True)
     subprocess.Popen(['cmd.exe', '/c', 'start', '', url], cwd='/mnt/c',
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    srv.serve_forever()
+    if not idle_exit:
+        return srv.serve_forever()
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    while True:
+        time.sleep(1)
+        with lock:
+            limit = 15 if tabs['seen'] else 60
+            if tabs['n'] == 0 and time.time() - tabs['since'] > limit:
+                return
 
 
 def main():
     if sys.argv[1] == 'serve':
-        return serve(sys.argv[2], sys.argv[3], sys.argv[4])
+        return serve(sys.argv[2], sys.argv[3], sys.argv[4], '--idle-exit' in sys.argv[5:])
     src, out = sys.argv[1], sys.argv[2]
     text = read(src)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)

@@ -18,7 +18,7 @@ reg [31:0] anode_reg;
 
 wire w_rx_done;
 wire [7:0] w_rx_data;
-wire [3:0] w_fnd_hex;
+wire [7:0] w_fnd_hex;
 wire w_clk_4k;
 wire [7:0] w_fnd_font;
 wire [1:0] w_sel;
@@ -29,7 +29,7 @@ always@(posedge clk or posedge rst)begin
 
 
 	if(rst)begin
-		anode_reg <= 32'hC0C0C0C0;
+		anode_reg <= 32'hBFBFBFBF;
 	end
 	
 	else begin

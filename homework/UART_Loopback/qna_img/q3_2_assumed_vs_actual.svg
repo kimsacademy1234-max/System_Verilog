@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400" font-family="'Malgun Gothic','맑은 고딕',sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>
+<rect width="960" height="400" fill="#FFFFFF"/>
+<text x="24.0" y="34.0" font-size="18" fill="#0F172A" text-anchor="start" font-weight="bold" >그림 Q3-2. 연속 전송 시 async 지연: 가정 vs 실제</text>
+<text x="24.0" y="56.0" font-size="12.5" fill="#64748B" text-anchor="start" font-weight="normal" >세로축 = 각 frame의 샘플 위치가 bit 중앙보다 늦어진 정도 (bit 대비 %), 빨간 선 = 뒤쪽 여유 한계</text>
+<text x="40.0" y="88.0" font-size="14" fill="#DC2626" text-anchor="start" font-weight="bold" >가정: frame마다 6.25%씩 누적</text>
+<line x1="80.0" y1="340.0" x2="460.0" y2="340.0" stroke="#E2E8F0" stroke-width="1"/>
+<text x="74.0" y="344.0" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >0%</text>
+<line x1="80.0" y1="288.9" x2="460.0" y2="288.9" stroke="#E2E8F0" stroke-width="1"/>
+<text x="74.0" y="292.9" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >12.5%</text>
+<line x1="80.0" y1="237.8" x2="460.0" y2="237.8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="74.0" y="241.8" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >25%</text>
+<line x1="80.0" y1="186.7" x2="460.0" y2="186.7" stroke="#E2E8F0" stroke-width="1"/>
+<text x="74.0" y="190.7" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >37.5%</text>
+<line x1="80.0" y1="135.6" x2="460.0" y2="135.6" stroke="#E2E8F0" stroke-width="1"/>
+<text x="74.0" y="139.6" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >50%</text>
+<line x1="80.0" y1="340.0" x2="460.0" y2="340.0" stroke="#64748B" stroke-width="1.2"/>
+<line x1="80.0" y1="161.1" x2="460.0" y2="161.1" stroke="#DC2626" stroke-width="1.6" stroke-dasharray="6,4"/>
+<rect x="92.0" y="314.4" width="36.0" height="25.6" fill="#BE123C" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="110.0" y="309.4" font-size="10.5" fill="#BE123C" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >6.25</text>
+<text x="110.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >1</text>
+<rect x="146.0" y="288.9" width="36.0" height="51.1" fill="#BE123C" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="164.0" y="283.9" font-size="10.5" fill="#BE123C" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >12.5</text>
+<text x="164.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >2</text>
+<rect x="200.0" y="263.3" width="36.0" height="76.7" fill="#BE123C" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="218.0" y="258.3" font-size="10.5" fill="#BE123C" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >18.75</text>
+<text x="218.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >3</text>
+<rect x="254.0" y="237.8" width="36.0" height="102.2" fill="#BE123C" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="272.0" y="232.8" font-size="10.5" fill="#BE123C" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >25</text>
+<text x="272.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >4</text>
+<rect x="308.0" y="212.2" width="36.0" height="127.8" fill="#BE123C" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="326.0" y="207.2" font-size="10.5" fill="#BE123C" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >31.25</text>
+<text x="326.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >5</text>
+<rect x="362.0" y="186.7" width="36.0" height="153.3" fill="#BE123C" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="380.0" y="181.7" font-size="10.5" fill="#BE123C" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >37.5</text>
+<text x="380.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >6</text>
+<rect x="416.0" y="161.1" width="36.0" height="178.9" fill="#DC2626" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="434.0" y="156.1" font-size="10.5" fill="#DC2626" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >43.75</text>
+<text x="434.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >7</text>
+<text x="270.0" y="376.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" >frame 번호</text>
+<text x="84.0" y="153.1" font-size="11.5" fill="#DC2626" text-anchor="start" font-weight="bold" >뒤쪽 여유 한계 43.75%</text>
+<text x="460.0" y="394.0" font-size="12" fill="#DC2626" text-anchor="end" font-weight="normal" >7번째 frame에서 한계 도달 → bit 놓침 (질문의 가정)</text>
+<text x="500.0" y="88.0" font-size="14" fill="#0F766E" text-anchor="start" font-weight="bold" >실제: frame마다 새 start edge 기준</text>
+<line x1="540.0" y1="340.0" x2="920.0" y2="340.0" stroke="#E2E8F0" stroke-width="1"/>
+<text x="534.0" y="344.0" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >0%</text>
+<line x1="540.0" y1="288.9" x2="920.0" y2="288.9" stroke="#E2E8F0" stroke-width="1"/>
+<text x="534.0" y="292.9" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >12.5%</text>
+<line x1="540.0" y1="237.8" x2="920.0" y2="237.8" stroke="#E2E8F0" stroke-width="1"/>
+<text x="534.0" y="241.8" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >25%</text>
+<line x1="540.0" y1="186.7" x2="920.0" y2="186.7" stroke="#E2E8F0" stroke-width="1"/>
+<text x="534.0" y="190.7" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >37.5%</text>
+<line x1="540.0" y1="135.6" x2="920.0" y2="135.6" stroke="#E2E8F0" stroke-width="1"/>
+<text x="534.0" y="139.6" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >50%</text>
+<line x1="540.0" y1="340.0" x2="920.0" y2="340.0" stroke="#64748B" stroke-width="1.2"/>
+<line x1="540.0" y1="161.1" x2="920.0" y2="161.1" stroke="#DC2626" stroke-width="1.6" stroke-dasharray="6,4"/>
+<rect x="552.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="570.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >1</text>
+<rect x="606.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="624.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >2</text>
+<rect x="660.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="678.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >3</text>
+<rect x="714.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="732.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >4</text>
+<rect x="768.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="786.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >5</text>
+<rect x="822.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="840.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >6</text>
+<rect x="876.0" y="314.4" width="36.0" height="25.6" fill="#0F766E" stroke="none" stroke-width="1" rx="0" fill-opacity="0.85"/>
+<text x="894.0" y="357.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >7</text>
+<text x="730.0" y="376.0" font-size="11.5" fill="#64748B" text-anchor="middle" font-weight="normal" >frame 번호</text>
+<text x="544.0" y="153.1" font-size="11.5" fill="#DC2626" text-anchor="start" font-weight="bold" >뒤쪽 여유 한계 43.75%</text>
+<text x="544.0" y="306.4" font-size="11.5" fill="#0F766E" text-anchor="start" font-weight="bold" >매 frame 0~6.25% 안에서만 변함</text>
+<text x="920.0" y="394.0" font-size="12" fill="#0F766E" text-anchor="end" font-weight="normal" >IDLE에서 새 edge를 기다려 카운터를 0부터 다시 셈</text>
+</svg>

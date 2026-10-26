@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="540" viewBox="0 0 980 540" font-family="'Malgun Gothic','맑은 고딕',sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs>
+<rect width="980" height="540" fill="#FFFFFF"/>
+<text x="24.0" y="34.0" font-size="18" fill="#0F172A" text-anchor="start" font-weight="bold" >그림 Q3-4. 연속 전송에서 실제로 쌓이는 곳: loopback TX (코드 기준, 속도 차이 4%로 과장)</text>
+<text x="24.0" y="56.0" font-size="12.5" fill="#64748B" text-anchor="start" font-weight="normal" >TX는 frame 하나에 160 tick 사용, tx_start(= rx_done)는 IDLE에서만 확인 · rx_done 간격 = PC frame 간격</text>
+<line x1="190.0" y1="84.0" x2="190.0" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="190.0" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >0</text>
+<line x1="283.6" y1="84.0" x2="283.6" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="283.6" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >80</text>
+<line x1="377.2" y1="84.0" x2="377.2" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="377.2" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >160</text>
+<line x1="470.8" y1="84.0" x2="470.8" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="470.8" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >240</text>
+<line x1="564.4" y1="84.0" x2="564.4" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="564.4" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >320</text>
+<line x1="658.0" y1="84.0" x2="658.0" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="658.0" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >400</text>
+<line x1="751.6" y1="84.0" x2="751.6" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="751.6" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >480</text>
+<line x1="845.2" y1="84.0" x2="845.2" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="845.2" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >560</text>
+<line x1="938.8" y1="84.0" x2="938.8" y2="89.0" stroke="#64748B" stroke-width="1"/>
+<text x="938.8" y="81.0" font-size="10.5" fill="#64748B" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >640</text>
+<text x="180.0" y="86.0" font-size="10.5" fill="#64748B" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >tick</text>
+<rect x="14.0" y="100.0" width="952.0" height="128.0" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="8" />
+<text x="28.0" y="126.0" font-size="14" fill="#B45309" text-anchor="start" font-weight="bold" >PC = FPGA</text>
+<text x="28.0" y="144.0" font-size="11.5" fill="#64748B" text-anchor="start" font-weight="normal" >(xsim TB)</text>
+<text x="180.0" y="168.0" font-size="11" fill="#1D4ED8" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >rx_done</text>
+<text x="180.0" y="202.0" font-size="11" fill="#1D4ED8" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >TX</text>
+<line x1="190.0" y1="158.0" x2="190.0" y2="176.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="190.0" y="188.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="274.2" y="203.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="358.5" y="188.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="367.8" y="203.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="190.0" y1="176.0" x2="190.0" y2="188.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<line x1="377.2" y1="158.0" x2="377.2" y2="176.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="377.2" y="188.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="461.4" y="203.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="545.7" y="188.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="555.0" y="203.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="377.2" y1="176.0" x2="377.2" y2="188.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<text x="377.2" y="226.0" font-size="10.5" fill="#B45309" text-anchor="middle" font-weight="bold" >여유 0 tick</text>
+<line x1="564.4" y1="158.0" x2="564.4" y2="176.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="564.4" y="188.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="648.6" y="203.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="732.9" y="188.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="742.2" y="203.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="564.4" y1="176.0" x2="564.4" y2="188.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<text x="564.4" y="226.0" font-size="10.5" fill="#B45309" text-anchor="middle" font-weight="bold" >여유 0 tick</text>
+<line x1="751.6" y1="158.0" x2="751.6" y2="176.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="751.6" y="188.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="835.8" y="203.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="920.1" y="188.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="929.4" y="203.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="751.6" y1="176.0" x2="751.6" y2="188.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<text x="751.6" y="226.0" font-size="10.5" fill="#B45309" text-anchor="middle" font-weight="bold" >여유 0 tick</text>
+<rect x="14.0" y="238.0" width="952.0" height="128.0" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="8" />
+<text x="28.0" y="264.0" font-size="14" fill="#0F766E" text-anchor="start" font-weight="bold" >PC가 느림</text>
+<text x="28.0" y="282.0" font-size="11.5" fill="#64748B" text-anchor="start" font-weight="normal" >(정확한 9600 bps)</text>
+<text x="180.0" y="306.0" font-size="11" fill="#1D4ED8" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >rx_done</text>
+<text x="180.0" y="340.0" font-size="11" fill="#1D4ED8" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >TX</text>
+<line x1="190.0" y1="296.0" x2="190.0" y2="314.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="190.0" y="326.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="274.2" y="341.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="358.5" y="326.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="367.8" y="341.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="190.0" y1="314.0" x2="190.0" y2="326.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<line x1="384.2" y1="296.0" x2="384.2" y2="314.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="384.2" y="326.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="468.5" y="341.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="552.7" y="326.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="562.1" y="341.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="384.2" y1="314.0" x2="384.2" y2="326.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<text x="384.2" y="364.0" font-size="10.5" fill="#0F766E" text-anchor="middle" font-weight="bold" >여유 생김</text>
+<line x1="578.4" y1="296.0" x2="578.4" y2="314.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="578.4" y="326.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="662.7" y="341.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="746.9" y="326.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="756.3" y="341.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="578.4" y1="314.0" x2="578.4" y2="326.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<text x="578.4" y="364.0" font-size="10.5" fill="#0F766E" text-anchor="middle" font-weight="bold" >여유 생김</text>
+<rect x="14.0" y="376.0" width="952.0" height="128.0" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="8" />
+<text x="28.0" y="402.0" font-size="14" fill="#DC2626" text-anchor="start" font-weight="bold" >PC가 빠름</text>
+<text x="28.0" y="420.0" font-size="11.5" fill="#64748B" text-anchor="start" font-weight="normal" >(조금이라도)</text>
+<text x="180.0" y="444.0" font-size="11" fill="#1D4ED8" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >rx_done</text>
+<text x="180.0" y="478.0" font-size="11" fill="#1D4ED8" text-anchor="end" font-weight="normal" font-family="Consolas,'Courier New',monospace" >TX</text>
+<line x1="190.0" y1="434.0" x2="190.0" y2="452.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="190.0" y="464.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="274.2" y="479.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="358.5" y="464.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="367.8" y="479.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="190.0" y1="452.0" x2="190.0" y2="464.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<line x1="370.2" y1="434.0" x2="370.2" y2="452.0" stroke="#DC2626" stroke-width="2.4"/>
+<text x="370.2" y="432.0" font-size="15" fill="#DC2626" text-anchor="middle" font-weight="bold" >✕</text>
+<line x1="370.2" y1="454.0" x2="370.2" y2="488.0" stroke="#DC2626" stroke-width="1.2" stroke-dasharray="3,2"/>
+<line x1="550.4" y1="434.0" x2="550.4" y2="452.0" stroke="#1D4ED8" stroke-width="2.4"/>
+<rect x="550.4" y="464.0" width="168.5" height="22.0" fill="#EFF6FF" stroke="#1D4ED8" stroke-width="1" rx="0" />
+<text x="634.6" y="479.0" font-size="10.5" fill="#1D4ED8" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >START + DATA</text>
+<rect x="718.8" y="464.0" width="18.7" height="22.0" fill="#1D4ED8" stroke="none" stroke-width="1" rx="0" fill-opacity="0.35"/>
+<text x="728.2" y="479.0" font-size="10.5" fill="#0F172A" text-anchor="middle" font-weight="normal" font-family="Consolas,'Courier New',monospace" >P</text>
+<line x1="550.4" y1="452.0" x2="550.4" y2="464.0" stroke="#1D4ED8" stroke-width="1" stroke-dasharray="2,2"/>
+<line x1="730.5" y1="434.0" x2="730.5" y2="452.0" stroke="#DC2626" stroke-width="2.4"/>
+<text x="730.5" y="432.0" font-size="15" fill="#DC2626" text-anchor="middle" font-weight="bold" >✕</text>
+<line x1="730.5" y1="454.0" x2="730.5" y2="488.0" stroke="#DC2626" stroke-width="1.2" stroke-dasharray="3,2"/>
+<text x="378.2" y="402.0" font-size="11.5" fill="#DC2626" text-anchor="start" font-weight="bold" >TX가 아직 STOP → tx_start 무시 → 그 byte echo 누락</text>
+<text x="24.0" y="528.0" font-size="11.5" fill="#64748B" text-anchor="start" font-weight="normal" >실제 차이가 작으면 rx_done 간격이 대부분 160 tick, 가끔 159 tick → 159 tick이 나오는 frame마다 echo 1 byte 누락 (xsim 미검증, 코드 구조 기준 추론)</text>
+</svg>

@@ -24,9 +24,10 @@
 
 1. [순차 회로 & 타이밍](#1-순차-회로--타이밍)
 2. [CDC · 동기화](#2-cdc--동기화)
-3. [문제 해결 경험](#3-문제-해결-경험)
-4. [진행 중 토론](#진행-중-토론)
-5. [토론 대기 질문](#토론-대기-질문)
+3. [검증 (Verification)](#3-검증-verification)
+4. [문제 해결 경험](#4-문제-해결-경험)
+5. [진행 중 토론](#진행-중-토론)
+6. [토론 대기 질문](#토론-대기-질문)
 
 ---
 
@@ -418,10 +419,88 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
 
 ---
 
-## 3. 문제 해결 경험
+## 3. 검증 (Verification)
+
+### Q3-1. 프로젝트 품질 평가 지표 5가지의 의미와 하드웨어 설계 · 검증에서의 대응 개념
+
+> **한 줄 답** : 소프트웨어 품질 지표(테스트 커버리지 · 성능 · 정적 분석 · 예외 처리 · 부하 안정성)는 하드웨어에서 각각 **coverage · PPA(타이밍) · lint/CDC/STA · corner case 검증 · stress 검증**에 대응 → 내 프로젝트를 이 5개 축으로 설명 가능해야 함
+
+**면접 답변**
+- 커버리지 : 모듈 단위 TB와 top 통합 TB로 나눠 검증, code coverage와 functional coverage로 "얼마나 검증했는지" 수치화
+- 성능 · 병목 : 목표(동작 주파수, throughput, latency)를 먼저 정하고, critical path나 가장 느린 단계를 병목으로 찾아 개선 전후 수치 비교
+- 정적 분석 : 시뮬레이션 없이 코드 · 넷리스트를 검사하는 lint, CDC 검사, STA로 latch 추론 · 비트 폭 불일치 · 비동기 경로 누락 같은 구조적 결함 조기 발견
+- 예외 · 엣지 케이스 : 경계값(카운터 최댓값 → 0), 동작 중 reset, 잘못된 입력(glitch, 프로토콜 위반)을 시나리오로 정의해 검증
+- 부하 안정성 : 최대 속도 연속 입력, 장시간 random 테스트로 FIFO full · 데이터 유실 · 상태 고착이 없는지 확인
+
+**설명**
+
+| # | 지표 | 소프트웨어 의미 | 하드웨어 대응 |
+|---|---|---|---|
+| 1 | 단위 · 통합 테스트 커버리지 | 함수 단위(unit) · 모듈 결합(integration) 테스트가 코드를 얼마나 실행했는지 | Block-level TB · top-level TB, code coverage · functional coverage |
+| 2 | 목표 성능 · 병목 개선도 | 응답 시간 · 처리량 목표 달성 여부, 가장 느린 구간(bottleneck)을 찾아 개선한 정도 | Fmax · WNS(critical path), throughput · latency, PPA(Power · Performance · Area) |
+| 3 | 정적 분석 보안 취약점 검사 | 실행하지 않고 소스 코드를 분석해 취약점 탐지 (버퍼 오버플로, 입력 검증 누락 등) | Lint, CDC 검사, STA, DRC (`report_methodology`, `report_cdc`) |
+| 4 | 예외 처리 · 엣지 케이스 시나리오 | 잘못된 입력 · 오류 상황 처리, 경계값(0, 최댓값, 빈 입력) 대응 | Corner case 검증, illegal state 복구(FSM default), 오류 검출(framing error 등) |
+| 5 | 대규모 트래픽 부하 테스트 안정성 | 최대 부하(load) · 한계 초과(stress) · 장시간(soak)에서도 장애 · 성능 저하 없음 | 최대 rate 연속 입력(back-to-back), 장시간 random regression, 보드 장시간 동작 |
+
+- **1. 커버리지**
+  - Unit(단위) = 모듈 하나를 떼어 검증, integration(통합) = 모듈을 연결했을 때 인터페이스 · 상호작용 검증
+  - Code coverage 종류 : line(statement), branch, condition, toggle, FSM state · transition
+  - Functional coverage : 스펙의 기능 · 조건 조합을 bin으로 정의해 실제로 발생했는지 측정 (SystemVerilog `covergroup`, IEEE 1800)
+  - Code coverage 100% ≠ 버그 없음 → 실행만 했고 결과를 확인하지 않았을 수 있음, 스펙 기능 누락은 code coverage로 안 보임 → self-checking(scoreboard) + functional coverage 병행
+
+- **2. 성능 · 병목**
+  - 병목(bottleneck) = 전체 성능을 제한하는 가장 느린 단계 → 다른 곳을 개선해도 전체 성능 변화 없음
+  - 소프트웨어 : profiling으로 시간 소모 구간 측정 / 하드웨어 : timing report로 critical path, 파이프라인에서 가장 느린 단계
+  - 개선도 = 개선 전후 같은 조건에서 측정한 수치 비교 (예 : WNS, 동작 주파수, cycle 수)
+  - 타이밍 개선 방법 → Q1-3
+
+- **3. 정적 분석 (static analysis)**
+  - 정의 : 코드를 **실행하지 않고** 구조 · 패턴을 검사 ↔ 동적 분석(dynamic) = 실행(시뮬레이션)하며 검사
+  - 소프트웨어 : 보안 취약점, 코딩 규칙 위반 탐지
+  - 하드웨어
+    - Lint : latch 추론, 비트 폭 불일치, multiple driver, 불완전한 sensitivity list
+    - CDC 검사 : 동기화기 없는 클럭 도메인 간 경로 (Q2-2)
+    - STA : 모든 경로의 타이밍을 입력 벡터 없이 검사 → 정적 분석의 대표 예
+  - 장점 : 테스트 벡터 없이 전체 코드를 빠르게 검사 / 한계 : 기능(동작 결과)이 맞는지는 판단 못 함 → 시뮬레이션과 병행
+
+- **4. 예외 처리 · 엣지 케이스**
+  - 엣지 케이스(edge case) = 경계값 · 극단 조건, 예외 = 정상 범위를 벗어난 입력 · 상황
+  - 하드웨어 예
+    - 경계값 : 카운터 9999 → 0, 0에서 DOWN, 데이터 0x00 · 0xFF
+    - 동작 중 reset, 스위치 동시 입력(우선순위)
+    - 비정상 입력 : glitch로 인한 false start, stop bit 오류(framing error)
+    - Illegal state : 정의되지 않은 FSM 상태 → default로 안전한 상태 복귀
+  - 시나리오화 = 각 경우의 입력 · 기대 동작을 검증 계획서(verification plan)에 먼저 정의
+
+- **5. 부하 · 안정성**
+  - Load test = 예상 최대 부하 / stress test = 한계 초과 / soak test = 장시간 지속
+  - 안정성 판단 : 오류 · 데이터 유실 없음, 응답 시간이 한계 안에 유지, 자원 누수 없음
+  - 하드웨어 예
+    - 최대 rate 연속 프레임(back-to-back) → FIFO full, 데이터 유실 여부
+    - 송신 쪽이 수신 처리 속도보다 빠를 때 → flow control · backpressure 필요성
+    - 장시간 random 입력 regression, 보드 장시간 동작
+
+**꼬리 질문**
+- **Q.** Code coverage가 100%면 검증이 끝난 것인지
+  - **A.** 아님 → 코드가 실행됐다는 뜻일 뿐, 결과 비교(self-checking)가 없으면 오동작을 놓침, 스펙에 있는데 구현이 빠진 기능은 code coverage로 보이지 않음 → functional coverage와 함께 sign-off
+- **Q.** 정적 분석과 시뮬레이션의 차이
+  - **A.** 정적 분석 = 실행 없이 구조 검사, 입력 벡터 불필요, 전체 경로 검사 / 시뮬레이션 = 입력을 넣어 동작 결과 확인, 넣은 시나리오만 검증 → 서로 못 잡는 영역이 달라 병행
+- **Q.** 엣지 케이스를 어떻게 빠짐없이 찾는지
+  - **A.** 스펙에서 입력 공간의 축(값 범위, 타이밍 위상, 연속성, 비정상 입력)을 먼저 나누고 각 축의 경계값을 bin으로 정의 → functional coverage로 누락 확인
+
+**헷갈리기 쉬운 점**
+- 하드웨어에서 "정적 분석"의 대표 예 = **STA**(Static Timing Analysis) → 이름 그대로 정적
+- Code coverage(코드가 실행됐는지) ≠ functional coverage(스펙 기능이 발생했는지)
+- 성능 개선도는 **같은 조건에서 전후 수치**로 말해야 설득력 있음
+
+<sub>근거 : IEEE 1800 (SystemVerilog covergroup · functional coverage) · Xilinx UG906 (report_methodology · report_cdc · timing report) · 출처 : 개인 질문(이미지 속 품질 지표 목록), 2026-10-25</sub>
+
+---
+
+## 4. 문제 해결 경험
 
 <!-- STAR 템플릿
-### P3-1. (프로젝트명) — (한 줄 요약)
+### P4-1. (프로젝트명) — (한 줄 요약)
 
 - **Situation** : 
 - **Task** : 

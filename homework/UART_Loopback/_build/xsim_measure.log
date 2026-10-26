@@ -1,0 +1,78 @@
+[0] RX  state -> IDLE cnt=0
+[0] TX  state -> IDLE
+[0] tx=1
+[0] rx_done=0 data=00
+[13045000] b_tick period = 6510000
+[104180000] DRV start bit (rx fall) data=41
+[104185000] RX  state -> START cnt=0
+[156265000] RX  state -> DATA cnt=0
+[260425000] RX  sample data_reg=80
+[364585000] RX  sample data_reg=40
+[468745000] RX  sample data_reg=20
+[572905000] RX  sample data_reg=10
+[677065000] RX  sample data_reg=08
+[781225000] RX  sample data_reg=04
+[885385000] RX  sample data_reg=82
+[989545000] RX  state -> STOP cnt=0
+[1093705000] RX  state -> IDLE cnt=15
+[1093705000] rx_done=1 data=41
+[1093715000] TX  state -> START
+[1093715000] rx_done=0 data=41
+[1093725000] tx=0
+[1197865000] TX  state -> DATA
+[1197875000] tx=1
+[1302035000] tx=0
+[1822835000] tx=1
+[1926995000] tx=0
+[2031145000] TX  state -> STOP
+[2031155000] tx=1
+[2135305000] TX  state -> IDLE
+[2395700000] DRV start bit (rx fall) data=31
+[2395705000] RX  state -> START cnt=0
+[2447785000] RX  state -> DATA cnt=0
+[2447785000] RX  sample data_reg=00
+[2551945000] RX  sample data_reg=80
+[2656105000] RX  sample data_reg=40
+[2760265000] RX  sample data_reg=20
+[2864425000] RX  sample data_reg=10
+[2968585000] RX  sample data_reg=88
+[3072745000] RX  sample data_reg=c4
+[3176905000] RX  sample data_reg=62
+[3281065000] RX  state -> STOP cnt=0
+[3385225000] RX  state -> IDLE cnt=15
+[3385225000] rx_done=1 data=31
+[3385235000] TX  state -> START
+[3385235000] rx_done=0 data=31
+[3385245000] tx=0
+[3437300000] DRV start bit (rx fall) data=32
+[3437305000] RX  state -> START cnt=0
+[3489385000] RX  state -> DATA cnt=0
+[3489385000] RX  sample data_reg=00
+[3489385000] TX  state -> DATA
+[3489395000] tx=1
+[3593555000] tx=0
+[3697705000] RX  sample data_reg=80
+[3801865000] RX  sample data_reg=40
+[3906025000] RX  sample data_reg=20
+[3906035000] tx=1
+[4010185000] RX  sample data_reg=90
+[4114345000] RX  sample data_reg=c8
+[4114355000] tx=0
+[4218505000] RX  sample data_reg=64
+[4322665000] RX  state -> STOP cnt=0
+[4322665000] TX  state -> STOP
+[4322675000] tx=1
+[4426825000] RX  state -> IDLE cnt=15
+[4426825000] TX  state -> IDLE
+[4426825000] rx_done=1 data=32
+[4426835000] TX  state -> START
+[4426835000] rx_done=0 data=32
+[4426845000] tx=0
+[4530985000] TX  state -> DATA
+[4635155000] tx=1
+[4739315000] tx=0
+[4947635000] tx=1
+[5155955000] tx=0
+[5364265000] TX  state -> STOP
+[5364275000] tx=1
+[5468425000] TX  state -> IDLE
