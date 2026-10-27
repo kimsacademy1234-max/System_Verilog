@@ -1,0 +1,208 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1800 850" class="bd" role="img" aria-label="day18 숙제 전체 블록도">
+<defs><marker id="bar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="context-stroke"/></marker></defs>
+<rect x="115" y="14" width="1675" height="822" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="8 5" rx="6"/>
+<text x="130" y="36" font-size="13" text-anchor="start" fill="#111111" font-family="Consolas,monospace" font-weight="bold">uart_fifo_ascii (Top)  —  입력 : clk · rst · rx · btnR · btnL · btnU    출력 : tx   (FND 는 뗌)</text>
+<rect x="132" y="56" width="588" height="660" fill="#fafbfd" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="4 4" rx="6"/>
+<text x="142" y="76" font-size="12.5" text-anchor="start" fill="#111111" font-family="Consolas,monospace" font-weight="bold">U_UART_FIFO_LOOPBACK (uart_fifo_loopback)</text>
+<rect x="15" y="110" width="85" height="530" fill="#f3f4f6" stroke="#888" stroke-dasharray="5 4" rx="4"/>
+<text x="57" y="375.0" font-size="15" text-anchor="middle" fill="#111111" font-family="Consolas,monospace" font-weight="bold">PC</text>
+<text x="57" y="395.0" font-size="10" text-anchor="middle" fill="#111111" font-family="Malgun Gothic,sans-serif">(TB : sender_uart</text>
+<text x="57" y="409.0" font-size="10" text-anchor="middle" fill="#111111" font-family="Malgun Gothic,sans-serif">· receive_uart)</text>
+<text x="94" y="154" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">Tx</text>
+<text x="94" y="514" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">Rx</text>
+<rect x="150" y="95" width="150" height="190" fill="#fff" stroke="#2E7D32" stroke-width="2.5" rx="4"/>
+<text x="225.0" y="115" font-size="13" text-anchor="middle" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">U_UART_RX</text>
+<text x="225.0" y="132" font-size="11.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">uart_rx</text>
+<rect x="430" y="95" width="225" height="190" fill="#fff" stroke="#C55A11" stroke-width="2.5" rx="4"/>
+<text x="542.5" y="115" font-size="13" text-anchor="middle" fill="#C55A11" font-family="Consolas,monospace" font-weight="bold">U_FIFO_RX</text>
+<text x="542.5" y="132" font-size="11.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">fifo (4 × 8 비트)</text>
+<rect x="430" y="450" width="225" height="190" fill="#fff" stroke="#C55A11" stroke-width="2.5" rx="4"/>
+<text x="542.5" y="470" font-size="13" text-anchor="middle" fill="#C55A11" font-family="Consolas,monospace" font-weight="bold">U_FIFO_TX</text>
+<text x="542.5" y="487" font-size="11.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">fifo (4 × 8 비트)</text>
+<rect x="150" y="450" width="150" height="190" fill="#fff" stroke="#1F3864" stroke-width="2.5" rx="4"/>
+<text x="225.0" y="470" font-size="13" text-anchor="middle" fill="#1F3864" font-family="Consolas,monospace" font-weight="bold">U_UART_TX</text>
+<text x="225.0" y="487" font-size="11.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">uart_tx</text>
+<rect x="150" y="335" width="150" height="46" fill="#f3f4f6" stroke="#555555" stroke-width="2" rx="4"/>
+<text x="225.0" y="353" font-size="12" text-anchor="middle" fill="#111111" font-family="Consolas,monospace" font-weight="bold">U_BAUD_TICK_GEN</text>
+<text x="225.0" y="370" font-size="10.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">baud_tick_gen (clk · rst)</text>
+<text x="156" y="154" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">rx</text>
+<text x="156" y="244" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">b_tick</text>
+<text x="294" y="154" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">rx_data[7:0]</text>
+<text x="294" y="199" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">rx_done</text>
+<polyline points="180,307 180,287" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="180" y="319" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="225,307 225,287" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="225" y="319" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<text x="436" y="154" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">push_data[7:0]</text>
+<text x="436" y="199" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">push</text>
+<text x="436" y="244" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">full</text>
+<text x="649" y="154" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">pop_data[7:0]</text>
+<text x="649" y="199" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">pop</text>
+<text x="649" y="244" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">empty</text>
+<polyline points="460,307 460,287" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="460" y="319" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="505,307 505,287" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="505" y="319" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<text x="649" y="514" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">push_data[7:0]</text>
+<text x="649" y="559" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">push</text>
+<text x="649" y="604" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">full</text>
+<text x="436" y="514" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">pop_data[7:0]</text>
+<text x="436" y="559" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">empty</text>
+<text x="436" y="604" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">pop</text>
+<polyline points="460,662 460,642" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="460" y="674" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="505,662 505,642" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="505" y="674" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<text x="294" y="514" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">tx_data[7:0]</text>
+<text x="294" y="559" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">tx_start</text>
+<text x="294" y="604" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">tx_busy</text>
+<text x="156" y="514" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">tx</text>
+<text x="156" y="604" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">b_tick</text>
+<polyline points="180,662 180,642" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="180" y="674" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="225,662 225,642" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="225" y="674" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<polyline points="100,150 150,150" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<text x="124" y="143" font-size="12" text-anchor="middle" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">rx</text>
+<polyline points="300,150 430,150" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<text x="355.0" y="142" font-size="11.5" text-anchor="middle" fill="#2E7D32" font-family="Consolas,monospace">w_rx_data</text>
+<line x1="404.0" y1="157" x2="416.0" y2="143" stroke="#2E7D32" stroke-width="2"/>
+<text x="412.0" y="169" font-size="12" text-anchor="start" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">/8</text>
+<polyline points="300,195 430,195" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="365.0" y="188" font-size="11.5" text-anchor="middle" fill="#C55A11" font-family="Consolas,monospace">w_rx_done</text>
+<polyline points="430,240 404,240" fill="none" stroke="#C55A11" stroke-width="2"/>
+<text x="398" y="246" font-size="17" text-anchor="middle" fill="#C00000" font-family="Consolas,monospace" font-weight="bold">×</text>
+<polyline points="430,510 300,510" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<text x="359.0" y="502" font-size="11" text-anchor="middle" fill="#2E7D32" font-family="Consolas,monospace">w_fifo_tx_pop_data</text>
+<line x1="409.0" y1="517" x2="421.0" y2="503" stroke="#2E7D32" stroke-width="2"/>
+<text x="417.0" y="529" font-size="12" text-anchor="start" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">/8</text>
+<polyline points="430,555 340,555" fill="none" stroke="#C55A11" stroke-width="2"/>
+<polyline points="324,555 300,555" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<polygon points="340,546 340,564 326,555" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<circle cx="322" cy="555" r="4" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<text x="333" y="542" font-size="13" text-anchor="middle" fill="#C55A11" font-family="Malgun Gothic,sans-serif" font-weight="bold">③</text>
+<polyline points="300,600 390,600" fill="none" stroke="#C55A11" stroke-width="2"/>
+<polyline points="412,600 430,600" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<polygon points="390,591 390,609 404,600" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<circle cx="408" cy="600" r="4" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<text x="397" y="587" font-size="13" text-anchor="middle" fill="#C55A11" font-family="Malgun Gothic,sans-serif" font-weight="bold">④</text>
+<polyline points="150,510 100,510" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<text x="124" y="503" font-size="12" text-anchor="middle" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">tx</text>
+<polyline points="150,358 138,358 138,240 150,240" fill="none" stroke="#555555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#bar2)"/>
+<polyline points="138,358 138,600 150,600" fill="none" stroke="#555555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#bar2)"/>
+<rect x="800" y="95" width="190" height="215" fill="#fff" stroke="#6A1B9A" stroke-width="2.5" rx="4" stroke-dasharray="7 4"/>
+<text x="895.0" y="115" font-size="13" text-anchor="middle" fill="#6A1B9A" font-family="Consolas,monospace" font-weight="bold">U_ASCII_DECODER</text>
+<text x="895.0" y="132" font-size="11.5" text-anchor="middle" fill="#6A1B9A" font-family="Malgun Gothic,sans-serif" font-style="italic">ascii_decoder (판서 이름)</text>
+<rect x="800" y="450" width="190" height="190" fill="#fff" stroke="#6A1B9A" stroke-width="2.5" rx="4" stroke-dasharray="7 4"/>
+<text x="895.0" y="470" font-size="13" text-anchor="middle" fill="#6A1B9A" font-family="Consolas,monospace" font-weight="bold">U_ASCII_SENDER</text>
+<text x="895.0" y="487" font-size="11.5" text-anchor="middle" fill="#6A1B9A" font-family="Malgun Gothic,sans-serif" font-style="italic">ascii_sender (새로 만들 블록)</text>
+<text x="806" y="154" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">ascii[7:0]</text>
+<text x="806" y="199" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">pop</text>
+<text x="806" y="244" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">enable</text>
+<text x="984" y="149" font-size="12" text-anchor="end" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">run_stop</text>
+<text x="984" y="199" font-size="12" text-anchor="end" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">clear</text>
+<text x="984" y="249" font-size="12" text-anchor="end" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">mode</text>
+<text x="984" y="294" font-size="12" text-anchor="end" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">status</text>
+<polyline points="885,332 885,312" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="885" y="344" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="930,332 930,312" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="930" y="344" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<text x="806" y="514" font-size="12" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">push_data[7:0]</text>
+<text x="806" y="559" font-size="12" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">push</text>
+<text x="806" y="604" font-size="12" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">full</text>
+<text x="984" y="514" font-size="12" text-anchor="end" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">status</text>
+<text x="984" y="604" font-size="12" text-anchor="end" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">time (msec~hour)</text>
+<polyline points="885,662 885,642" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="885" y="674" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="930,662 930,642" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="930" y="674" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<polyline points="655,150 800,150" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<line x1="689" y1="157" x2="701" y2="143" stroke="#2E7D32" stroke-width="2"/>
+<text x="697" y="169" font-size="12" text-anchor="start" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">/8</text>
+<text x="724" y="142" font-size="11" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">rx_pop_data</text>
+<polyline points="800,195 655,195" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="724" y="188" font-size="11" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">fifo_rx_pop</text>
+<polyline points="655,240 677,240" fill="none" stroke="#C55A11" stroke-width="2"/>
+<polygon points="677,231 677,249 691,240" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<circle cx="695" cy="240" r="4" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<polyline points="699,240 800,240" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="705" y="233" font-size="11" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">rx_empty</text>
+<polyline points="800,510 655,510" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<line x1="689" y1="517" x2="701" y2="503" stroke="#2E7D32" stroke-width="2"/>
+<text x="697" y="529" font-size="12" text-anchor="start" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">/8</text>
+<text x="724" y="502" font-size="11" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">tx_push_data</text>
+<polyline points="800,555 655,555" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="724" y="548" font-size="11" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">tx_push</text>
+<polyline points="655,600 800,600" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="724" y="593" font-size="11" text-anchor="start" fill="#6A1B9A" font-family="Consolas,monospace" font-style="italic">tx_full</text>
+<text x="649" y="692" font-size="11.5" text-anchor="end" fill="#C00000" font-family="Malgun Gothic,sans-serif">예전 ① ② (FIFO_RX → FIFO_TX 자동 전달) 은 끊음</text>
+<rect x="1035" y="56" width="745" height="660" fill="#fbfaf7" stroke="#9aa3b2" stroke-width="1.5" stroke-dasharray="4 4" rx="6"/>
+<text x="1045" y="76" font-size="12.5" text-anchor="start" fill="#111111" font-family="Consolas,monospace" font-weight="bold">스톱워치 — 20261014_Stopwatch_watch 모듈 그대로</text>
+<rect x="1312" y="95" width="200" height="210" fill="#fff" stroke="#1F3864" stroke-width="2.5" rx="4"/>
+<text x="1412.0" y="115" font-size="13" text-anchor="middle" fill="#1F3864" font-family="Consolas,monospace" font-weight="bold">U_STOPWATCH_CONTROL_UNIT</text>
+<text x="1412.0" y="132" font-size="11.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">control_unit</text>
+<rect x="1565" y="95" width="185" height="210" fill="#fff" stroke="#1F3864" stroke-width="2.5" rx="4"/>
+<text x="1657.5" y="115" font-size="13" text-anchor="middle" fill="#1F3864" font-family="Consolas,monospace" font-weight="bold">U_STOPWATCH_DATAPATH</text>
+<text x="1657.5" y="132" font-size="11.5" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">stopwatch_datapath</text>
+<text x="1318" y="157" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">btn_run_stop</text>
+<text x="1318" y="207" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">btn_clear</text>
+<text x="1318" y="257" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">btn_mode</text>
+<text x="1506" y="157" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">run_stop</text>
+<text x="1571" y="157" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">run_stop</text>
+<polyline points="1512,153 1565,153" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="1506" y="207" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">clear</text>
+<text x="1571" y="207" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">clear</text>
+<polyline points="1512,203 1565,203" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="1506" y="257" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">mode</text>
+<text x="1571" y="257" font-size="12" text-anchor="start" fill="#111111" font-family="Consolas,monospace">mode</text>
+<polyline points="1512,253 1565,253" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<polyline points="1362,327 1362,307" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="1362" y="339" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="1407,327 1407,307" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="1407" y="339" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">reset</text>
+<text x="1744" y="274" font-size="12" text-anchor="end" fill="#111111" font-family="Consolas,monospace">msec·sec·min·hour</text>
+<polyline points="1605,327 1605,307" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="1605" y="339" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">clk</text>
+<polyline points="1650,327 1650,307" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#bar2)"/>
+<text x="1650" y="339" font-size="11" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">rst</text>
+<polyline points="990,145 1254,145" fill="none" stroke="#6A1B9A" stroke-width="2" marker-end="url(#bar2)"/>
+<path d="M1250,137 Q1262,153 1250,169 Q1278,169 1290,153 Q1278,137 1250,137 z" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<polyline points="1290,153 1312,153" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<polyline points="990,195 1254,195" fill="none" stroke="#6A1B9A" stroke-width="2" marker-end="url(#bar2)"/>
+<path d="M1250,187 Q1262,203 1250,219 Q1278,219 1290,203 Q1278,187 1250,187 z" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<polyline points="1290,203 1312,203" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<polyline points="990,245 1254,245" fill="none" stroke="#6A1B9A" stroke-width="2" marker-end="url(#bar2)"/>
+<path d="M1250,237 Q1262,253 1250,269 Q1278,269 1290,253 Q1278,237 1250,237 z" fill="#fff" stroke="#C55A11" stroke-width="2"/>
+<polyline points="1290,253 1312,253" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<rect x="1065" y="395" width="125" height="50" fill="#fff" stroke="#C55A11" stroke-width="2" rx="4"/>
+<text x="1127.5" y="413" font-size="11.5" text-anchor="middle" fill="#C55A11" font-family="Consolas,monospace" font-weight="bold">U_BD_RUN_STOP</text>
+<text x="1127.5" y="429" font-size="11" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">btn_debounce</text>
+<text x="1127.5" y="441" font-size="9.5" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">i_btn → o_btn</text>
+<polyline points="1040,420 1065,420" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="1058" y="410" font-size="11" text-anchor="end" fill="#111111" font-family="Consolas,monospace" font-weight="bold">btnR</text>
+<polyline points="1190,420 1210,420 1210,161 1256,161" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<rect x="1065" y="470" width="125" height="50" fill="#fff" stroke="#C55A11" stroke-width="2" rx="4"/>
+<text x="1127.5" y="488" font-size="11.5" text-anchor="middle" fill="#C55A11" font-family="Consolas,monospace" font-weight="bold">U_BD_CLEAR</text>
+<text x="1127.5" y="504" font-size="11" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">btn_debounce</text>
+<text x="1127.5" y="516" font-size="9.5" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">i_btn → o_btn</text>
+<polyline points="1040,495 1065,495" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="1058" y="485" font-size="11" text-anchor="end" fill="#111111" font-family="Consolas,monospace" font-weight="bold">btnL</text>
+<polyline points="1190,495 1222,495 1222,211 1256,211" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<rect x="1065" y="545" width="125" height="50" fill="#fff" stroke="#C55A11" stroke-width="2" rx="4"/>
+<text x="1127.5" y="563" font-size="11.5" text-anchor="middle" fill="#C55A11" font-family="Consolas,monospace" font-weight="bold">U_BD_MODE</text>
+<text x="1127.5" y="579" font-size="11" text-anchor="middle" fill="#111111" font-family="Consolas,monospace">btn_debounce</text>
+<text x="1127.5" y="591" font-size="9.5" text-anchor="middle" fill="#555555" font-family="Consolas,monospace">i_btn → o_btn</text>
+<polyline points="1040,570 1065,570" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="1058" y="560" font-size="11" text-anchor="end" fill="#111111" font-family="Consolas,monospace" font-weight="bold">btnU</text>
+<polyline points="1190,570 1234,570 1234,261 1256,261" fill="none" stroke="#C55A11" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="1065" y="635" font-size="11.5" text-anchor="start" fill="#C55A11" font-family="Malgun Gothic,sans-serif">버튼 · 키보드 둘 다 1 클럭 펄스 → OR → control_unit</text>
+<text x="1320" y="470" font-size="12" text-anchor="start" fill="#C00000" font-family="Malgun Gothic,sans-serif" font-weight="bold">fnd_controller 는 이 숙제에서 뗀다</text>
+<text x="1320" y="490" font-size="11" text-anchor="start" fill="#C00000" font-family="Malgun Gothic,sans-serif">(시뮬레이션이라 FND 출력 불필요 — 시간은 TB 에서 datapath msec 로 확인)</text>
+<polyline points="1750,270 1762,270 1762,745 1015,745 1015,600 990,600" fill="none" stroke="#2E7D32" stroke-width="2.5" marker-end="url(#bar2)"/>
+<line x1="1756" y1="427" x2="1768" y2="413" stroke="#2E7D32" stroke-width="2"/>
+<text x="1771" y="425" font-size="12" text-anchor="start" fill="#2E7D32" font-family="Consolas,monospace" font-weight="bold">/24</text>
+<text x="1380" y="737" font-size="11.5" text-anchor="middle" fill="#2E7D32" font-family="Malgun Gothic,sans-serif">스톱워치 시간값 (7 + 6 + 6 + 5 = 24 비트) — 판서 1쪽 Stopwatch → ASCII_sender 선</text>
+<polyline points="990,290 1005,290 1005,510 990,510" fill="none" stroke="#6A1B9A" stroke-width="2" marker-end="url(#bar2)"/>
+<text x="130" y="816" font-size="12" text-anchor="start" fill="#111111" font-family="Malgun Gothic,sans-serif">초록 = 데이터 (/n 비트)  ·  주황 = 제어  ·  회색 점선 = b_tick  ·  ③④ = 포트 연결의 ~ (인버터)  ·  clk · rst 는 Top 의 clk · rst 공통</text>
+<text x="130" y="834" font-size="12" text-anchor="start" fill="#6A1B9A" font-family="Malgun Gothic,sans-serif">보라 기울임 · 점선 상자 = 숙제에서 새로 만들 블록 · 새로 뚫을 포트 (이름은 판서 · 예시, 내가 정하면 됨).  검정 이름 = 지금 내 코드 이름 그대로</text>
+</svg>
