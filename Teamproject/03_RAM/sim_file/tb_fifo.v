@@ -59,17 +59,17 @@ fail_cnt = 0;
 	i_reset =0;
 	@(negedge i_clk);
 	if(full == 0)begin
-		$display("%t :ass full signal", $stime);
+		$display("%t :pass full signal", $stime);
 	end else begin
 		
-		$display("%t :ail full signal", $stime);
+		$display("%t :fail full signal", $stime);
 	end
 
 	if(empty == 1)begin
-		$display("%t :ass empty signal", $stime);
+		$display("%t :pass empty signal", $stime);
 	end else begin
 		
-		$display("%t :ail empty signal", $stime);
+		$display("%t :fail empty signal", $stime);
 	end
 
 	#10;
