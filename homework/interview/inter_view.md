@@ -25,9 +25,10 @@
 1. [순차 회로 & 타이밍](#1-순차-회로--타이밍)
 2. [CDC · 동기화](#2-cdc--동기화)
 3. [검증 (Verification)](#3-검증-verification)
-4. [문제 해결 경험](#4-문제-해결-경험)
-5. [진행 중 토론](#진행-중-토론)
-6. [토론 대기 질문](#토론-대기-질문)
+4. [통신 인터페이스 (UART · SPI · I2C)](#4-통신-인터페이스-uart--spi--i2c)
+5. [문제 해결 경험](#5-문제-해결-경험)
+6. [진행 중 토론](#진행-중-토론)
+7. [토론 대기 질문](#토론-대기-질문)
 
 ---
 
@@ -497,10 +498,69 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
 
 ---
 
-## 4. 문제 해결 경험
+## 4. 통신 인터페이스 (UART · SPI · I2C)
+
+### Q4-1. UART는 데이터를 어떤 순서로 보내는지 (LSB first 여부와 프레임 구조)
+
+> **한 줄 답** : UART는 **LSB first** → idle(1) → start bit(0) → data bit 0(LSB) … 7(MSB) → (parity) → stop bit(1)
+
+**면접 답변**
+- UART 비동기 직렬 통신은 데이터를 LSB부터 전송
+- 프레임 : idle 상태 High → start bit 0으로 프레임 시작 알림 → 데이터 5~9비트 LSB부터 → 선택적 parity → stop bit 1 이상 High
+- 클럭선이 없어서 송수신이 baud rate를 미리 맞추고, 수신기는 start bit의 falling edge를 기준으로 각 비트 중앙에서 샘플링
+- RTL에서는 송신 = shift register를 오른쪽으로 밀며 bit 0 출력, 수신 = 받은 비트를 MSB 쪽에 넣고 오른쪽으로 밀기 → 8비트 뒤 첫 비트가 bit 0에 위치
+
+**설명**
+
+- **프레임 구조 (8N1 예 : 데이터 8비트, parity 없음, stop 1비트)**
+
+  ```
+  idle | start | D0  D1  D2  D3  D4  D5  D6  D7 | stop | idle
+   1   |   0   | LSB ─────────────────────→ MSB |  1   |  1
+  ```
+
+  - 예 : 0x41('A') = 0100_0001 → 선로에는 1,0,0,0,0,0,1,0 순서로 전송
+  - 설정 표기 : 8N1 = 데이터 8비트 · parity 없음(None) · stop 1비트
+
+- **RTL 구현과의 연결**
+  - 송신 : `tx <= shreg[0]; shreg <= shreg >> 1;` → bit 0부터 출력
+  - 수신 : `rx_data <= {rx, rx_data[7:1]};` → 먼저 온 LSB가 8번 밀린 뒤 bit 0에 도착
+  - 순서를 반대로 구현하면 송수신 결과가 비트 반전(bit-reversed)된 값 → loopback에서는 송수신 둘 다 같은 실수면 통과해 버리므로 PC 터미널 등 외부 장치와의 통신으로 확인 필요
+
+- **다른 프로토콜과 비교**
+
+  | 프로토콜 | 비트 순서 | 비고 |
+  |---|---|---|
+  | UART | LSB first | 비동기, 클럭선 없음 |
+  | I2C | MSB first | 동기, SCL 클럭 |
+  | SPI | 보통 MSB first | ⚠️ 장치마다 설정 가능 (LSB first 모드 있는 컨트롤러도 존재) → 데이터시트 확인 |
+
+- **RS-232와의 구분**
+  - RS-232(TIA-232) = 전압 레벨 · 커넥터 등 **전기적 규격** (논리 1 = 음전압)
+  - Start · data · stop 프레임과 LSB first = **UART 비동기 직렬 프레임 관례**
+  - FPGA 보드의 USB-UART 칩은 전압만 다를 뿐 같은 프레임 사용
+
+**꼬리 질문**
+- **Q.** UART가 클럭선 없이 동기를 맞추는 방법
+  - **A.** 송수신이 같은 baud rate를 미리 약속 → 수신기가 start bit의 falling edge를 감지해 매 프레임 타이밍 재정렬 → 보통 baud의 16배 oversampling으로 각 비트 중앙에서 샘플링 → 프레임마다 재동기화하므로 오차가 한 프레임 안에서만 누적
+- **Q.** Stop bit가 필요한 이유
+  - **A.** 프레임 끝에 선로를 반드시 High로 되돌려야 다음 start bit의 falling edge(1 → 0)를 감지 가능, 수신기가 데이터를 처리할 최소 시간 확보, stop 위치에서 0이 읽히면 framing error로 검출
+- **Q.** 왜 LSB first인지
+  - **A.** ⚠️ 표준이 이유를 명시하진 않음 → 흔히 드는 설명 : 초기 텔레타이프 · 직렬 장치의 shift register 구현 관례, 데이터 길이(5~8비트)가 달라도 LSB 위치가 start bit 바로 뒤로 고정 → 면접에서는 "관례"로 답하고 단정 금지
+
+**헷갈리기 쉬운 점**
+- UART = LSB first, I2C = MSB first, SPI = 보통 MSB first(설정 가능)
+- 파형에서 왼쪽(먼저 온 비트)이 LSB → 16진수로 읽을 때 순서를 뒤집어야 함
+- Loopback 테스트만으로는 비트 순서 오류를 못 잡을 수 있음 (송수신이 같은 방향으로 틀리면 통과)
+
+<sub>근거 : TI PC16550D UART datasheet (serial frame, LSB first) · NXP UM10204 I2C-bus specification (MSB first) · 출처 : 개인 질문 (UART loopback 프로젝트), 2026-10-29</sub>
+
+---
+
+## 5. 문제 해결 경험
 
 <!-- STAR 템플릿
-### P4-1. (프로젝트명) — (한 줄 요약)
+### P5-1. (프로젝트명) — (한 줄 요약)
 
 - **Situation** : 
 - **Task** : 
