@@ -6,6 +6,12 @@
 
 ## 업데이트 이력
 
+### 2026-10-30 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 25단계 | vim: Caps Lock이 켜져 있으면 화면 **오른쪽 위에 `CAPS`**(주황), 한글 입력 상태면 그 왼쪽에 **`한`**(파랑) 표시. 끄면 사라짐. Windows `powershell.exe`가 0.2초마다 상태 확인, vim 닫으면 같이 꺼짐 | `~/.vim/keystate.ps1`(저장소 `ubuntu-terminal-setup/keystate.ps1`), `~/.vimrc` |
+
 ### 2026-10-24 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -117,6 +123,7 @@
 | 22 | vim 줄번호 색을 회보라(`#7f849c`), 커서 줄 번호는 주황(`#fab387`)으로. `theme`로 테마를 바꿔도 유지 | `~/.vimrc` |
 | 23 | vim에서 md를 열면 제목·굵게·코드·표가 색으로 구분되고 `**` 같은 기호는 숨겨져서 읽기 좋게 | `~/.vimrc`, `~/.vim/after/syntax/markdown.vim` |
 | 24 | vim에서 `:glow` → md를 렌더링한 화면을 vim 화면 전체로 보기 (`q`로 복귀) | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
+| 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 | `~/.vim/keystate.ps1`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -1634,6 +1641,96 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 
 ---
 
+## 25단계. vim: Caps Lock / 한글 상태를 오른쪽 위에 `CAPS` / `한`으로 표시
+
+Caps Lock이나 한글 입력이 켜진 줄 모르고 normal 모드 키를 눌러 엉뚱한 동작이 일어나는 걸 막기 위해, 켜져 있는 동안 vim 화면 오른쪽 위에 표시한다 (2026-10-30).
+- 오른쪽 끝에 `CAPS`(주황 `#fab387`, 22단계 커서 줄 번호와 같은 색), 그 왼쪽에 `한`(파랑 `#89b4fa`). 둘 다 켜지면 ` 한  CAPS `. 색은 테마와 상관없이 유지.
+- 터미널 vim은 키 상태를 알 수 없다 → vim이 켜질 때 Windows `powershell.exe`로 `~/.vim/keystate.ps1`을 job으로 띄운다. 이 스크립트가 0.2초마다 확인하고 **바뀔 때만** 숫자를 보낸다 (1: Caps Lock, 2: 한글, 3: 둘 다).
+  - Caps Lock: `[console]::CapsLock`
+  - 한글: 앞 창의 IME에 `WM_IME_CONTROL`/`IMC_GETCONVERSIONMODE`를 물어서 1번 비트 확인. **앞 창이 터미널(Windows Terminal 등)일 때만** 갱신한다. 브라우저·Discord 같은 Chromium 앱은 엉뚱한 값(예: `4027`)을 돌려주기 때문이다. 다른 창이 앞에 있으면 마지막 상태를 그대로 둔다.
+- 표시는 popup 창(`+popupwin`, vim 8.2 이상)이고, 창 폭이 바뀌면 오른쪽 끝으로 다시 붙는다.
+- vim 하나마다 powershell 하나가 뜬다 (메모리 약 50MB). vim을 닫으면 같이 꺼진다.
+
+사전 확인: `vim --version | grep -o '+popupwin\|+job'` → 둘 다 나와야 함. `echo $WSL_DISTRO_NAME` → 비어 있으면 안 됨. `grep -c 'Caps Lock / 한글 표시\|Caps Lock 표시' ~/.vimrc` → `0` (이미 있으면 건너뜀. 옛 "Caps Lock 표시" 섹션만 있으면 그 섹션을 아래 내용으로 교체).
+
+### 25-1. 감시 스크립트 복사
+```bash
+cp <저장소>/ubuntu-terminal-setup/keystate.ps1 ~/.vim/keystate.ps1
+cd /mnt/c && timeout 3 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w ~/.vim/keystate.ps1)"; cd -
+# → 0 / 1 / 2 / 3 중 하나가 한 번 출력되고 3초 뒤 종료 (exit 124)
+```
+
+### 25-2. `~/.vimrc` 맨 아래에 추가
+`~/.vimrc` 백업(`cp ~/.vimrc ~/.vimrc.bak_capsind`) 후:
+```vim
+" ==========================================
+"  Caps Lock / 한글 표시 : 켜져 있으면 vim 오른쪽 위에 CAPS / 한 띄움
+" ==========================================
+" 터미널 vim 은 키 상태를 알 수 없어서 Windows powershell(~/.vim/keystate.ps1)이 0.2초마다 확인 → 바뀔 때만 숫자 출력
+" (1: Caps Lock, 2: 한글, 3: 둘 다). 한/영은 앞 창이 터미널일 때만 갱신. vim 이 켜질 때 시작, vim 을 닫으면 같이 꺼짐
+let s:key_popups = []
+let s:key_state = 0
+function! s:KeyShow()
+    call map(s:key_popups, 'popup_close(v:val)')
+    let s:key_popups = []
+    let l:col = &columns
+    " 오른쪽 끝부터: CAPS, 그 왼쪽에 한
+    for [l:bit, l:text, l:hl] in [[1, ' CAPS ', 'CapsLockInd'], [2, ' 한 ', 'HangulInd']]
+        if and(s:key_state, l:bit)
+            call add(s:key_popups, popup_create(l:text, {'line': 1, 'col': l:col, 'pos': 'topright',
+                \ 'highlight': l:hl, 'zindex': 300}))
+            let l:col -= strdisplaywidth(l:text) + 1
+        endif
+    endfor
+endfunction
+function! s:KeyState(msg)
+    let s:key_state = str2nr(trim(a:msg))
+    call s:KeyShow()
+endfunction
+function! s:KeyStart()
+    let l:ps1 = '\\wsl.localhost\' . $WSL_DISTRO_NAME . substitute(expand('~/.vim/keystate.ps1'), '/', '\\', 'g')
+    let s:key_job = job_start(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', l:ps1],
+        \ {'cwd': '/mnt/c', 'out_cb': {ch, msg -> s:KeyState(msg)}, 'err_io': 'null'})
+endfunction
+if has('popupwin') && executable('powershell.exe') && !empty($WSL_DISTRO_NAME) && filereadable(expand('~/.vim/keystate.ps1'))
+    augroup key_ind
+        autocmd!
+        " 색: 어떤 테마든 CAPS 는 주황 바탕(#fab387, 커서 줄 번호와 같음), 한 은 파랑 바탕(#89b4fa)
+        autocmd ColorScheme * highlight CapsLockInd guifg=#1e1e2e guibg=#fab387 ctermfg=234 ctermbg=216 gui=bold cterm=bold
+                          \ | highlight HangulInd   guifg=#1e1e2e guibg=#89b4fa ctermfg=234 ctermbg=111 gui=bold cterm=bold
+        autocmd VimEnter * call s:KeyStart()
+        autocmd VimResized * if s:key_state | call s:KeyShow() | endif
+        autocmd VimLeavePre * if exists('s:key_job') | call job_stop(s:key_job, 'kill') | endif
+    augroup END
+    highlight CapsLockInd guifg=#1e1e2e guibg=#fab387 ctermfg=234 ctermbg=216 gui=bold cterm=bold
+    highlight HangulInd   guifg=#1e1e2e guibg=#89b4fa ctermfg=234 ctermbg=111 gui=bold cterm=bold
+endif
+```
+> - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
+> - WSL이 아니거나 `~/.vim/keystate.ps1`이 없으면 아무 일도 하지 않는다.
+
+검증 (별도 tmux 서버, Caps Lock을 스크립트로 켰다가 다시 끔 → 원래 상태로 돌아옴):
+```bash
+SP=<스크래치패드>
+cat > $SP/tog.ps1 <<'EOF'
+Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void keybd_event(byte b, byte s, uint f, UIntPtr e);' -Name K -Namespace W
+[W.K]::keybd_event(0x14,0x45,1,[UIntPtr]::Zero); [W.K]::keybd_event(0x14,0x45,3,[UIntPtr]::Zero)
+EOF
+tog(){ (cd /mnt/c; powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w $SP/tog.ps1)"); }
+kc(){ ps -eo args | grep -c '[k]eystate.ps1'; }
+printf 'line1\n' > $SP/c.txt; T="tmux -L keyind"
+$T new-session -d -s k -x 80 -y 10 "vim $SP/c.txt"; sleep 4
+kc                                                                      # → 1 (감시 job 실행 중)
+tog; sleep 1.2; $T capture-pane -p -t k | head -1                      # → 오른쪽 끝에 CAPS
+$T resize-window -t k -x 60; sleep 0.7; $T capture-pane -p -t k | head -1   # → 폭 60 오른쪽 끝에 CAPS
+tog; sleep 1.2; $T capture-pane -p -t k | head -1                      # → CAPS 없음
+$T send-keys -t k ':q' Enter; sleep 2; $T kill-server 2>/dev/null
+kc                                                                      # → 0 (vim 닫으면 감시 종료)
+```
+한글 표시는 앞 창이 터미널일 때만 바뀌어서 자동 검증이 어렵다 → 사용자에게 vim을 새로 열고 `한/영` 키와 Caps Lock을 눌러 보게 하고, 오른쪽 위 `한` / `CAPS`가 나타나고 사라지는지 확인받는다.
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1663,6 +1760,7 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 - [ ] vim 줄번호가 회보라, 커서가 있는 줄 번호만 주황색 (`theme next`로 테마를 바꿔도 같음)
 - [ ] vim으로 md를 열면 제목이 단계별 색, `**`·`` ` ``·링크 url이 숨겨지고 커서 줄에서만 보임, 표의 `|`가 흐림
 - [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
+- [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
 - [ ] `iv` 입력 시 `homework/interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 
 ## 사용자에게 전달할 사용법 요약
@@ -1692,6 +1790,7 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 | 면접 포트폴리오 토론 세션 열기 (이어서) | `iv` |
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
 | vim 바꾸기·검색에서 단어 자동완성 | `:%s/w` 또는 `/w` 입력 후 `Tab` (계속 누르면 다음 후보) |
+| Caps Lock / 한글 켜졌는지 확인 | vim 오른쪽 위에 `CAPS` / `한`이 보이면 켜진 상태 |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -1719,3 +1818,4 @@ $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 - 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
 - md 보기 좋게: `~/.vimrc`의 "md 파일을 vim 안에서 보기 좋게" 섹션 삭제, `rm ~/.vim/after/syntax/markdown.vim` (또는 `~/.vimrc.bak_mdview` 복원)
 - glow: `~/.vimrc`의 ":Glow" 섹션 삭제, 19단계 `l:alias`에서 `'glow': 'Glow'` 삭제, `rm ~/.local/bin/glow`, `rm -rf ~/.config/glow` (또는 `~/.vimrc.bak_glow` 복원)
+- Caps Lock / 한글 표시: `~/.vimrc`의 "Caps Lock / 한글 표시" 섹션 삭제, `rm ~/.vim/keystate.ps1` (또는 `~/.vimrc.bak_capsind` 복원)
