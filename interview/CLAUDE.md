@@ -31,8 +31,8 @@
 - 구체적 수치(ps, ns 등)는 출처가 있을 때만 기록
 
 ## 자료 위치
-- 숙제 PDF: `../<project>/*.pdf` (예: `../counter_10000_project/`)
-- 수업 메모: `../homework.md`
+- 숙제 PDF: `../homework/homework_verilog/<project>/*.pdf` (예: `../homework/homework_verilog/counter_10000_project/`), SystemVerilog 숙제 = `../homework/homework_system_verilog/`
+- 수업 메모: `../homework/homework_verilog/homework.md`
 - PDF 읽기: `pdftotext -layout 파일.pdf -` (poppler-utils)
 
 ## 문체

@@ -55,7 +55,7 @@
 |---|---|---|---|
 | 추가 | 17단계 | `md` / `md "파일명"` / `md "폴더명"`: Markdown을 **VS Code 미리보기처럼** 브라우저로 보기 (GitHub 스타일 + 코드 색, 인터넷 없이 동작, `pdf`와 같은 방식) | `~/.mdview/`(저장소 `ubuntu-terminal-setup/mdview.py`), `~/.bashrc` |
 | 추가 | 17-3단계 | vim `:Md`: 편집 중인 md를 브라우저에서 **실시간 미리보기** (`:w` 안 해도 입력하는 대로 바뀜, vim 커서 위치를 따라 스크롤), `:MdStop`으로 끄기 | `~/.vimrc`, `~/.mdview/mdview.py` |
-| 추가 | 18단계 | `iv`: 면접 포트폴리오 토론 전용 Claude 세션 (`homework/interview` 폴더). 처음이면 `interview` 이름으로 새 세션, 이후로는 마지막 대화 이어서 열기 | `~/.bashrc` |
+| 추가 | 18단계 | `iv`: 면접 포트폴리오 토론 전용 Claude 세션 (`interview` 폴더). 처음이면 `interview` 이름으로 새 세션, 이후로는 마지막 대화 이어서 열기 | `~/.bashrc` |
 
 ### 2026-10-06 업데이트
 
@@ -116,7 +116,7 @@
 | 15 | **테마를 Catppuccin Mocha로** + `theme` 명령으로 터미널·vim·tmux 색을 한 번에 전환 (후보 8개) | `~/.theme/theme.py`, `~/.vim/pack/themes/`, `~/.vimrc`, `~/.tmux.conf`, `~/.bashrc`, Windows Terminal `settings.json` |
 | 16 | `pdf` (현재 폴더 전부) / `pdf "파일명"` (확장자 생략 가능) / `pdf "폴더명"`으로 PDF를 Windows 기본 뷰어에서 열기 | `~/.bashrc` |
 | 17 | `md` (현재 폴더 전부) / `md "파일명"` (확장자 생략 가능) / `md "폴더명"`으로 Markdown을 VS Code 미리보기처럼 브라우저에서 **실시간**으로 보기 (파일이 바뀌면 바로 반영) + vim `:Md`로 편집하면서 실시간 미리보기 | `~/.mdview/`, `~/.bashrc`, `~/.vimrc` |
-| 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`homework/interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
+| 18 | `iv` 입력 시 면접 포트폴리오 토론 전용 Claude 세션 열기 (`interview` 폴더, 두 번째부터 이어서) | `~/.bashrc` |
 | 19 | vim에서 Caps Lock이 켜진 채 `:W` `:WQ` `:Q!` `:SET NU` 등을 쳐도 소문자 명령처럼 실행 | `~/.vimrc` |
 | 20 | tmux에서 화살표만으로 창이 바뀌지 않게 (`Ctrl+b` + 화살표만 이동) | `~/.tmux.conf` |
 | 21 | tmux에서 Caps Lock이 켜진 채 `Ctrl+B P` / `Ctrl+B W`를 눌러도 `Ctrl+b p` / `Ctrl+b w`처럼 동작 | `~/.tmux.conf` |
@@ -1290,18 +1290,18 @@ Windows 브라우저가 WSL 서버에 닿는지: 서버 실행 중 `powershell.e
 
 ## 18단계. `iv`: 면접 포트폴리오 토론 전용 Claude 세션
 
-`homework/interview/` 폴더(`inter_view.md` + 토론 규칙 `CLAUDE.md`)에서만 Claude를 실행해서 토론 세션을 하나로 유지한다.
+저장소 최상위 `interview/` 폴더(`inter_view.md` + 토론 규칙 `CLAUDE.md`)에서만 Claude를 실행해서 토론 세션을 하나로 유지한다.
 `claude -c`는 **현재 폴더**의 마지막 대화를 이어 열기 때문에, 전용 폴더에서 실행하면 다른 작업 세션과 섞이지 않는다.
 
-사전 확인: `type -t iv` → 출력이 없어야 한다. `homework/interview/` 폴더가 있어야 한다 (저장소에 포함).
+사전 확인: `type -t iv` → 출력이 없어야 한다. 저장소 최상위 `interview/` 폴더가 있어야 한다 (저장소에 포함).
 경로는 PC마다 다를 수 있으니, 다른 PC에서는 `D`를 실제 경로로 바꾼다.
 
 `~/.bashrc` 맨 아래에 없으면 추가:
 ```bash
-# iv : 면접 포트폴리오 토론 전용 Claude 세션 (homework/interview 폴더)
+# iv : 면접 포트폴리오 토론 전용 Claude 세션 (System_Verilog/interview 폴더)
 #   처음이면 'interview' 이름으로 새 세션, 이후로는 그 폴더의 마지막 대화를 이어서 열기
 iv() {
-    local D=/mnt/c/26_AI_CAMP/System_Verilog/homework/interview
+    local D=/mnt/c/26_AI_CAMP/System_Verilog/interview
     local S="$HOME/.claude/projects/$(echo "$D" | sed 's#[/_]#-#g')"
     cd "$D" || return
     if ls "$S"/*.jsonl >/dev/null 2>&1; then
@@ -1311,7 +1311,8 @@ iv() {
     fi
 }
 ```
-- `--add-dir ..`: 상위 `homework/`의 숙제 PDF, `homework.md`를 권한 확인 없이 읽기 위함
+- `--add-dir ..`: 상위 저장소 전체(`homework/homework_verilog/`의 숙제 PDF · `homework.md` 등)를 권한 확인 없이 읽기 위함
+- 폴더를 옮기면 세션 기록 폴더 이름도 바뀌어 `claude -c`가 이전 대화를 못 찾음 → 이전 기록 폴더의 `*.jsonl`을 새 경로 이름의 기록 폴더로 복사 (2026-11-03 `verilog/homework/interview` → `interview` 이동 시 수행)
 - Claude Code는 세션 기록을 `~/.claude/projects/<경로의 / 와 _ 를 - 로 바꾼 이름>/`에 저장 → 그 폴더에 기록이 있으면 이어 열기
 
 검증:
@@ -1761,7 +1762,7 @@ kc                                                                      # → 0 
 - [ ] vim으로 md를 열면 제목이 단계별 색, `**`·`` ` ``·링크 url이 숨겨지고 커서 줄에서만 보임, 표의 `|`가 흐림
 - [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
 - [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
-- [ ] `iv` 입력 시 `homework/interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
+- [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 
 ## 사용자에게 전달할 사용법 요약
 

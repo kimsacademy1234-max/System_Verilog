@@ -42,8 +42,6 @@ class transaction; // -> 벡터, 스티뮬러스를 생성하기위한 사용자
 
 
 
-
-
 endclass 
 
 
@@ -102,7 +100,6 @@ class driver;
 		gen2drv_mbox = gen2drv_mbox_a;
 
 	endfunction 
-
 
 
 	task run();
