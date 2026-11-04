@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# simkill : 안 끝나는 Vivado 시뮬레이션(xsim) 강제 종료 → xsim_build 파일 잠금 해제
+#   simkill      시뮬 프로세스(xsimk, xsim, xelab, xvlog)만 종료
+#   simkill -a   Vivado 본체(vivado.exe)까지 같이 종료
+procs=(xsimk.exe xsim.exe xelab.exe xvlog.exe)
+[ "$1" = "-a" ] && procs+=(vivado.exe)
+
+killed=0
+for p in "${procs[@]}"; do
+    # Windows 프로세스 목록에서 PID 찾기 (CSV: "이름","PID",...)
+    pids=$(tasklist.exe /FO CSV /NH /FI "IMAGENAME eq $p" 2>/dev/null | tr -d '\r' | grep -i "^\"$p\"" | cut -d'"' -f4)
+    for pid in $pids; do
+        taskkill.exe /F /PID "$pid" >/dev/null 2>&1 && { echo "종료: $p (PID $pid)"; killed=1; }
+    done
+done
+
+[ $killed = 0 ] && echo "실행 중인 시뮬 프로세스 없음"
+exit 0

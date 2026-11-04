@@ -3,3 +3,6 @@
 *.swo
 *~
 ~$*
+
+# xsv 빌드 폴더
+xsim_build/

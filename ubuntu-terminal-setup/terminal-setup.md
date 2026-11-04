@@ -6,6 +6,14 @@
 
 ## 업데이트 이력
 
+### 2026-11-04 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 26단계 | `xsv`: Ubuntu(WSL) 터미널에서 Vivado xsim 시뮬레이션 실행 (`xvlog` → `xelab` → `xsim`). `xsv -g`로 파형 창, 창 Tcl 콘솔 `rl`로 다시 컴파일 + 파형 갱신, `xsv-re` / `xsv-kill` / `xsv-clean` | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`), `~/.bashrc` |
+| 추가 | 26-3단계 | `simkill`: 안 끝나는 시뮬(0ns 무한 루프 등) 강제 종료 → `xsim_build/` 파일 잠금 해제. `simkill -a`는 `vivado.exe`까지 | `~/.local/bin/simkill`(저장소 `ubuntu-terminal-setup/simkill`) |
+| 추가 | 27단계 | vim Verilog/SV 키워드 역할별 색: `module`/`class`/`interface` 빨강, `task`/`function` 파랑, `initial`/`always` 주황, 타입 노랑, 포트 방향 청록, `//////` 구분선 주석 연보라 (전에는 전부 같은 색이라 경계가 안 보임) | `~/.vim/after/syntax/verilog.vim`, `~/.vim/after/syntax/systemverilog.vim`, `~/.vimrc` |
+
 ### 2026-10-30 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -124,6 +132,8 @@
 | 23 | vim에서 md를 열면 제목·굵게·코드·표가 색으로 구분되고 `**` 같은 기호는 숨겨져서 읽기 좋게 | `~/.vimrc`, `~/.vim/after/syntax/markdown.vim` |
 | 24 | vim에서 `:glow` → md를 렌더링한 화면을 vim 화면 전체로 보기 (`q`로 복귀) | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
 | 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 | `~/.vim/keystate.ps1`, `~/.vimrc` |
+| 26 | `xsv`로 터미널에서 Vivado xsim 시뮬 실행 (`-g` 파형 창, `rl` 다시 컴파일) + `simkill`로 안 끝나는 시뮬 강제 종료 | `~/.xsv.sh`, `~/.bashrc`, `~/.local/bin/simkill` |
+| 27 | vim에서 Verilog/SV 키워드를 역할별 색으로 (`module`/`class` 경계, `task`, `initial`, 타입, 포트 방향, 구분선 주석) | `~/.vim/after/syntax/`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -1732,6 +1742,143 @@ kc                                                                      # → 0 
 
 ---
 
+## 26단계. `xsv`: 터미널에서 Vivado xsim 시뮬레이션 실행
+
+Vivado GUI를 열지 않고 Ubuntu(WSL) 터미널에서 SystemVerilog TB를 바로 돌린다 (2026-11-04).
+- WSL에서 Windows Vivado의 `xvlog.bat` → `xelab.bat` → `xsim.bat`을 `cmd.exe`로 차례로 실행한다. 경고/오류 줄만 터미널에 보여 주고, 시뮬 출력(`$display`)은 그대로 출력한다.
+- `xsv -g`는 파형 창(xsim GUI)을 띄운다. 창 Tcl 콘솔에 `rl`을 치면 같은 창에서 다시 컴파일하고 파형을 갱신한다 (신호 배치 유지).
+- 빌드 결과는 실행한 폴더의 `xsim_build/`에 생긴다. 스냅샷 이름이 `xsv`는 `sim_r`, `xsv -g`/`rl`은 `sim`으로 달라서, 파형 창을 연 채로 `xsv`를 실행해도 서로 충돌하지 않는다.
+- Windows 프로그램이 파일을 읽어야 하므로 **`/mnt/c`, `/mnt/d` 같은 Windows 드라이브 아래에서만** 실행된다 (`~/` 아래에서는 안내 메시지만 나옴).
+- 함수는 `~/.xsv.sh`에 두고 `~/.bashrc`에서 불러온다.
+
+사전 확인: `ls /mnt/c/Xilinx/Vivado/2020.2/bin/xsim.bat` → 파일이 있어야 함 (경로나 버전이 다르면 `xsv.sh`의 Vivado 경로 두 곳 `VIV='C:\Xilinx\Vivado\2020.2\bin'`, `set bin {C:/Xilinx/Vivado/2020.2/bin}`을 그 PC에 맞게 고친다). `grep -c 'xsv.sh' ~/.bashrc` → `0` (이미 있으면 건너뜀).
+
+### 26-1. 함수 파일 복사 + `~/.bashrc` 맨 아래에 추가
+`~/.bashrc` 백업(`cp ~/.bashrc ~/.bashrc.bak_xsv`) 후:
+```bash
+cp <저장소>/ubuntu-terminal-setup/xsv.sh ~/.xsv.sh
+echo '[ -f ~/.xsv.sh ] && source ~/.xsv.sh' >> ~/.bashrc
+source ~/.bashrc
+type -t xsv xsv-re
+# → function / function
+```
+
+### 26-2. 사용법
+
+| 명령 | 역할 |
+|---|---|
+| `xsv <top_module> <파일들...>` | 시뮬 실행, 결과를 터미널에 출력 (예: `xsv tb_adder tb_adder.sv ../adder.sv`) |
+| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, 신호는 직접 추가) |
+| `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 |
+| `xsv-re` / `xsv -re` | 이 터미널에서 마지막으로 실행한 xsv 다시 실행 |
+| `xsv-kill` | xsv 파형 창 닫기 |
+| `xsv-clean` | 파형 창 닫기 + `xsim_build/` 삭제 |
+
+> - 첫 인자는 파일명이 아니라 TB 안의 **`module` 이름**이다. 파일 경로는 실행 위치 기준 상대 경로.
+> - git 저장소 안에서 쓴다면 `.gitignore`에 `xsim_build/`를 넣어 빌드 결과가 커밋되지 않게 한다.
+
+검증 (Windows `%TEMP%` 아래 임시 폴더에서 1줄짜리 TB 실행 후 삭제):
+```bash
+cd /mnt/c && W=$(wslpath "$(cmd.exe /c echo %TEMP% 2>/dev/null | tr -d '\r')")/xsv_test
+rm -rf "$W"; mkdir -p "$W" && cd "$W"
+printf 'module tb_t;\n  initial begin\n    $display("xsv ok");\n    $finish;\n  end\nendmodule\n' > tb_t.sv
+xsv tb_t tb_t.sv | tail -4
+# → "xsv ok" 와 "$finish called at time : 0 fs" 가 나오면 성공, xsim_build/ 생성됨
+cd /mnt/c && rm -rf "$W"
+```
+파형 창은 자동 검증이 어렵다 → 사용자에게 TB 폴더에서 `xsv -g ...`로 창을 띄우고, TB를 고친 뒤 창 Tcl 콘솔에 `rl`을 쳐서 파형이 갱신되는지 확인받는다.
+
+### 26-3. `simkill`: 안 끝나는 시뮬 강제 종료
+TB에 지연 없는 `forever` 루프가 있으면 시간이 0ns에서 멈춘 채 xsim이 끝나지 않고(`xsim.log`가 계속 커짐), `xsim_build/`가 잠겨서 지워지지도 않는다. 이럴 때 Windows의 xsim 프로세스를 강제로 끈다 (2026-11-04).
+- 기본: `xsimk.exe`, `xsim.exe`, `xelab.exe`, `xvlog.exe` 종료. `-a`를 붙이면 `vivado.exe`까지.
+- 끈 프로세스 이름과 PID를 출력하고, 없으면 `실행 중인 시뮬 프로세스 없음`. (`taskkill` 한글 메시지는 깨져서 숨김)
+
+사전 확인: `type simkill` → not found (이미 있으면 건너뜀).
+```bash
+mkdir -p ~/.local/bin
+cp <저장소>/ubuntu-terminal-setup/simkill ~/.local/bin/simkill
+chmod +x ~/.local/bin/simkill
+simkill
+# → "실행 중인 시뮬 프로세스 없음" (돌고 있던 시뮬이 있으면 "종료: xsim.exe (PID ...)")
+```
+> `~/.local/bin`이 `PATH`에 없으면 `echo $PATH | grep -c .local/bin` → `0`. 그때는 새 터미널을 열거나(Ubuntu 기본 `~/.profile`이 폴더가 있으면 PATH에 넣음) `~/.bashrc`에 `export PATH="$HOME/.local/bin:$PATH"`를 추가한다.
+
+## 27단계. vim: Verilog/SV 키워드를 역할별 색으로 (모듈·클래스 경계가 잘 보이게)
+
+vim 내장 문법은 `module`, `class`, `task`, `logic`, `input`을 전부 같은 그룹(Statement)으로 칠해서, TB에 class가 여러 개 있으면 경계가 안 보인다. 역할별로 그룹을 나누고 색을 따로 준다 (2026-11-04).
+
+| 그룹 | 키워드 | 색 (catppuccin mocha) |
+|---|---|---|
+| `vlogBlock` | `module` `interface` `class` `package` `program` (+ `end~`) | 빨강 `#f38ba8`, 굵게 |
+| `vlogMethod` | `task` `function` (+ `end~`) | 파랑 `#89b4fa`, 굵게 |
+| `vlogProc` | `initial` `always` `always_ff/comb/latch` `final` | 주황 `#fab387`, 굵게 |
+| `vlogType` | `logic` `bit` `byte` `int` `wire` `reg` `string` `void` … | 노랑 `#f9e2af` |
+| `vlogDir` | `input` `output` `inout` `ref` | 청록 `#94e2d5` |
+| `vlogSeparator` | `//////`, `// =====`, `// -----`처럼 기호 5개 이상 이어지는 주석 줄 | 연보라 `#b4befe`, 굵게 |
+
+- `.sv`는 `systemverilog.vim`이 `class`·`logic` 등을 자기 그룹으로 다시 잡기 때문에, `after/syntax/systemverilog.vim`에서 한 번 더 적용한다.
+- 색은 22단계처럼 `ColorScheme` 이벤트에서 다시 칠한다 → `theme`로 바꿔도 유지.
+
+사전 확인: `ls ~/.vim/after/syntax/verilog.vim` → 없어야 함, `grep -c 'VlogColors' ~/.vimrc` → `0` (이미 있으면 건너뜀).
+
+### 27-1. 문법 그룹 파일 2개 만들기 (`mkdir -p ~/.vim/after/syntax`)
+`~/.vim/after/syntax/verilog.vim`:
+```vim
+" Verilog / SystemVerilog 키워드를 역할별로 나눠 색 구분 (원래는 module, logic, task 가 전부 같은 색)
+" 색 자체는 ~/.vimrc 의 s:VlogColors() 에서 지정 (테마를 바꿔도 다시 칠함)
+
+" 구조 경계 : module / class / interface ... 시작과 끝
+syntax keyword vlogBlock  module endmodule macromodule interface endinterface class endclass
+syntax keyword vlogBlock  package endpackage program endprogram
+" 메서드 : task / function
+syntax keyword vlogMethod task endtask function endfunction
+" 실행 블록 : initial / always ...
+syntax keyword vlogProc   initial always always_ff always_comb always_latch final
+" 데이터 타입
+syntax keyword vlogType   logic bit byte int integer shortint longint wire reg real shortreal string void
+" 포트 방향
+syntax keyword vlogDir    input output inout ref
+" 구분선 주석 : ////////////// , // ====== , // ------ 처럼 기호가 5개 이상 이어지는 줄
+syntax match   vlogSeparator "^\s*//\s*[/=\-*#~]\{5,}.*$"
+```
+`~/.vim/after/syntax/systemverilog.vim`:
+```vim
+" systemverilog.vim 이 class / interface / logic 등을 자기 그룹으로 다시 잡기 때문에 한 번 더 적용
+execute "source " . expand("<sfile>:p:h") . "/verilog.vim"
+```
+
+### 27-2. `~/.vimrc`에 색 지정 추가
+`~/.vimrc` 백업(`cp ~/.vimrc ~/.vimrc.bak_vlogcolor`) 후 23단계 `call s:MdColors()` 줄 바로 아래(없으면 맨 아래)에 추가:
+```vim
+" ==========================================
+"  Verilog / SV 색 : 역할별로 다른 색 → module / class / task 경계가 잘 보이게
+" ==========================================
+" 그룹 정의는 ~/.vim/after/syntax/verilog.vim (catppuccin mocha 팔레트)
+function! s:VlogColors()
+    highlight vlogBlock     guifg=#f38ba8 gui=bold ctermfg=211 cterm=bold
+    highlight vlogMethod    guifg=#89b4fa gui=bold ctermfg=111 cterm=bold
+    highlight vlogProc      guifg=#fab387 gui=bold ctermfg=216 cterm=bold
+    highlight vlogType      guifg=#f9e2af ctermfg=223
+    highlight vlogDir       guifg=#94e2d5 ctermfg=116
+    highlight vlogSeparator guifg=#b4befe gui=bold ctermfg=147 cterm=bold
+endfunction
+augroup vlog_colors
+    autocmd!
+    autocmd ColorScheme * call s:VlogColors()
+```
+> **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
+
+검증 (`.sv` 임시 파일에서 키워드마다 그룹·색 확인):
+```bash
+T=$(mktemp -d); printf '////////////////\nclass c;\n  logic a;\n  task run(input int n);\n  endtask\nendclass\nmodule m;\n  initial begin end\nendmodule\n' > $T/t.sv
+vim -Nu ~/.vimrc -es "$T/t.sv" +'redir! > /dev/stdout | for [l,c] in [[1,1],[2,1],[3,3],[4,3],[4,12],[7,1],[8,3]] | let i=synID(l,c,1) | echo synIDattr(i,"name") synIDattr(synIDtrans(i),"fg#") | endfor | redir END' +'qa!'
+rm -rf $T
+# → vlogSeparator #b4befe / vlogBlock #f38ba8 / vlogType #f9e2af / vlogMethod #89b4fa / vlogDir #94e2d5 / vlogBlock #f38ba8 / vlogProc #fab387
+```
+
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1763,6 +1910,9 @@ kc                                                                      # → 0 
 - [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
 - [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
 - [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
+- [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸
+- [ ] `simkill` → `실행 중인 시뮬 프로세스 없음` (시뮬이 돌고 있으면 끈 프로세스와 PID 출력)
+- [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -1792,6 +1942,10 @@ kc                                                                      # → 0 
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
 | vim 바꾸기·검색에서 단어 자동완성 | `:%s/w` 또는 `/w` 입력 후 `Tab` (계속 누르면 다음 후보) |
 | Caps Lock / 한글 켜졌는지 확인 | vim 오른쪽 위에 `CAPS` / `한`이 보이면 켜진 상태 |
+| Vivado 시뮬 실행 (터미널 출력) / 파형 창 | `xsv <top> <파일들>` / `xsv -g <top> <파일들>` |
+| 파형 창에서 TB 다시 컴파일 + 갱신 / 마지막 xsv 다시 실행 | 창 Tcl 콘솔 `rl` / `xsv-re` |
+| xsv 파형 창 닫기 / 빌드 폴더까지 삭제 | `xsv-kill` / `xsv-clean` |
+| 안 끝나는 시뮬 강제 종료 (`xsim_build` 안 지워질 때) / Vivado까지 | `simkill` / `simkill -a` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -1820,3 +1974,6 @@ kc                                                                      # → 0 
 - md 보기 좋게: `~/.vimrc`의 "md 파일을 vim 안에서 보기 좋게" 섹션 삭제, `rm ~/.vim/after/syntax/markdown.vim` (또는 `~/.vimrc.bak_mdview` 복원)
 - glow: `~/.vimrc`의 ":Glow" 섹션 삭제, 19단계 `l:alias`에서 `'glow': 'Glow'` 삭제, `rm ~/.local/bin/glow`, `rm -rf ~/.config/glow` (또는 `~/.vimrc.bak_glow` 복원)
 - Caps Lock / 한글 표시: `~/.vimrc`의 "Caps Lock / 한글 표시" 섹션 삭제, `rm ~/.vim/keystate.ps1` (또는 `~/.vimrc.bak_capsind` 복원)
+- xsv: `~/.bashrc`의 `[ -f ~/.xsv.sh ] && source ~/.xsv.sh` 줄 삭제, `rm ~/.xsv.sh` (또는 `~/.bashrc.bak_xsv` 복원)
+- simkill: `rm ~/.local/bin/simkill`
+- Verilog 키워드 색: `~/.vimrc`의 "Verilog / SV 색" 섹션 삭제, `rm ~/.vim/after/syntax/verilog.vim ~/.vim/after/syntax/systemverilog.vim` (또는 `~/.vimrc.bak_vlogcolor` 복원)
