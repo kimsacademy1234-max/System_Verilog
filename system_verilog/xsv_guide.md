@@ -13,7 +13,7 @@ xsv [-g] <top_module> <파일들...>
 | 명령 | 역할 |
 |---|---|
 | `xsv tb_adder tb_adder_no_comment.sv ../adder.sv` | 시뮬레이션 실행, 결과 터미널 출력 (열린 파형 창 유지) |
-| `xsv -g tb_adder tb_adder_no_comment.sv ../adder.sv` | 파형 창 띄우기 (기존 파형 창 닫고 새로, run all, 신호는 직접 추가) |
+| `xsv -g tb_adder tb_adder_no_comment.sv ../adder.sv` | 파형 창 띄우기 (기존 파형 창 닫고 새로, run all, top·interface·DUT 신호 자동 추가) |
 | `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 (신호 배치 유지) |
 | `xsv-re` / `xsv -re` | 마지막 xsv 명령 다시 실행 (마지막이 `-g`면 파형 창 닫고 새로 띄움) |
 | `xsv-kill` | xsv 파형 창 닫기 |

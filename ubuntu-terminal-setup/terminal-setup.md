@@ -13,6 +13,7 @@
 | 추가 | 26단계 | `xsv`: Ubuntu(WSL) 터미널에서 Vivado xsim 시뮬레이션 실행 (`xvlog` → `xelab` → `xsim`). `xsv -g`로 파형 창, 창 Tcl 콘솔 `rl`로 다시 컴파일 + 파형 갱신, `xsv-re` / `xsv-kill` / `xsv-clean` | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`), `~/.bashrc` |
 | 추가 | 26-3단계 | `simkill`: 안 끝나는 시뮬(0ns 무한 루프 등) 강제 종료 → `xsim_build/` 파일 잠금 해제. `simkill -a`는 `vivado.exe`까지 | `~/.local/bin/simkill`(저장소 `ubuntu-terminal-setup/simkill`) |
 | 추가 | 27단계 | vim Verilog/SV 키워드 역할별 색: `module`/`class`/`interface` 빨강, `task`/`function` 파랑, `initial`/`always` 주황, 타입 노랑, 포트 방향 청록, `//////` 구분선 주석 연보라 (전에는 전부 같은 색이라 경계가 안 보임) | `~/.vim/after/syntax/verilog.vim`, `~/.vim/after/syntax/systemverilog.vim`, `~/.vimrc` |
+| 변경 | 26단계 | `xsv -g` 파형 창에 신호 자동 추가 (top + 바로 아래 interface·DUT, scope마다 구분선). 전에는 빈 창이라 class 기반 TB에서 파형이 안 보였음. `rl` 때 저장된 배치가 없으면 똑같이 자동 추가 | `~/.xsv.sh` |
 
 ### 2026-10-30 업데이트
 
@@ -1747,6 +1748,7 @@ kc                                                                      # → 0 
 Vivado GUI를 열지 않고 Ubuntu(WSL) 터미널에서 SystemVerilog TB를 바로 돌린다 (2026-11-04).
 - WSL에서 Windows Vivado의 `xvlog.bat` → `xelab.bat` → `xsim.bat`을 `cmd.exe`로 차례로 실행한다. 경고/오류 줄만 터미널에 보여 주고, 시뮬 출력(`$display`)은 그대로 출력한다.
 - `xsv -g`는 파형 창(xsim GUI)을 띄운다. 창 Tcl 콘솔에 `rl`을 치면 같은 창에서 다시 컴파일하고 파형을 갱신한다 (신호 배치 유지).
+- 파형에는 top 신호와 바로 아래 scope(interface 인스턴스, DUT 등)의 신호를 scope 이름 구분선과 함께 자동으로 넣는다. class 기반 TB는 top에 class 핸들만 있어서 top만 넣으면 파형이 비어 보이기 때문이다 (2026-11-04 수정).
 - 빌드 결과는 실행한 폴더의 `xsim_build/`에 생긴다. 스냅샷 이름이 `xsv`는 `sim_r`, `xsv -g`/`rl`은 `sim`으로 달라서, 파형 창을 연 채로 `xsv`를 실행해도 서로 충돌하지 않는다.
 - Windows 프로그램이 파일을 읽어야 하므로 **`/mnt/c`, `/mnt/d` 같은 Windows 드라이브 아래에서만** 실행된다 (`~/` 아래에서는 안내 메시지만 나옴).
 - 함수는 `~/.xsv.sh`에 두고 `~/.bashrc`에서 불러온다.
@@ -1768,7 +1770,7 @@ type -t xsv xsv-re
 | 명령 | 역할 |
 |---|---|
 | `xsv <top_module> <파일들...>` | 시뮬 실행, 결과를 터미널에 출력 (예: `xsv tb_adder tb_adder.sv ../adder.sv`) |
-| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, 신호는 직접 추가) |
+| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, top 신호와 바로 아래 interface·DUT 신호를 구분선과 함께 자동 추가) |
 | `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 |
 | `xsv-re` / `xsv -re` | 이 터미널에서 마지막으로 실행한 xsv 다시 실행 |
 | `xsv-kill` | xsv 파형 창 닫기 |

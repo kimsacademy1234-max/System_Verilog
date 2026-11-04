@@ -40,6 +40,16 @@ xsv() {
       local tsrcs="" s
       for s in "${srcs[@]}"; do tsrcs+=" {${s//\\//}}"; done
       cat > wave.tcl <<EOF
+# 파형에 신호 자동 추가: top 신호 + 바로 아래 scope(interface, DUT 등)마다 구분선 + 신호
+# (class 기반 TB 는 top 에 class 핸들만 있어서 top 만 넣으면 파형이 비어 있음)
+proc xsv_add_waves {} {
+  catch {add_wave /$top}
+  foreach s [get_scopes /$top/*] {
+    if {[llength [get_objects \$s/*]] == 0} continue
+    add_wave_divider [file tail \$s]
+    catch {add_wave \$s}
+  }
+}
 proc rl {} {
   set bin {C:/Xilinx/Vivado/2020.2/bin}
   catch {save_wave_config xsv.wcfg}
@@ -49,13 +59,14 @@ proc rl {} {
   puts "rl: elaborate"
   if {[catch {exec -ignorestderr \$bin/xelab.bat $top -s sim -debug typical} m]} { puts \$m; puts "rl: elaborate FAIL (elaborate.log)"; return }
   xsim sim
-  if {[file exists xsv.wcfg]} { catch {open_wave_config xsv.wcfg} }
+  if {![file exists xsv.wcfg] || [catch {open_wave_config xsv.wcfg}]} { xsv_add_waves }
   log_wave -recursive *
   run all
   puts "rl: done"
 }
 file delete -force xsv.wcfg
 log_wave -recursive *
+xsv_add_waves
 run all
 puts "xsv: edit TB, then type 'rl' here to reload"
 EOF
