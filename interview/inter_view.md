@@ -799,6 +799,17 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
   - "같은 주소를 할당받음"이 아닌 "같은 참조 값을 복사받음" → 객체는 1개
   - 한쪽에서 객체 내용을 바꾸면 다른 쪽에서도 바뀐 내용이 보임
 
+- **Handle 변수 위치 vs 값**
+
+  | | env의 `mbx` | driver의 `gen2drv_mbox` |
+  |---|---|---|
+  | 변수 칸 위치 | env 객체 안 | driver 객체 안 → **서로 다름** |
+  | 칸에 든 값 | mailbox 객체 참조값 | **같은 참조값** (복사본) |
+
+  - Handle → 객체 1단계 참조만 존재, handle이 다른 handle 변수를 가리키는 구조(C의 `**ptr`) 없음
+  - 칸이 독립 → 이후 한쪽 handle에 다른 값을 대입해도 다른 쪽 handle 값은 그대로
+  - ⚠️ task · function의 `ref` 인자 = 호출 중에만 변수 자체의 별칭, class 멤버에 대입하는 순간은 역시 참조 값 복사
+
 - **흔한 실수 : 받은 쪽에서 다시 `new`**
 
   ```systemverilog
@@ -836,13 +847,17 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
   - **A.** Generator와 다른 mailbox를 쓰게 돼 transaction이 전달되지 않음 → driver `get()`에서 hang
 - **Q.** `new t1`로 복사했는데 내부 객체 값이 같이 바뀌는 이유
   - **A.** Shallow copy라 handle 멤버는 참조 값만 복사 → 하위 객체 공유 → deep copy 필요
+- **Q.** env가 driver에 mailbox를 넘긴 뒤 자기 `mbx`에 다시 `new`하면 driver는 어느 mailbox를 쓰는지
+  - **A.** 옛 mailbox → driver handle은 env의 변수가 아닌 객체 참조값을 복사해 갖고 있으므로 env 칸 값이 바뀌어도 영향 없음 / 이후 generator에 새 mailbox를 넘기면 gen · drv가 서로 다른 mailbox → driver `get()` hang
 
 **헷갈리기 쉬운 점**
 - 다른 객체에 넘기는 것 = 주소 "할당"이 아닌 참조 값 "복사"
+- 클래스 안에 생기는 것 = mailbox 객체가 아닌 **handle 칸** / 칸 위치는 각자 다르고 같은 것은 칸에 든 값(참조값)
+- Handle은 다른 handle 변수를 가리키지 않음 → 객체를 직접 가리킴
 - 공유 객체는 상위에서 1번만 `new`
 - Handle 주소 ≠ 객체의 영구 ID (해제 후 재사용 가능)
 
-<sub>근거 : IEEE 1800-2017 Ch.8 (object handle 대입, shallow copy `new`) · 출처 : 수업 코드 (generator · mailbox), 2026-11-03</sub>
+<sub>근거 : IEEE 1800-2017 Ch.8 (object handle 대입, shallow copy `new`) · 13.5.2 (`ref` 인자) · 출처 : 수업 코드 (generator · mailbox), 2026-11-03 · 수업 중 의문, 2026-11-04</sub>
 
 ---
 
@@ -1168,13 +1183,16 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
   - **A.** 아님 → 최대 handle 10칸이라는 제한일 뿐, 객체는 `put` 전에 각자 `new`로 생성
 - **Q.** `put(tr)` 후 `tr.data`를 바꾸면 mailbox 안 항목도 바뀌는지
   - **A.** 바뀜 → mailbox 칸과 tr이 같은 객체를 참조 (handle 값 복사이지 객체 복사가 아님) → put 후에는 그 객체를 수정하지 말고 새로 `new`
+- **Q.** 10개 put 후 3개 get 하면, 빠진 3자리에 새 참조값이 들어가는지
+  - **A.** 아님 → mailbox = 고정 칸 배열이 아닌 **FIFO** → get은 앞에서 꺼내고 put은 항상 맨 뒤에 추가, 꺼내는 순서는 h4부터 / bounded면 개수 상한이라 3개 get 후 3개 put은 block 없음 / ⚠️ 내부 메모리 재사용 여부는 구현 사항
+  - 별개 : 꺼낸 객체가 GC되면 그 **heap 주소**는 새 `new`가 재사용 가능 (Q5-4) → mailbox 순서와 무관
 
 **헷갈리기 쉬운 점**
 - `#(transaction)` = 타입 이름표, 크기 예약 아님
 - Mailbox에 저장 = **tr의 값(객체 참조)**, tr 변수 자체의 위치가 아님
 - 객체를 만드는 것은 언제나 `new` (mailbox 생성 · bound와 무관)
 
-<sub>근거 : IEEE 1800-2017 15.4 Mailboxes (15.4.9 parameterized mailboxes) · Ch.8 (object handle) · 출처 : 수업 중 의문, 2026-11-03</sub>
+<sub>근거 : IEEE 1800-2017 15.4 Mailboxes (15.4.9 parameterized mailboxes, FIFO 순서) · Ch.8 (object handle) · 출처 : 수업 중 의문, 2026-11-03 · 2026-11-04</sub>
 
 ---
 
@@ -1223,6 +1241,17 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
   - Driver · monitor의 vif가 같은 instance를 참조 → mailbox handle 공유(Q5-4)와 같은 원리
   - ⚠️ 신호 값의 내부 저장 구조(값, driver 목록, 이벤트 대기 목록 등)는 시뮬레이터 구현 사항
 
+- **선언 시 할당되는 것 = 참조 칸 1개 (객체 아님), 위치는 선언 위치 규칙(Q5-2)을 따름**
+
+  | 선언 위치 | vif 칸 위치 | 생성 | 소멸 |
+  |---|---|---|---|
+  | Class 멤버 | Heap (그 객체 안) | 객체 `new()` 때 | 객체 GC 때 |
+  | Module · interface · program 안, `static` 변수 | Static data 영역 | Elaboration | 시뮬레이션 끝 |
+  | `automatic` task · function 지역 변수 · 인자 (class method 인자 포함) | Stack | 호출 때 | 반환 때 |
+
+  - 어느 경우든 칸의 값 = instance 참조값 (초기 null), ⚠️ 칸 크기는 구현마다 다름
+  - Vif를 여러 개 선언해도 늘어나는 것은 참조 칸뿐 → 실제 신호(interface instance)는 1벌
+
 - **선언 vs 대입**
 
   | 시점 | vif 상태 |
@@ -1261,8 +1290,10 @@ CLK 핀      ____|‾‾‾‾‾‾‾‾‾
 - `virtual` 선언 = 자동 연결이 아님 → **null**, 대입해야 실제 instance를 가리킴
 - Virtual interface가 가리키는 것 = heap 객체가 아닌 **static interface instance**
 - Interface instance는 `new`로 만들지 않음 (elaboration 때 생성)
+- Vif 선언 = 객체 생성 아님 → 참조 칸만, 칸 위치는 선언 위치(class 멤버면 heap)에 따름
+- 가상 메모리 ≠ heap → 가상 메모리 = 프로세스 주소 공간 전체 (static · heap · stack 모두 포함), interface instance도 가상 메모리 안의 static 영역
 
-<sub>근거 : IEEE 1800-2017 25.9 Virtual interfaces · Ch.8 (object handle) · 출처 : 수업 중 의문, 2026-11-03</sub>
+<sub>근거 : IEEE 1800-2017 25.9 Virtual interfaces · Ch.8 (object handle) · 출처 : 수업 중 의문, 2026-11-03 · 2026-11-04</sub>
 
 ---
 
