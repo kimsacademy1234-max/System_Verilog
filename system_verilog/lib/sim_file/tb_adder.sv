@@ -73,7 +73,7 @@ class generator;
 		// tr의 랜덤 스티뮬러스 - class 기본제공 function 
 		//dr -> a,b를 어떻게 드라이브 할 것인가. -> 가상 인터페이스로 연결해야한다. 이건 SW 따라서 Virtual 키워드를 써야한다. 
 
-		repeat(100) begin		
+		repeat(10) begin		
 		tr = new; 
 		tr.randomize();
 		tr.debug_print("GEN");
@@ -153,7 +153,8 @@ class environment;
 	
 
 		end
-
+		#10;
+		$display("env finish");
 
 	endtask 
 
