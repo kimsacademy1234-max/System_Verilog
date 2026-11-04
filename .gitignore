@@ -6,3 +6,11 @@
 
 # xsv 빌드 폴더
 xsim_build/
+
+# xsim 실행 결과 (xsv 밖에서 돌린 시뮬 포함)
+xsim*.log
+*.jou
+*.wdb
+*.pb
+webtalk*
+.Xil/
