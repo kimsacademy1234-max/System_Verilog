@@ -6,6 +6,12 @@
 
 ## 업데이트 이력
 
+### 2026-11-05 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 26단계 | `xsv -s <top> <RTL 파일들>`: Vivado 본체를 프로젝트 없이 띄워 RTL 회로도(Schematic) 열기 (`synth_design -rtl`). Vivado Tcl 콘솔 `rs`로 RTL 수정 후 회로도 갱신. `xsv-kill` / `xsv-clean`이 회로도 창도 닫음 | `~/.xsv.sh` |
+
 ### 2026-11-04 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -1748,6 +1754,7 @@ kc                                                                      # → 0 
 Vivado GUI를 열지 않고 Ubuntu(WSL) 터미널에서 SystemVerilog TB를 바로 돌린다 (2026-11-04).
 - WSL에서 Windows Vivado의 `xvlog.bat` → `xelab.bat` → `xsim.bat`을 `cmd.exe`로 차례로 실행한다. 경고/오류 줄만 터미널에 보여 주고, 시뮬 출력(`$display`)은 그대로 출력한다.
 - `xsv -g`는 파형 창(xsim GUI)을 띄운다. 창 Tcl 콘솔에 `rl`을 치면 같은 창에서 다시 컴파일하고 파형을 갱신한다 (신호 배치 유지).
+- `xsv -s`는 Vivado 본체(`vivado.bat -mode gui`)를 프로젝트 없이 띄워 `read_verilog` → `synth_design -rtl` → `show_schematic`으로 RTL 회로도를 연다 (Vivado GUI의 RTL Analysis → Schematic과 같음). **합성 가능한 RTL만** 그릴 수 있고 class·`initial`이 있는 TB는 안 된다. Vivado가 뜨기까지 1분 정도 걸린다. 스크립트는 `xsim_build/xsv_schem.tcl`.
 - 파형에는 top 신호와 바로 아래 scope(interface 인스턴스, DUT 등)의 신호를 scope 이름 구분선과 함께 자동으로 넣는다. class 기반 TB는 top에 class 핸들만 있어서 top만 넣으면 파형이 비어 보이기 때문이다 (2026-11-04 수정).
 - 빌드 결과는 실행한 폴더의 `xsim_build/`에 생긴다. 스냅샷 이름이 `xsv`는 `sim_r`, `xsv -g`/`rl`은 `sim`으로 달라서, 파형 창을 연 채로 `xsv`를 실행해도 서로 충돌하지 않는다.
 - Windows 프로그램이 파일을 읽어야 하므로 **`/mnt/c`, `/mnt/d` 같은 Windows 드라이브 아래에서만** 실행된다 (`~/` 아래에서는 안내 메시지만 나옴).
@@ -1772,9 +1779,11 @@ type -t xsv xsv-re
 | `xsv <top_module> <파일들...>` | 시뮬 실행, 결과를 터미널에 출력 (예: `xsv tb_adder tb_adder.sv ../adder.sv`) |
 | `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, top 신호와 바로 아래 interface·DUT 신호를 구분선과 함께 자동 추가) |
 | `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 |
+| `xsv -s <top_module> <RTL 파일들...>` | RTL 회로도 창 띄우기 (예: `xsv -s adder ../adder.sv`, 기존 xsv 회로도 창은 닫고 새로) |
+| `rs` (Vivado Tcl 콘솔) | RTL 수정 후 같은 창에서 회로도 다시 그리기 |
 | `xsv-re` / `xsv -re` | 이 터미널에서 마지막으로 실행한 xsv 다시 실행 |
-| `xsv-kill` | xsv 파형 창 닫기 |
-| `xsv-clean` | 파형 창 닫기 + `xsim_build/` 삭제 |
+| `xsv-kill` | xsv 파형 창 + 회로도 창 닫기 |
+| `xsv-clean` | 파형·회로도 창 닫기 + `xsim_build/` 삭제 |
 
 > - 첫 인자는 파일명이 아니라 TB 안의 **`module` 이름**이다. 파일 경로는 실행 위치 기준 상대 경로.
 > - git 저장소 안에서 쓴다면 `.gitignore`에 `xsim_build/`를 넣어 빌드 결과가 커밋되지 않게 한다.
@@ -1788,7 +1797,19 @@ xsv tb_t tb_t.sv | tail -4
 # → "xsv ok" 와 "$finish called at time : 0 fs" 가 나오면 성공, xsim_build/ 생성됨
 cd /mnt/c && rm -rf "$W"
 ```
-파형 창은 자동 검증이 어렵다 → 사용자에게 TB 폴더에서 `xsv -g ...`로 창을 띄우고, TB를 고친 뒤 창 Tcl 콘솔에 `rl`을 쳐서 파형이 갱신되는지 확인받는다.
+파형 창은 자동 검증이 어렵다 → 사용자에게 TB 폴더에서 `xsv -g ...`로 창을 띄우고, TB를 고친 뒤 창 Tcl 콘솔에 `rl`을 쳐서 파형이 갱신되는지 확인받는다. 회로도도 `xsv -s ...`로 창이 뜨고 RTL을 고친 뒤 `rs`로 바뀌는지 확인받는다.
+회로도 검증 (Vivado를 스크립트로 띄워 회로도를 SVG로 저장한 뒤 종료, 1~2분 걸림):
+```bash
+cd /mnt/c && W=$(wslpath "$(cmd.exe /c echo %TEMP% 2>/dev/null | tr -d '\r')")/xsv_schem_test
+rm -rf "$W"; mkdir -p "$W" && cd "$W"
+printf 'module add2(input logic [3:0] a, b, output logic [4:0] s);\n  assign s = a + b;\nendmodule\n' > add2.sv
+nohup(){ :; }; xsv -s add2 add2.sv; unset -f nohup        # 창은 띄우지 않고 xsim_build/xsv_schem.tcl 만 생성
+cd xsim_build && printf 'source xsv_schem.tcl\nwrite_schematic -format svg -force sch.svg\nexit\n' > t.tcl
+cmd.exe /c 'C:\Xilinx\Vivado\2020.2\bin\vivado.bat' -mode gui -nojournal -nolog -source t.tcl > /dev/null 2>&1
+grep -o 'RTL_ADD' sch.svg | head -1
+# → RTL_ADD 가 나오면 성공
+cd /mnt/c && rm -rf "$W"
+```
 
 ### 26-3. `simkill`: 안 끝나는 시뮬 강제 종료
 TB에 지연 없는 `forever` 루프가 있으면 시간이 0ns에서 멈춘 채 xsim이 끝나지 않고(`xsim.log`가 계속 커짐), `xsim_build/`가 잠겨서 지워지지도 않는다. 이럴 때 Windows의 xsim 프로세스를 강제로 끈다 (2026-11-04).
@@ -1912,7 +1933,7 @@ rm -rf $T
 - [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
 - [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
 - [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
-- [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸
+- [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (interface·DUT 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
 - [ ] `simkill` → `실행 중인 시뮬 프로세스 없음` (시뮬이 돌고 있으면 끈 프로세스와 PID 출력)
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라
 
@@ -1947,6 +1968,7 @@ rm -rf $T
 | Vivado 시뮬 실행 (터미널 출력) / 파형 창 | `xsv <top> <파일들>` / `xsv -g <top> <파일들>` |
 | 파형 창에서 TB 다시 컴파일 + 갱신 / 마지막 xsv 다시 실행 | 창 Tcl 콘솔 `rl` / `xsv-re` |
 | xsv 파형 창 닫기 / 빌드 폴더까지 삭제 | `xsv-kill` / `xsv-clean` |
+| RTL 회로도 보기 / 수정 후 다시 그리기 | `xsv -s <top> <RTL 파일들>` / Vivado Tcl 콘솔 `rs` |
 | 안 끝나는 시뮬 강제 종료 (`xsim_build` 안 지워질 때) / Vivado까지 | `simkill` / `simkill -a` |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저

@@ -5,7 +5,7 @@ Ubuntu(WSL) 터미널에서 Vivado xsim 시뮬레이션 실행
 ## 형식
 
 ```
-xsv [-g] <top_module> <파일들...>
+xsv [-g|-s] <top_module> <파일들...>
 ```
 
 ## 명령
@@ -14,9 +14,11 @@ xsv [-g] <top_module> <파일들...>
 |---|---|
 | `xsv tb_adder tb_adder_no_comment.sv ../adder.sv` | 시뮬레이션 실행, 결과 터미널 출력 (열린 파형 창 유지) |
 | `xsv -g tb_adder tb_adder_no_comment.sv ../adder.sv` | 파형 창 띄우기 (기존 파형 창 닫고 새로, run all, top·interface·DUT 신호 자동 추가) |
+| `xsv -s adder ../adder.sv` | RTL 회로도 창 띄우기 (Vivado 본체, 1분 정도 걸림, 합성 가능한 RTL만, TB 불가) |
+| `rs` (Vivado Tcl 콘솔) | RTL 수정 후 회로도 다시 그리기 |
 | `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 (신호 배치 유지) |
 | `xsv-re` / `xsv -re` | 마지막 xsv 명령 다시 실행 (마지막이 `-g`면 파형 창 닫고 새로 띄움) |
-| `xsv-kill` | xsv 파형 창 닫기 |
+| `xsv-kill` | xsv 파형 창 + 회로도 창 닫기 |
 | `xsv-clean` | 파형 창 닫기 + `xsim_build/` 삭제 |
 | `source ~/.bashrc` | 함수 수정 후 현재 터미널에 적용 |
 

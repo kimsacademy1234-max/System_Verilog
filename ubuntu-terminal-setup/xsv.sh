@@ -2,14 +2,19 @@ _xsv_kill_gui() {
   powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { (\$_.Name -eq 'xsim.exe' -and \$_.CommandLine -match 'sim -gui') -or (\$_.Name -eq 'xsimk.exe' -and \$_.CommandLine -match 'xsim\.dir/sim/xsimk') } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue; \$_.ProcessId }" 2>/dev/null | tr -d '\r' | grep -q . && sleep 1
 }
 
+_xsv_kill_schem() {
+  powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { \$_.Name -eq 'vivado.exe' -and \$_.CommandLine -match 'xsv_schem\.tcl' } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue; \$_.ProcessId }" 2>/dev/null | tr -d '\r' | grep -q . && sleep 1
+}
+
 xsv() {
   local VIV='C:\Xilinx\Vivado\2020.2\bin'
   local mode="-R"
   if [ "$1" = "-re" ]; then xsv-re; return; fi
   local args=("$@")
   if [ "$1" = "-g" ]; then mode="-gui"; shift; fi
+  if [ "$1" = "-s" ]; then mode="-schem"; shift; fi
   if [ $# -lt 2 ]; then
-    echo "usage: xsv [-g] <top_module> <file1.sv> [file2.sv ...]"
+    echo "usage: xsv [-g|-s] <top_module> <file1.sv> [file2.sv ...]"
     return 1
   fi
   case "$(pwd -P)" in
@@ -24,6 +29,31 @@ xsv() {
   done
   _XSV_LAST=("${args[@]}")
   _XSV_DIR="$PWD"
+  if [ "$mode" = "-schem" ]; then
+    # RTL 회로도: Vivado 본체를 프로젝트 없이 띄워 synth_design -rtl → Schematic 창 (합성 가능한 RTL 만 가능, TB 는 불가)
+    _xsv_kill_schem
+    mkdir -p xsim_build
+    local tsrcs="" s
+    for s in "${srcs[@]}"; do tsrcs+=" {${s//\\//}}"; done
+    cat > xsim_build/xsv_schem.tcl <<EOF
+read_verilog -sv$tsrcs
+proc rs {} {
+  catch {close_design}
+  puts "rs: elaborate $top"
+  if {[catch {synth_design -rtl -top $top -name rtl_1} m]} { puts \$m; puts "rs: FAIL (check top name; TB / non-synthesizable code cannot be drawn)"; return }
+  show_schematic [concat [get_cells] [get_ports]]
+  puts "rs: done"
+}
+rs
+puts "xsv: edit RTL, then type 'rs' here to reload schematic"
+EOF
+    (
+      cd xsim_build || exit 1
+      nohup cmd.exe /c "$VIV\\vivado.bat" -mode gui -nojournal -nolog -source xsv_schem.tcl > vivado_schem.log 2>&1 &
+    )
+    echo "xsv: Vivado 회로도 창을 띄우는 중 (1분 정도 걸림). RTL 수정 후 Vivado Tcl 콘솔에 'rs' 입력"
+    return 0
+  fi
   local snap="sim_r"
   if [ "$mode" = "-gui" ]; then snap="sim"; _xsv_kill_gui; fi
   mkdir -p xsim_build
@@ -87,5 +117,5 @@ xsv-re() {
   cd "$_XSV_DIR" && xsv "${_XSV_LAST[@]}"
 }
 
-alias xsv-kill='_xsv_kill_gui'
-alias xsv-clean='_xsv_kill_gui; rm -rf xsim_build'
+alias xsv-kill='_xsv_kill_gui; _xsv_kill_schem'
+alias xsv-clean='_xsv_kill_gui; _xsv_kill_schem; rm -rf xsim_build'
