@@ -10,6 +10,8 @@
 
 | 구분 | 단계 | 내용 | 수정 대상 |
 |---|---|---|---|
+| 추가 | 27단계 | vim: class 핸들 선언의 타입 이름(파일 안 `class X` / `interface X` 이름 + `mailbox` `semaphore`)을 초록 굵게 (`vlogClassName`). 예) `transaction tr;`, `virtual adder_interface vif;` | `~/.vimrc` |
+| 변경 | 11-3단계 | TB 파일에서 Verilator `VARHIDDEN` 경고도 끔: `new()` 인자를 멤버와 같은 이름으로 짓고 `this.`로 구분하는 정상 코드에 "Declaration of signal hides declaration in upper scope"가 뜨던 것 | `~/.vimrc` |
 | 추가 | 26단계 | `xsv -s <top> <RTL 파일들>`: Vivado 본체를 프로젝트 없이 띄워 RTL 회로도(Schematic) 열기 (`synth_design -rtl`). Vivado Tcl 콘솔 `rs`로 RTL 수정 후 회로도 갱신. `xsv-kill` / `xsv-clean`이 회로도 창도 닫음 | `~/.xsv.sh` |
 
 ### 2026-11-04 업데이트
@@ -803,13 +805,15 @@ let g:ale_lint_on_save = 1
 let g:ale_virtualtext_cursor = 'all'
 " --timing : #5 / @(posedge clk) / wait 같은 지연 문법을 시뮬레이터처럼 이해 (Verilator 5 는 안 주면 NEEDTIMINGOPT 오류)
 let g:ale_verilog_verilator_options = '--timing'
-" TB 파일(tb_*.v, sim_file/ 안)은 always #5 clk = ~clk 같은 블로킹(=) 이 정상이라 BLKSEQ 경고 끔 (RTL 은 그대로 검사)
+" TB 파일(tb_*.v, sim_file/ 안)은 always #5 clk = ~clk 같은 블로킹(=) 이 정상이라 BLKSEQ 경고 끔
+" + new() 인자를 멤버와 같은 이름으로 짓고 this. 로 구분하는 것도 정상이라 VARHIDDEN 경고 끔 (RTL 은 그대로 검사)
 augroup ale_tb
     autocmd!
     autocmd BufRead,BufNewFile tb_*.v,tb_*.sv,*/sim_file/*.v,*/sim_file/*.sv
-        \ let b:ale_verilog_verilator_options = '--timing -Wno-BLKSEQ'
+        \ let b:ale_verilog_verilator_options = '--timing -Wno-BLKSEQ -Wno-VARHIDDEN'
 augroup END
 ```
+> 이미 11-3이 적용된 PC: `grep -c 'Wno-VARHIDDEN' ~/.vimrc` → `0`이면 `'--timing -Wno-BLKSEQ'`를 `'--timing -Wno-BLKSEQ -Wno-VARHIDDEN'`으로 바꾸고 위 주석 한 줄을 추가한다 (2026-11-05).
 > - 자동완성은 Verilog 파일에서만 켜진다. 키워드 사전은 `iskeyword+=$`로 `$display` 같은 시스템 함수도 포함.
 > - ALE는 Verilator를 `-Wall`로 돌리므로 오류뿐 아니라 "사용 안 한 신호" 같은 경고(`--`)도 나온다.
 > - vim은 셸의 PATH를 물려받으므로, Verilator가 PATH에 있는 셸에서 vim을 실행해야 한다.
@@ -1838,11 +1842,13 @@ vim 내장 문법은 `module`, `class`, `task`, `logic`, `input`을 전부 같�
 | `vlogType` | `logic` `bit` `byte` `int` `wire` `reg` `string` `void` … | 노랑 `#f9e2af` |
 | `vlogDir` | `input` `output` `inout` `ref` | 청록 `#94e2d5` |
 | `vlogSeparator` | `//////`, `// =====`, `// -----`처럼 기호 5개 이상 이어지는 주석 줄 | 연보라 `#b4befe`, 굵게 |
+| `vlogClassName` | 파일 안의 `class X` / `interface X` 이름 + `mailbox` `semaphore` → `transaction tr;`, `virtual adder_interface vif;`, `mailbox #(transaction) mbox;`의 타입 이름 | 초록 `#a6e3a1`, 굵게 (2026-11-05) |
 
 - `.sv`는 `systemverilog.vim`이 `class`·`logic` 등을 자기 그룹으로 다시 잡기 때문에, `after/syntax/systemverilog.vim`에서 한 번 더 적용한다.
+- `vlogClassName`은 이름이 파일마다 달라서 `.vimrc`의 `s:VlogClassNames()`가 버퍼를 훑어 `syntax keyword`로 등록한다. 파일을 열 때, `:w` 저장할 때, 입력 모드를 나올 때 다시 찾는다. 다른 파일에 정의된 class는 못 찾는다.
 - 색은 22단계처럼 `ColorScheme` 이벤트에서 다시 칠한다 → `theme`로 바꿔도 유지.
 
-사전 확인: `ls ~/.vim/after/syntax/verilog.vim` → 없어야 함, `grep -c 'VlogColors' ~/.vimrc` → `0` (이미 있으면 건너뜀).
+사전 확인: `ls ~/.vim/after/syntax/verilog.vim` → 없어야 함, `grep -c 'VlogColors' ~/.vimrc` → `0` (이미 있으면 건너뜀). `VlogColors`는 있는데 `grep -c 'VlogClassNames' ~/.vimrc` → `0`이면(2026-11-04 버전) 27-2의 "Verilog / SV 색" 섹션만 아래 내용으로 교체한다.
 
 ### 27-1. 문법 그룹 파일 2개 만들기 (`mkdir -p ~/.vim/after/syntax`)
 `~/.vim/after/syntax/verilog.vim`:
@@ -1884,19 +1890,40 @@ function! s:VlogColors()
     highlight vlogType      guifg=#f9e2af ctermfg=223
     highlight vlogDir       guifg=#94e2d5 ctermfg=116
     highlight vlogSeparator guifg=#b4befe gui=bold ctermfg=147 cterm=bold
+    highlight vlogClassName guifg=#a6e3a1 gui=bold ctermfg=150 cterm=bold
 endfunction
+" class / interface 이름(핸들 선언 타입) : 파일 안의 class X, interface X 를 찾아서 초록으로 + mailbox, semaphore
+" 예) transaction tr;  virtual adder_interface vif;  mailbox #(transaction) mbox;
+" 열 때 + 저장할 때 + 입력 모드 나갈 때 다시 찾음 (다른 파일에 정의된 class 는 못 찾음)
+function! s:VlogClassNames()
+    if &filetype !~# '^\(verilog\|systemverilog\)$' | return | endif
+    silent! syntax clear vlogClassName
+    let l:names = ['mailbox', 'semaphore']
+    for l:line in getline(1, '$')
+        let l:m = matchlist(l:line, '^\s*\%(virtual\s\+\)\?\%(class\|interface\)\s\+\(\h\w*\)')
+        if !empty(l:m) | call add(l:names, l:m[1]) | endif
+    endfor
+    execute 'syntax keyword vlogClassName ' . join(uniq(sort(l:names)))
+endfunction
+augroup vlog_classnames
+    autocmd!
+    autocmd Syntax verilog,systemverilog call s:VlogClassNames()
+    autocmd BufWritePost,InsertLeave * call s:VlogClassNames()
+augroup END
 augroup vlog_colors
     autocmd!
     autocmd ColorScheme * call s:VlogColors()
+augroup END
+call s:VlogColors()
 ```
 > **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
 
 검증 (`.sv` 임시 파일에서 키워드마다 그룹·색 확인):
 ```bash
-T=$(mktemp -d); printf '////////////////\nclass c;\n  logic a;\n  task run(input int n);\n  endtask\nendclass\nmodule m;\n  initial begin end\nendmodule\n' > $T/t.sv
-vim -Nu ~/.vimrc -es "$T/t.sv" +'redir! > /dev/stdout | for [l,c] in [[1,1],[2,1],[3,3],[4,3],[4,12],[7,1],[8,3]] | let i=synID(l,c,1) | echo synIDattr(i,"name") synIDattr(synIDtrans(i),"fg#") | endfor | redir END' +'qa!'
+T=$(mktemp -d); printf '////////////////\nclass c;\n  logic a;\n  task run(input int n);\n  endtask\nendclass\nmodule m;\n  initial begin end\n  c h;\nendmodule\n' > $T/t.sv
+vim -Nu ~/.vimrc -es "$T/t.sv" +'redir! > /dev/stdout | for [l,c] in [[1,1],[2,1],[3,3],[4,3],[4,12],[7,1],[8,3],[9,3]] | let i=synID(l,c,1) | echo synIDattr(i,"name") synIDattr(synIDtrans(i),"fg#") | endfor | redir END' +'qa!'
 rm -rf $T
-# → vlogSeparator #b4befe / vlogBlock #f38ba8 / vlogType #f9e2af / vlogMethod #89b4fa / vlogDir #94e2d5 / vlogBlock #f38ba8 / vlogProc #fab387
+# → vlogSeparator #b4befe / vlogBlock #f38ba8 / vlogType #f9e2af / vlogMethod #89b4fa / vlogDir #94e2d5 / vlogBlock #f38ba8 / vlogProc #fab387 / vlogClassName #a6e3a1
 ```
 
 
@@ -1935,7 +1962,7 @@ rm -rf $T
 - [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 - [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (interface·DUT 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
 - [ ] `simkill` → `실행 중인 시뮬 프로세스 없음` (시뮬이 돌고 있으면 끈 프로세스와 PID 출력)
-- [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라
+- [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -2000,4 +2027,5 @@ rm -rf $T
 - Caps Lock / 한글 표시: `~/.vimrc`의 "Caps Lock / 한글 표시" 섹션 삭제, `rm ~/.vim/keystate.ps1` (또는 `~/.vimrc.bak_capsind` 복원)
 - xsv: `~/.bashrc`의 `[ -f ~/.xsv.sh ] && source ~/.xsv.sh` 줄 삭제, `rm ~/.xsv.sh` (또는 `~/.bashrc.bak_xsv` 복원)
 - simkill: `rm ~/.local/bin/simkill`
-- Verilog 키워드 색: `~/.vimrc`의 "Verilog / SV 색" 섹션 삭제, `rm ~/.vim/after/syntax/verilog.vim ~/.vim/after/syntax/systemverilog.vim` (또는 `~/.vimrc.bak_vlogcolor` 복원)
+- Verilog 키워드 색: `~/.vimrc`의 "Verilog / SV 색" 섹션 삭제, `rm ~/.vim/after/syntax/verilog.vim ~/.vim/after/syntax/systemverilog.vim` (또는 `~/.vimrc.bak_vlogcolor` 복원). class 이름 색만 빼려면 "Verilog / SV 색" 섹션의 `vlogClassName` highlight 줄과 `s:VlogClassNames()` / `vlog_classnames` augroup 삭제
+- TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제
