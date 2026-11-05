@@ -26,7 +26,7 @@ class transaction;
 
 
 	function void debug_print(string name);
-		$display("%t :[%s] d =%d, q = %d , reset = %d ",$time,name,d,q,reset);
+		$display("%t :[%s] d =%h, q = %h , reset = %d ",$time,name,d,q,reset);
 	endfunction
 
 
@@ -93,6 +93,9 @@ class driver;
 
 	task run();
 		forever begin
+
+			//gen2drv_mbox.get(tr);
+			//tr.debug_print("DRV -GET");
 			@(posedge reg_if_v.clk);
 			gen2drv_mbox.get(tr);
 			tr.debug_print("DRV -GET");
@@ -108,7 +111,10 @@ class driver;
 	endtask
 
 	task preset();
-		
+	        	
+			$display("==========================================================================");
+            $display(" start test");
+			$display("==========================================================================");
 			$display("%t : reset = 1 ",$time);
 			reg_if_v.reset = 1;
 			@(posedge reg_if_v.clk);
@@ -154,7 +160,7 @@ class monitor;
 				tr.d = reg_if_v.d;
 				tr.q = reg_if_v.q;
 				mon2scb_mbox.put(tr);
-				tr.debug_print("MON - GET");
+				tr.debug_print("MON - PUT");
 
 			end
 
@@ -313,7 +319,7 @@ initial begin
 	$timeformat(-9,0,"ns",0);
 	clk = 0;
 	env = new(reg_if);
-	env.run(5);
+	env.run(256);
 	$finish;
 
 end
