@@ -96,10 +96,20 @@ class driver;
 
 			//gen2drv_mbox.get(tr);
 			//tr.debug_print("DRV -GET");
-			@(posedge reg_if_v.clk);
+			
+			// case 1//
+			//@(posedge reg_if_v.clk);
+			//gen2drv_mbox.get(tr);
+			//tr.debug_print("DRV -GET");
+			//#1;
+
+			//case 2// - negedge에서 dirve
+
+			@(negedge reg_if_v.clk);
 			gen2drv_mbox.get(tr);
 			tr.debug_print("DRV -GET");
-			#1;
+
+
 			tr.debug_print("DRV -PUT");
 			reg_if_v.reset = 0;
 			reg_if_v.d = tr.d;   // DRIVE - D 
@@ -319,7 +329,7 @@ initial begin
 	$timeformat(-9,0,"ns",0);
 	clk = 0;
 	env = new(reg_if);
-	env.run(256);
+	env.run(5);
 	$finish;
 
 end

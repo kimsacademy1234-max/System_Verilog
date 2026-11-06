@@ -282,7 +282,7 @@ join_none   : ▲ (0ns에 바로)
 | 1 | SV의 OOP 특징 |
 | 2 | Constraint Random Verification (CRV) |
 | 3 | UVM 개요 |
-| 4 | Verilog vs SystemVerilog 주요 차이점 |
+| 4 | Verilog vs SystemVerilog 주요 차이점 · **4-state 진리표** |
 | 5 | 배열 자료형 & queue |
 | 6 | 왜 fork-join + event인가 (IPC) |
 | 7 | 실습 — 8-bit register 검증 |
@@ -369,6 +369,61 @@ CRV로 대량 검증  →  coverage 측정  →  구멍(미도달 corner case) �
 | 연산자/문법 | 기본 | `++`, `+=`, `inside`, `unique`/`priority case`, `foreach` 등 |
 | 패키지 | 없음 (`include` 사용) | `package` / `import` |
 | 시뮬 스케줄 | Active / Inactive / NBA 중심 | + Observed, **Reactive** (program) 등 region 추가 |
+
+### 4-1. 4-state 값 (★ 진리표 꼭 보기)
+
+| 값 | 의미 | 언제 생기나 |
+|---|---|---|
+| `0` | 논리 0 | — |
+| `1` | 논리 1 | — |
+| `X` | unknown (알 수 없음) | 초기화 안 된 `logic`/`reg`, 다중 드라이버 충돌(0 vs 1) |
+| `Z` | high-impedance (연결 끊김) | 아무도 구동 안 하는 `wire`, tri-state 출력 |
+
+> 연산 입력으로 들어가면 **Z는 X처럼 취급**된다.
+
+### 4-2. 진리표
+
+**AND (`&`)** — 0이 하나라도 있으면 무조건 0
+
+| & | 0 | 1 | X | Z |
+|---|---|---|---|---|
+| **0** | 0 | 0 | 0 | 0 |
+| **1** | 0 | 1 | X | X |
+| **X** | 0 | X | X | X |
+| **Z** | 0 | X | X | X |
+
+**OR (`\|`)** — 1이 하나라도 있으면 무조건 1
+
+| \| | 0 | 1 | X | Z |
+|---|---|---|---|---|
+| **0** | 0 | 1 | X | X |
+| **1** | 1 | 1 | 1 | 1 |
+| **X** | X | 1 | X | X |
+| **Z** | X | 1 | X | X |
+
+**XOR (`^`)** — X/Z가 하나라도 있으면 무조건 X
+
+| ^ | 0 | 1 | X | Z |
+|---|---|---|---|---|
+| **0** | 0 | 1 | X | X |
+| **1** | 1 | 0 | X | X |
+| **X** | X | X | X | X |
+| **Z** | X | X | X | X |
+
+**NOT (`~`)**
+
+| 입력 | 0 | 1 | X | Z |
+|---|---|---|---|---|
+| **출력** | 1 | 0 | X | X |
+
+### 4-3. 검증할 때 주의점
+
+| 상황 | 결과 | 포인트 |
+|---|---|---|
+| `==` / `!=` 에 X·Z 포함 | 결과가 **X** | `if (X)`는 **거짓**으로 처리 → else로 빠짐 (FAIL을 PASS로 착각 가능) |
+| `===` / `!==` | X·Z까지 **정확히 비교** → 항상 0 또는 1 | scoreboard에서 X 검출하려면 `===` 사용 |
+| 4-state → 2-state 대입 (`logic` → `bit`) | X·Z가 **0으로 바뀜** | X가 숨어버려 버그를 못 찾음 |
+| reset 전 레지스터 | 출력이 **X** | register 실습에서 reset을 먼저 거는 이유 |
 
 ---
 
@@ -469,11 +524,143 @@ CRV로 대량 검증  →  coverage 측정  →  구멍(미도달 corner case) �
 | UVM을 쓰는 이유? | 검증 환경 **표준화** → 팀·프로젝트 간 재사용 |
 | sequencer 역할? | 여러 sequence의 item을 중재해서 driver로 전달 |
 | factory란? | class 등록 후 코드 수정 없이 교체 생성하는 등록 관리자 |
-| `logic` vs `wire`/`reg`? | `logic`은 둘을 통합 (단, 다중 드라이버는 `wire` 필요) || 2-state vs 4-state? | `bit`(0,1) / `logic`(0,1,X,Z) — 2-state는 빠르지만 X 검출 불가 |
+| `logic` vs `wire`/`reg`? | `logic`은 둘을 통합 (단, 다중 드라이버는 `wire` 필요) |
+| 2-state vs 4-state? | `bit`(0,1) / `logic`(0,1,X,Z) — 2-state는 빠르지만 X 검출 불가 |
 | 동적 배열 vs queue? | 크기를 `new`로 지정 / 자동으로 늘고 줄음 |
+| `1 & X`, `0 & X`, `1 \| X`? | X / **0** / **1** — 결과를 확정하는 값(AND의 0, OR의 1)이 있으면 X여도 결정됨 |
+| `==` vs `===`? | X·Z 있으면 `==`는 X(if에서 거짓) / `===`는 X·Z까지 정확 비교 |
 
 
-4상태 진리표 제대로 봐야함.
+
+
+1106 수업
+
+
+레이스 컨디션 - 시뮬레이션이 누가 먼저 처리할 것이냐 할 때 발생하는 문제
+			  - 간혹가다 레이스 컨디션을 피하려고 하다가 클럭이 한사이클씩 밀리는 문제가 발생할 수 있다.
+			  
+
+
+counter256 검증
+
+++ 연산은 기본적으로 블로킹 연산
+설계시는 사용되지 않는다
+
+```
+<v1> 
+검증방법 - gen은 아직 없음
+종료 시점 - join any 
+
+
+```
+gen - 보통은 여기서 gen count 로 
+
+DRV - preset  
+
+mon - posedge clk 
+
+scb  - rst "0"  카운터 증가
+	   rst "1"  카운터 초기화 
+
+
+	
+```
+v2 - 런 스탑 클리어
+```
+
+counter 256 run stop clear
+
+GEN - 어떻게 시간을 쓸 것인지 
+	  1.evt trigger 방식 
+	  	탈출은 어떻게 할 것인가? - fork_join any 어떻게 탈출할 것인지
+		uvm 같은 경우 enable을 사용 
+		-sequence start/stop -> function 으로 만든다
+		- 이방법으로 하면 어떨까
+
+	-> fork join_none으로 돌려보자
+	   외부에서 기다렸다가 제어하는 방법으로 설계
+	   (이전에는 repeat로 
+
+
+
+# 1. seq_item : list 작성
+
+# 2. 시나리오 작성 
+
+1. mode
+
+
+2. run_stop
+
+
+3. clear
+
+-스케줄링 어떻게 할 것인지?
+
+# 3. structure
+
+# 4. timing  mon/ drv / scb
+
+
+
+
+assert - "반드시" 일어나야 하는 사건 
+체크하는 모듈 - 인터페이스 모듈, 등등
+
+tick 다음에 몇클럭 안에 나와야한다~! -> 디버깅용으로 쓴다 
+모듈 설계 안에도 넣는다. 
+
+|=> 순차논리 (다음 타임 슬랏)
+|-> 조합논리 (현재 시간)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
