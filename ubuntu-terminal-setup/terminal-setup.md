@@ -6,6 +6,15 @@
 
 ## 업데이트 이력
 
+### 2026-11-07 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 변경 | 26단계 | `xsv-kill` / `xsv-clean`: 백그라운드에서 도는 Vivado 시뮬 **전부** 종료 (`xsim`·`xsimk`·`xelab`·`xvlog` + `xsv -s` 회로도 창), 끈 프로세스 이름·PID 출력. 전에는 `xsv -g` 파형 창과 회로도 창만 닫아서, 안 끝나거나 `Ctrl+C` 후 남은 `xsv` 시뮬(`sim_r`)이 `xsimk.exe`를 잠가 다음 빌드가 `XSIM 43-3345`/`43-3238`로 실패했음. alias → 함수 | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`) |
+| 추가 | 28단계 | tmux `Ctrl+b Ctrl+o`(pane 돌리기) 끄기. `Ctrl+b o`(다음 pane)를 누를 때 Ctrl을 늦게 떼면 좌우 pane 위치가 바뀌던 것 | `~/.tmux.conf` |
+| 변경 | 26단계 | `xsv` 오류 표시: Windows 출력에 한글(cp949)이 섞이면 `grep`이 `binary file matches`만 찍고 실제 ERROR 줄을 숨기던 것 → `grep -a`. 실패 안내의 로그 이름을 실제 파일 `xelab.log`로, 같은 시뮬이 돌고 있으면 `simkill` 안내 | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`) |
+| 변경 | 26단계 | `xsv -g` / `rl` 파형 자동 추가를 **DUT 인스턴스만**으로 (top 바로 아래 이름에 `dut`가 들어간 인스턴스, 대소문자 무관: `DUT`, `u_dut` 등). DUT가 여러 개면 이름 구분선. DUT 인스턴스가 없으면 전처럼 top + interface 등 전부. 기록은 계속 `log_wave -recursive *`라 다른 신호는 Scope 창에서 끌어다 넣으면 됨 | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`) |
+
 ### 2026-11-05 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -143,6 +152,7 @@
 | 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 | `~/.vim/keystate.ps1`, `~/.vimrc` |
 | 26 | `xsv`로 터미널에서 Vivado xsim 시뮬 실행 (`-g` 파형 창, `rl` 다시 컴파일) + `simkill`로 안 끝나는 시뮬 강제 종료 | `~/.xsv.sh`, `~/.bashrc`, `~/.local/bin/simkill` |
 | 27 | vim에서 Verilog/SV 키워드를 역할별 색으로 (`module`/`class` 경계, `task`, `initial`, 타입, 포트 방향, 구분선 주석) | `~/.vim/after/syntax/`, `~/.vimrc` |
+| 28 | tmux에서 `Ctrl+b Ctrl+o`로 pane 위치가 바뀌지 않게 (pane 돌리기 끄기) | `~/.tmux.conf` |
 
 ## 전제 환경
 
@@ -1759,7 +1769,7 @@ Vivado GUI를 열지 않고 Ubuntu(WSL) 터미널에서 SystemVerilog TB를 바�
 - WSL에서 Windows Vivado의 `xvlog.bat` → `xelab.bat` → `xsim.bat`을 `cmd.exe`로 차례로 실행한다. 경고/오류 줄만 터미널에 보여 주고, 시뮬 출력(`$display`)은 그대로 출력한다.
 - `xsv -g`는 파형 창(xsim GUI)을 띄운다. 창 Tcl 콘솔에 `rl`을 치면 같은 창에서 다시 컴파일하고 파형을 갱신한다 (신호 배치 유지).
 - `xsv -s`는 Vivado 본체(`vivado.bat -mode gui`)를 프로젝트 없이 띄워 `read_verilog` → `synth_design -rtl` → `show_schematic`으로 RTL 회로도를 연다 (Vivado GUI의 RTL Analysis → Schematic과 같음). **합성 가능한 RTL만** 그릴 수 있고 class·`initial`이 있는 TB는 안 된다. Vivado가 뜨기까지 1분 정도 걸린다. 스크립트는 `xsim_build/xsv_schem.tcl`.
-- 파형에는 top 신호와 바로 아래 scope(interface 인스턴스, DUT 등)의 신호를 scope 이름 구분선과 함께 자동으로 넣는다. class 기반 TB는 top에 class 핸들만 있어서 top만 넣으면 파형이 비어 보이기 때문이다 (2026-11-04 수정).
+- 파형에는 **DUT 인스턴스 신호만** 자동으로 넣는다: top 바로 아래 인스턴스 중 이름에 `dut`가 들어간 것(대소문자 무관, `DUT`·`u_dut` 등). 여러 개면 인스턴스 이름 구분선을 넣는다 (2026-11-07 수정). DUT 인스턴스가 없으면 top 신호와 바로 아래 scope(interface 인스턴스 등)의 신호를 구분선과 함께 넣는다. class 기반 TB는 top에 class 핸들만 있어서 top만 넣으면 파형이 비어 보이기 때문이다 (2026-11-04). 전체 신호는 `log_wave -recursive *`로 기록되므로 interface·TB 신호는 Scope 창에서 끌어다 넣으면 된다.
 - 빌드 결과는 실행한 폴더의 `xsim_build/`에 생긴다. 스냅샷 이름이 `xsv`는 `sim_r`, `xsv -g`/`rl`은 `sim`으로 달라서, 파형 창을 연 채로 `xsv`를 실행해도 서로 충돌하지 않는다.
 - Windows 프로그램이 파일을 읽어야 하므로 **`/mnt/c`, `/mnt/d` 같은 Windows 드라이브 아래에서만** 실행된다 (`~/` 아래에서는 안내 메시지만 나옴).
 - 함수는 `~/.xsv.sh`에 두고 `~/.bashrc`에서 불러온다.
@@ -1781,13 +1791,13 @@ type -t xsv xsv-re
 | 명령 | 역할 |
 |---|---|
 | `xsv <top_module> <파일들...>` | 시뮬 실행, 결과를 터미널에 출력 (예: `xsv tb_adder tb_adder.sv ../adder.sv`) |
-| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, top 신호와 바로 아래 interface·DUT 신호를 구분선과 함께 자동 추가) |
+| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, DUT 인스턴스 신호만 자동 추가, DUT가 없으면 top + interface 등) |
 | `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 |
 | `xsv -s <top_module> <RTL 파일들...>` | RTL 회로도 창 띄우기 (예: `xsv -s adder ../adder.sv`, 기존 xsv 회로도 창은 닫고 새로) |
 | `rs` (Vivado Tcl 콘솔) | RTL 수정 후 같은 창에서 회로도 다시 그리기 |
 | `xsv-re` / `xsv -re` | 이 터미널에서 마지막으로 실행한 xsv 다시 실행 |
-| `xsv-kill` | xsv 파형 창 + 회로도 창 닫기 |
-| `xsv-clean` | 파형·회로도 창 닫기 + `xsim_build/` 삭제 |
+| `xsv-kill` | 백그라운드 Vivado 시뮬 전부 종료 (`xsim`·`xsimk`·`xelab`·`xvlog` + 회로도 창, 파형 창 포함). 끈 프로세스와 PID 출력. Vivado 프로젝트 창은 안 건드림 |
+| `xsv-clean` | `xsv-kill` + `xsim_build/` 삭제 |
 
 > - 첫 인자는 파일명이 아니라 TB 안의 **`module` 이름**이다. 파일 경로는 실행 위치 기준 상대 경로.
 > - git 저장소 안에서 쓴다면 `.gitignore`에 `xsim_build/`를 넣어 빌드 결과가 커밋되지 않게 한다.
@@ -1929,6 +1939,32 @@ rm -rf $T
 
 ---
 
+## 28단계. tmux: `Ctrl+b Ctrl+o`(pane 돌리기) 끄기
+
+tmux 좌우 pane 위치가 갑자기 바뀌는 문제 (2026-11-07).
+- 원인: tmux 기본 키 `Ctrl+b` 다음 `Ctrl+o`는 `rotate-window`(pane 전체를 한 칸씩 돌림)이다. `Ctrl+b o`(다음 pane으로 이동)를 누를 때 Ctrl을 늦게 떼면 `Ctrl+o`로 들어가서 pane 위치가 바뀐다.
+- 해결: prefix 다음 `C-o` 바인딩만 지운다. `Ctrl+b o`(다음 pane)는 그대로다.
+- 그대로인 것: `Ctrl+b {` / `Ctrl+b }`(pane 맞바꾸기), `Ctrl+b Alt+o`(반대 방향 돌리기) — 직접 위치를 바꾸고 싶을 때 쓴다.
+
+사전 확인: `tmux list-keys -T prefix | grep ' C-o '` → `rotate-window`가 나오면 적용 전이다 (출력이 없으면 적용된 것).
+
+`~/.tmux.conf` 백업(`cp ~/.tmux.conf ~/.tmux.conf.bak_ctrlo`) 후, 21단계의 `bind-key W choose-tree -Zw` 줄 아래에 추가:
+```bash
+# Ctrl+b Ctrl+o (pane 돌리기) 끄기: Ctrl+b o (다음 pane) 누를 때 Ctrl을 늦게 떼면 pane 위치가 바뀌던 것
+unbind-key C-o
+```
+적용: `tmux unbind-key C-o` (실행 중인 tmux에 바로 적용, `source-file`은 지운 키를 되살리지 않으므로 이것만으로 충분)
+
+검증:
+```bash
+tmux list-keys -T prefix | grep -c ' C-o '                     # → 0
+tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | grep -c ' C-o '; tmux -L ctrlotest kill-server   # → 0 (새 서버에서도)
+tmux list-keys -T prefix | grep -E ' o +select-pane'            # → 다음 pane 이동은 그대로
+```
+
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -1960,8 +1996,10 @@ rm -rf $T
 - [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
 - [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
 - [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
-- [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (interface·DUT 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
+- [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (DUT 인스턴스 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
+- [ ] `xsv-kill` → `xsv-kill: 실행 중인 Vivado 시뮬 없음` (돌고 있으면 `xsv-kill: 종료 xsimk.exe (PID …)`)
 - [ ] `simkill` → `실행 중인 시뮬 프로세스 없음` (시뮬이 돌고 있으면 끈 프로세스와 PID 출력)
+- [ ] tmux에서 `Ctrl+b Ctrl+o`를 눌러도 pane 위치가 안 바뀜, `Ctrl+b o`는 다음 pane으로 이동
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
 
 ## 사용자에게 전달할 사용법 요약
@@ -1976,6 +2014,7 @@ rm -rf $T
 | 화살표 방향으로 이동 (한 번 누르면 한 번만) | `Ctrl+b` 다음 `←↑↓→` (화살표만으로는 이동 안 함) |
 | 이전 window / window 목록 (Caps Lock 켜져 있어도 됨) | `Ctrl+b` 다음 `p` / `w` (`Ctrl+B`, `P` / `W`) |
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
+| pane 위치 맞바꾸기 (`Ctrl+b Ctrl+o`는 꺼 둠) | `Ctrl+b` 다음 `{` / `}` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
 | Verilog 자동완성 (입력 모드) | `↑`/`↓`로 고르고 `Tab`으로 완성 (선택 없이 `Tab` = 첫 후보) |
@@ -1994,7 +2033,7 @@ rm -rf $T
 | Caps Lock / 한글 켜졌는지 확인 | vim 오른쪽 위에 `CAPS` / `한`이 보이면 켜진 상태 |
 | Vivado 시뮬 실행 (터미널 출력) / 파형 창 | `xsv <top> <파일들>` / `xsv -g <top> <파일들>` |
 | 파형 창에서 TB 다시 컴파일 + 갱신 / 마지막 xsv 다시 실행 | 창 Tcl 콘솔 `rl` / `xsv-re` |
-| xsv 파형 창 닫기 / 빌드 폴더까지 삭제 | `xsv-kill` / `xsv-clean` |
+| 백그라운드 Vivado 시뮬 전부 종료 (빌드 실패 `43-3345` 때) / 빌드 폴더까지 삭제 | `xsv-kill` / `xsv-clean` |
 | RTL 회로도 보기 / 수정 후 다시 그리기 | `xsv -s <top> <RTL 파일들>` / Vivado Tcl 콘솔 `rs` |
 | 안 끝나는 시뮬 강제 종료 (`xsim_build` 안 지워질 때) / Vivado까지 | `simkill` / `simkill -a` |
 
@@ -2028,4 +2067,5 @@ rm -rf $T
 - xsv: `~/.bashrc`의 `[ -f ~/.xsv.sh ] && source ~/.xsv.sh` 줄 삭제, `rm ~/.xsv.sh` (또는 `~/.bashrc.bak_xsv` 복원)
 - simkill: `rm ~/.local/bin/simkill`
 - Verilog 키워드 색: `~/.vimrc`의 "Verilog / SV 색" 섹션 삭제, `rm ~/.vim/after/syntax/verilog.vim ~/.vim/after/syntax/systemverilog.vim` (또는 `~/.vimrc.bak_vlogcolor` 복원). class 이름 색만 빼려면 "Verilog / SV 색" 섹션의 `vlogClassName` highlight 줄과 `s:VlogClassNames()` / `vlog_classnames` augroup 삭제
+- `Ctrl+b Ctrl+o` 끄기: `~/.tmux.conf`의 "Ctrl+b Ctrl+o (pane 돌리기) 끄기" 2줄 삭제 후 `tmux bind-key C-o rotate-window` (또는 `~/.tmux.conf.bak_ctrlo` 복원)
 - TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제

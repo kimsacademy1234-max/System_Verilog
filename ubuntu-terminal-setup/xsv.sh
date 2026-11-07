@@ -60,19 +60,31 @@ EOF
   (
     cd xsim_build || exit 1
     echo "=== [1/3] xvlog ==="
-    cmd.exe /c "$VIV\\xvlog.bat" -sv "${srcs[@]}" | tr -d '\r' | grep -E "ERROR|WARNING" ; [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "xsv: 컴파일 실패 (xsim_build/xvlog.log 확인)"; exit 1; }
+    cmd.exe /c "$VIV\\xvlog.bat" -sv "${srcs[@]}" | tr -d '\r' | grep -aE "ERROR|WARNING" ; [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "xsv: 컴파일 실패 (xsim_build/xvlog.log 확인)"; exit 1; }
     echo "=== [2/3] xelab ==="
     local dbg=()
     [ "$mode" = "-gui" ] && dbg=(-debug typical)
-    cmd.exe /c "$VIV\\xelab.bat" "$top" -s "$snap" "${dbg[@]}" | tr -d '\r' | grep -E "ERROR|WARNING" ; [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "xsv: 엘라보레이션 실패 (xsim_build/elaborate.log 확인)"; exit 1; }
+    cmd.exe /c "$VIV\\xelab.bat" "$top" -s "$snap" "${dbg[@]}" | tr -d '\r' | grep -aE "ERROR|WARNING" ; [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "xsv: 엘라보레이션 실패 (xsim_build/xelab.log 확인, 같은 시뮬이 아직 돌고 있으면 simkill)"; exit 1; }
     echo "=== [3/3] xsim $mode ==="
     if [ "$mode" = "-gui" ]; then
       local tsrcs="" s
       for s in "${srcs[@]}"; do tsrcs+=" {${s//\\//}}"; done
       cat > wave.tcl <<EOF
-# 파형에 신호 자동 추가: top 신호 + 바로 아래 scope(interface, DUT 등)마다 구분선 + 신호
-# (class 기반 TB 는 top 에 class 핸들만 있어서 top 만 넣으면 파형이 비어 있음)
+# 파형에 신호 자동 추가: top 바로 아래 이름에 dut 가 들어간 인스턴스(DUT, u_dut 등)만 넣음
+# DUT 인스턴스가 없으면 top 신호 + 바로 아래 scope(interface 등)마다 구분선 + 신호
+# (log_wave -recursive * 로 전부 기록하므로 다른 신호는 Scope 창에서 끌어다 넣으면 됨)
 proc xsv_add_waves {} {
+  set duts {}
+  foreach s [get_scopes /$top/*] {
+    if {[regexp -nocase {dut} [file tail \$s]]} { lappend duts \$s }
+  }
+  if {[llength \$duts] > 0} {
+    foreach s \$duts {
+      if {[llength \$duts] > 1} { add_wave_divider [file tail \$s] }
+      catch {add_wave \$s}
+    }
+    return
+  }
   catch {add_wave /$top}
   foreach s [get_scopes /$top/*] {
     if {[llength [get_objects \$s/*]] == 0} continue
@@ -87,7 +99,7 @@ proc rl {} {
   puts "rl: compile"
   if {[catch {exec -ignorestderr \$bin/xvlog.bat -sv$tsrcs} m]} { puts \$m; puts "rl: compile FAIL (xvlog.log)"; return }
   puts "rl: elaborate"
-  if {[catch {exec -ignorestderr \$bin/xelab.bat $top -s sim -debug typical} m]} { puts \$m; puts "rl: elaborate FAIL (elaborate.log)"; return }
+  if {[catch {exec -ignorestderr \$bin/xelab.bat $top -s sim -debug typical} m]} { puts \$m; puts "rl: elaborate FAIL (xelab.log)"; return }
   xsim sim
   if {![file exists xsv.wcfg] || [catch {open_wave_config xsv.wcfg}]} { xsv_add_waves }
   log_wave -recursive *
@@ -117,5 +129,19 @@ xsv-re() {
   cd "$_XSV_DIR" && xsv "${_XSV_LAST[@]}"
 }
 
-alias xsv-kill='_xsv_kill_gui; _xsv_kill_schem'
-alias xsv-clean='_xsv_kill_gui; _xsv_kill_schem; rm -rf xsim_build'
+# 백그라운드에서 도는 Vivado 시뮬 전부 종료: xsim / xsimk(시뮬 본체) / xelab / xvlog + xsv -s 회로도 창
+# (안 끝나는 xsv 실행, Ctrl+C 후 남은 시뮬, 파형 창 모두. Vivado 프로젝트 창 자체는 안 건드림)
+_xsv_kill_all() {
+  local out
+  out=$(powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { (@('xsim.exe','xsimk.exe','xelab.exe','xvlog.exe') -contains \$_.Name) -or (\$_.Name -eq 'vivado.exe' -and \$_.CommandLine -match 'xsv_schem\.tcl') } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue; '{0} (PID {1})' -f \$_.Name, \$_.ProcessId }" 2>/dev/null | tr -d '\r')
+  if [ -n "$out" ]; then
+    echo "$out" | sed 's/^/xsv-kill: 종료 /'
+    sleep 1
+  else
+    echo "xsv-kill: 실행 중인 Vivado 시뮬 없음"
+  fi
+}
+
+unalias xsv-kill xsv-clean 2>/dev/null
+xsv-kill() { _xsv_kill_all; }
+xsv-clean() { _xsv_kill_all; rm -rf xsim_build; }

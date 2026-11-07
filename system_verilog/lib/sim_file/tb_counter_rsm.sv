@@ -43,10 +43,7 @@ rand bit clear;
 logic [7:0] count;
 
 
-
-
-
-constraint reset_dist{		// clear가 50%면 카운트가 거의 안 쌓임 → 10%로 낮춤
+constraint reset_dist{		 
 		reset dist{
 			0:/ 9,
 			1:/ 1
@@ -55,14 +52,14 @@ constraint reset_dist{		// clear가 50%면 카운트가 거의 안 쌓임 → 10
 }
 
 
-constraint mode_dist{		// clear가 50%면 카운트가 거의 안 쌓임 → 10%로 낮춤
+constraint mode_dist{		 
 		mode dist{
 			0:/ 9,
 			1:/ 1
 		};
 }
 
-constraint run_stop_dist{		// clear가 50%면 카운트가 거의 안 쌓임 → 10%로 낮춤
+constraint run_stop_dist{	 
 		run_stop dist{
 			0:/ 9,
 			1:/ 1
@@ -70,7 +67,7 @@ constraint run_stop_dist{		// clear가 50%면 카운트가 거의 안 쌓임 →
 }
 
 
-constraint clear_dist{		// clear가 50%면 카운트가 거의 안 쌓임 → 10%로 낮춤
+constraint clear_dist{		
 		clear dist{
 			0:/ 9,
 			1:/ 1
@@ -95,26 +92,21 @@ endclass
 //
 /////////////////////////////////////////////////////////////////////////////
 class generator;
-
-	
+    
     transaction tr;
 	mailbox #(transaction) gen2drv_mbox;
 	event gen_next_evt;
 
 	function new(mailbox #(transaction) gen2drv_mbox, event gen_next_evt);
-
 		this.gen_next_evt =gen_next_evt;
 		this.gen2drv_mbox =gen2drv_mbox;
 	endfunction
 
-	// To control for generator task run 
-	bit enable = 1;
-	
+	bit enable ;
 	bit prv_reset;
 	bit prv_clear;
 	bit prv_mode;
 	bit prv_run_stop;
-
 
 	bit [1:0] cnt =1; 
 
@@ -126,41 +118,27 @@ class generator;
 				tr.randomize() with{ 
 
 					if(cnt>1){     
-						reset == prv_reset;
+					
 						clear == prv_clear;
 						mode  == prv_mode;
 						run_stop == prv_run_stop;
 					      }
 					};
-				
-				
-				prv_reset = tr.reset;
 				prv_clear = tr.clear;
 				prv_mode  = tr.mode;
 				prv_run_stop = tr.run_stop;
-				
-
-
 				gen2drv_mbox.put(tr);
 
 		$display("+----------------------------------------------------------------------+");
 		$display(" gen_count : %5d ", cnt);
-				tr.debug_print("GEN");
 		$display("+----------------------------------------------------------------------+");
-				
+				tr.debug_print("GEN");
 				if(cnt < 3) cnt++;
 				else 		cnt = 1; 
-
 				@(gen_next_evt);
-				
-				
 			end
 		
-
 	endtask
-
-
-
 
 endclass
 
@@ -197,14 +175,16 @@ class driver;
 			cnt_vif.run_stop = 0;
 			
 			@(negedge cnt_vif.clk);
-			@(negedge cnt_vif.clk);
+            $display("%t",$time);
+		@(negedge cnt_vif.clk);
+			
+            $display("%t",$time);
 			cnt_vif.reset = 0;
 	endtask
 
 
 	task run();
 		forever begin
-			@(negedge cnt_vif.clk);
 			gen2drv_mbox.get(tr);
 			tr.debug_print("DRV"); 
 
@@ -212,16 +192,13 @@ class driver;
 			cnt_vif.reset = tr.reset;
 			cnt_vif.clear = tr.clear;
 			cnt_vif.run_stop = tr.run_stop;
+			@(negedge cnt_vif.clk);
 			->gen_next_evt;
-			
 
 
 
 		end
 	endtask
-
-
-
 
 	
 endclass
@@ -254,7 +231,7 @@ class monitor;
 
 			forever begin
 				@(posedge cnt_vif.clk);
-				#1;
+                #1;
 				tr = new();
 				tr.mode = cnt_vif.mode ;
 				tr.reset = cnt_vif.reset ;
@@ -294,7 +271,7 @@ class scoreboard;
 	int fail_cnt=0;
 	int total_cnt =0;
 
-	int pass_cnt_f [0:7];		// {run_stop,mode,clear} 3bit → 8가지 조합
+	int pass_cnt_f [0:7];		
 	int fail_cnt_f [0:7];
 	int reset_cnt ;
 
@@ -328,6 +305,9 @@ class scoreboard;
 						pass_cnt ++;
 						pass_cnt_f[{tr.run_stop,tr.mode,tr.clear}] ++;
 
+						//$display("=========================================================================");
+						//$display("%t  PASS : count  = %d  / expected_count = %d",$time,tr.count,expected_count);
+						//$display("=========================================================================");
 
 			end
 
@@ -338,18 +318,11 @@ class scoreboard;
 						$display("%t  FAIL : count  = %d  / expected_count = %d",$time,tr.count,expected_count);
 						$display("=========================================================================");
 			end
-			
-			
-
-
 
 		end
 	
 
-
-
 	endtask
-
 
 	task report();
 
@@ -388,20 +361,7 @@ class scoreboard;
 
 	endtask
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-endclass
+    endclass
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -434,9 +394,6 @@ class environment;
 
 	endfunction
 
-
-
-
 	task run();  // argument 선언
 		
 			drv.preset();
@@ -448,7 +405,7 @@ class environment;
 			scb.run();
 		join_none
 
-			#4500;
+			#3000;
 			gen.enable = 0 ;
 			#10;
 			scb.report();
@@ -468,7 +425,7 @@ endclass
 module tb_counter_rsm();
 
 
-logic clk;
+logic clk = 0 ;
 
 cnt_interface cnt_if(clk); 
 environment env;
@@ -492,7 +449,6 @@ always #5 clk = ~clk;
 initial begin
 	
 	$timeformat(-9,0,"ns",0);
-	clk = 0;
 	env = new(cnt_if);
 	env.run();
 	$finish;

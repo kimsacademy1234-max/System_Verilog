@@ -207,7 +207,6 @@ class monitor;
 				tr.mode = cnt_vif.mode;
 				tr.clear = cnt_vif.clear;
 				tr.run_stop = cnt_vif.run_stop;
-				#1;							// posedge 직후 : 이번 엣지 결과가 반영된 count
 				tr.count = cnt_vif.count;
 				mon2scb_mbox.put(tr);
 				tr.debug_print("MON - PUT");
