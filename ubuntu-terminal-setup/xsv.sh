@@ -1,5 +1,6 @@
+# $1 = 스냅샷 이름. 그 스냅샷의 파형 창만 닫음 (다른 TB 창은 유지)
 _xsv_kill_gui() {
-  powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { (\$_.Name -eq 'xsim.exe' -and \$_.CommandLine -match 'sim -gui') -or (\$_.Name -eq 'xsimk.exe' -and \$_.CommandLine -match 'xsim\.dir/sim/xsimk') } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue; \$_.ProcessId }" 2>/dev/null | tr -d '\r' | grep -q . && sleep 1
+  powershell.exe -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { (\$_.Name -eq 'xsim.exe' -and \$_.CommandLine -match ' $1 -gui') -or (\$_.Name -eq 'xsimk.exe' -and \$_.CommandLine -match 'xsim\.dir/$1/xsimk') } | ForEach-Object { Stop-Process -Id \$_.ProcessId -Force -ErrorAction SilentlyContinue; \$_.ProcessId }" 2>/dev/null | tr -d '\r' | grep -q . && sleep 1
 }
 
 _xsv_kill_schem() {
@@ -54,11 +55,19 @@ EOF
     echo "xsv: Vivado 회로도 창을 띄우는 중 (1분 정도 걸림). RTL 수정 후 Vivado Tcl 콘솔에 'rs' 입력"
     return 0
   fi
-  local snap="sim_r"
-  if [ "$mode" = "-gui" ]; then snap="sim"; _xsv_kill_gui; fi
-  mkdir -p xsim_build
+  local snap="sim_r" build="xsim_build"
+  if [ "$mode" = "-gui" ]; then
+    # top + 파일 조합마다 스냅샷·빌드 폴더를 따로 써서 파형 창 여러 개 유지 (같은 조합을 다시 띄우면 그 창만 교체)
+    local label hash
+    label=$(basename "$1"); label=${label%.*}; label=${label//[^A-Za-z0-9_]/_}; label=${label:0:24}
+    hash=$(printf '%s\n' "$top" "${srcs[@]}" | md5sum | cut -c1-6)
+    snap="sim_${label}_${hash}"
+    build="xsim_build/$snap"
+    _xsv_kill_gui "$snap"
+  fi
+  mkdir -p "$build"
   (
-    cd xsim_build || exit 1
+    cd "$build" || exit 1
     echo "=== [1/3] xvlog ==="
     cmd.exe /c "$VIV\\xvlog.bat" -sv "${srcs[@]}" | tr -d '\r' | grep -aE "ERROR|WARNING" ; [ "${PIPESTATUS[0]}" -eq 0 ] || { echo "xsv: 컴파일 실패 (xsim_build/xvlog.log 확인)"; exit 1; }
     echo "=== [2/3] xelab ==="
@@ -99,8 +108,8 @@ proc rl {} {
   puts "rl: compile"
   if {[catch {exec -ignorestderr \$bin/xvlog.bat -sv$tsrcs} m]} { puts \$m; puts "rl: compile FAIL (xvlog.log)"; return }
   puts "rl: elaborate"
-  if {[catch {exec -ignorestderr \$bin/xelab.bat $top -s sim -debug typical} m]} { puts \$m; puts "rl: elaborate FAIL (xelab.log)"; return }
-  xsim sim
+  if {[catch {exec -ignorestderr \$bin/xelab.bat $top -s $snap -debug typical} m]} { puts \$m; puts "rl: elaborate FAIL (xelab.log)"; return }
+  xsim $snap
   if {![file exists xsv.wcfg] || [catch {open_wave_config xsv.wcfg}]} { xsv_add_waves }
   log_wave -recursive *
   run all
@@ -112,8 +121,8 @@ xsv_add_waves
 run all
 puts "xsv: edit TB, then type 'rl' here to reload"
 EOF
-      nohup cmd.exe /c "$VIV\\xsim.bat" sim -gui -tclbatch wave.tcl > xsim_gui.log 2>&1 &
-      echo "xsv: 파형 창을 띄웠어요. TB 수정 후 xsim 창 Tcl 콘솔에 'rl' 입력 (창 새로 띄우기: xsv -re)"
+      nohup cmd.exe /c "$VIV\\xsim.bat" "$snap" -gui -tclbatch wave.tcl > xsim_gui.log 2>&1 &
+      echo "xsv: 파형 창을 띄웠어요 ($snap). 다른 TB 창은 유지. TB 수정 후 xsim 창 Tcl 콘솔에 'rl' 입력 (이 창 새로 띄우기: xsv -re)"
     else
       cmd.exe /c "$VIV\\xsim.bat" "$snap" -R | tr -d '\r'
     fi

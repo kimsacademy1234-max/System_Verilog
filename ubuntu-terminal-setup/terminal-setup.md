@@ -18,6 +18,7 @@
 
 | 구분 | 단계 | 내용 | 수정 대상 |
 |---|---|---|---|
+| 변경 | 26단계 | `xsv -g` 파형 창 **여러 개 유지**: top + 파일 조합마다 스냅샷(`sim_<첫파일>_<해시6>`)과 빌드 폴더(`xsim_build/<스냅샷>/`)를 분리, 같은 조합을 다시 띄울 때만 그 창 교체. 전에는 스냅샷이 `sim` 하나라 잠금 충돌을 피하려고 모든 파형 창을 닫았음 | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`) |
 | 변경 | 26단계 | `xsv-kill` / `xsv-clean`: 백그라운드에서 도는 Vivado 시뮬 **전부** 종료 (`xsim`·`xsimk`·`xelab`·`xvlog` + `xsv -s` 회로도 창), 끈 프로세스 이름·PID 출력. 전에는 `xsv -g` 파형 창과 회로도 창만 닫아서, 안 끝나거나 `Ctrl+C` 후 남은 `xsv` 시뮬(`sim_r`)이 `xsimk.exe`를 잠가 다음 빌드가 `XSIM 43-3345`/`43-3238`로 실패했음. alias → 함수 | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`) |
 | 추가 | 28단계 | tmux `Ctrl+b Ctrl+o`(pane 돌리기) 끄기. `Ctrl+b o`(다음 pane)를 누를 때 Ctrl을 늦게 떼면 좌우 pane 위치가 바뀌던 것 | `~/.tmux.conf` |
 | 변경 | 26단계 | `xsv` 오류 표시: Windows 출력에 한글(cp949)이 섞이면 `grep`이 `binary file matches`만 찍고 실제 ERROR 줄을 숨기던 것 → `grep -a`. 실패 안내의 로그 이름을 실제 파일 `xelab.log`로, 같은 시뮬이 돌고 있으면 `simkill` 안내 | `~/.xsv.sh`(저장소 `ubuntu-terminal-setup/xsv.sh`) |
@@ -1779,7 +1780,7 @@ Vivado GUI를 열지 않고 Ubuntu(WSL) 터미널에서 SystemVerilog TB를 바�
 - `xsv -g`는 파형 창(xsim GUI)을 띄운다. 창 Tcl 콘솔에 `rl`을 치면 같은 창에서 다시 컴파일하고 파형을 갱신한다 (신호 배치 유지).
 - `xsv -s`는 Vivado 본체(`vivado.bat -mode gui`)를 프로젝트 없이 띄워 `read_verilog` → `synth_design -rtl` → `show_schematic`으로 RTL 회로도를 연다 (Vivado GUI의 RTL Analysis → Schematic과 같음). **합성 가능한 RTL만** 그릴 수 있고 class·`initial`이 있는 TB는 안 된다. Vivado가 뜨기까지 1분 정도 걸린다. 스크립트는 `xsim_build/xsv_schem.tcl`.
 - 파형에는 **DUT 인스턴스 신호만** 자동으로 넣는다: top 바로 아래 인스턴스 중 이름에 `dut`가 들어간 것(대소문자 무관, `DUT`·`u_dut` 등). 여러 개면 인스턴스 이름 구분선을 넣는다 (2026-11-07 수정). DUT 인스턴스가 없으면 top 신호와 바로 아래 scope(interface 인스턴스 등)의 신호를 구분선과 함께 넣는다. class 기반 TB는 top에 class 핸들만 있어서 top만 넣으면 파형이 비어 보이기 때문이다 (2026-11-04). 전체 신호는 `log_wave -recursive *`로 기록되므로 interface·TB 신호는 Scope 창에서 끌어다 넣으면 된다.
-- 빌드 결과는 실행한 폴더의 `xsim_build/`에 생긴다. 스냅샷 이름이 `xsv`는 `sim_r`, `xsv -g`/`rl`은 `sim`으로 달라서, 파형 창을 연 채로 `xsv`를 실행해도 서로 충돌하지 않는다.
+- 빌드 결과는 실행한 폴더의 `xsim_build/`에 생긴다. `xsv`의 스냅샷은 `sim_r`이고, `xsv -g`/`rl`은 top + 파일 조합마다 `sim_<첫파일>_<해시6>` 스냅샷과 `xsim_build/<스냅샷>/` 폴더를 따로 쓴다. 그래서 파형 창을 연 채로 `xsv`를 실행해도 충돌하지 않고, top 이름이 같은 TB(v2·v3 등)도 창을 동시에 띄울 수 있다. 같은 조합을 다시 `xsv -g` 하면 그 창만 닫고 새로 띄운다 (2026-11-09 수정).
 - Windows 프로그램이 파일을 읽어야 하므로 **`/mnt/c`, `/mnt/d` 같은 Windows 드라이브 아래에서만** 실행된다 (`~/` 아래에서는 안내 메시지만 나옴).
 - 함수는 `~/.xsv.sh`에 두고 `~/.bashrc`에서 불러온다.
 
@@ -1800,7 +1801,7 @@ type -t xsv xsv-re
 | 명령 | 역할 |
 |---|---|
 | `xsv <top_module> <파일들...>` | 시뮬 실행, 결과를 터미널에 출력 (예: `xsv tb_adder tb_adder.sv ../adder.sv`) |
-| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (기존 xsv 파형 창은 닫고 새로, `run all`, DUT 인스턴스 신호만 자동 추가, DUT가 없으면 top + interface 등) |
+| `xsv -g <top_module> <파일들...>` | 파형 창 띄우기 (다른 TB의 창은 유지, 같은 top + 파일 조합의 창만 닫고 새로, `run all`, DUT 인스턴스 신호만 자동 추가, DUT가 없으면 top + interface 등) |
 | `rl` (xsim 창 Tcl 콘솔) | 같은 창에서 다시 컴파일 + 파형 갱신 |
 | `xsv -s <top_module> <RTL 파일들...>` | RTL 회로도 창 띄우기 (예: `xsv -s adder ../adder.sv`, 기존 xsv 회로도 창은 닫고 새로) |
 | `rs` (Vivado Tcl 콘솔) | RTL 수정 후 같은 창에서 회로도 다시 그리기 |
