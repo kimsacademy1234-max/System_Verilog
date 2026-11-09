@@ -4,6 +4,7 @@
 |---|---|
 | [1104 (수)](#1104-수--class-기반-검증-환경) | Class 기반 검증 환경 · event · mailbox · fork-join · scheduling |
 | [1105 (목)](#1105-목--sv-특징--crv--uvm--자료형) | SV 특징 · CRV · UVM 개요 · Verilog vs SV · queue · IPC · 8-bit register 실습 |
+| [1106 (금)](#1106-금--counter-검증--race--assertion) | Race condition · counter256 검증 v1/v2 · 검증 작성 순서 · Assertion |
 
 ---
 
@@ -530,107 +531,234 @@ CRV로 대량 검증  →  coverage 측정  →  구멍(미도달 corner case) �
 | `1 & X`, `0 & X`, `1 \| X`? | X / **0** / **1** — 결과를 확정하는 값(AND의 0, OR의 1)이 있으면 X여도 결정됨 |
 | `==` vs `===`? | X·Z 있으면 `==`는 X(if에서 거짓) / `===`는 X·Z까지 정확 비교 |
 
+---
+
+# 1106 (금) — Counter 검증 · Race · Assertion
+
+> **핵심 한 줄** : counter256을 v1(단순 증가) → v2(run/stop/clear)로 확장하며, GEN의 **시간 제어와 종료 방식**을 설계한다. 반드시 일어나야 하는 사건은 **assert**로 체크한다.
+
+| # | 목차 |
+|---|------|
+| 1 | Race condition |
+| 2 | counter256 검증 v1 |
+| 3 | counter256 검증 v2 (run · stop · clear) |
+| 4 | 검증 작성 순서 |
+| 5 | Assertion |
+
+---
+
+## 1. Race condition
+
+| 항목 | 내용 |
+|---|---|
+| 정의 | 시뮬레이션에서 **누가 먼저 처리되느냐**에 따라 결과가 달라지는 문제 |
+| 주의 | race를 피하려다 **클럭이 한 사이클씩 밀리는** 문제가 생길 수 있음 |
+
+---
+
+## 2. counter256 검증 v1
+
+| 컴포넌트 | 내용 |
+|---|---|
+| GEN | 아직 자극 생성은 없음 — 보통 여기서 **gen count**로 횟수를 관리 |
+| DRV | `preset` |
+| MON | `posedge clk`에서 샘플 |
+| SCB | rst `0` → 카운터 증가 / rst `1` → 카운터 초기화 |
+| 종료 시점 | `join_any` |
+
+> `++` 연산은 기본적으로 **블로킹** 연산이라 설계(RTL)에서는 사용하지 않는다.
+
+---
+
+## 3. counter256 검증 v2 (run · stop · clear)
+
+**GEN — 어떻게 시간을 쓸 것인지**
+
+| 방식 | 내용 | 고민 / 결론 |
+|---|---|---|
+| event trigger | event로 다음 동작을 진행 | `fork` - `join_any`를 **어떻게 탈출할지** 정해야 함 |
+| enable 제어 (UVM 방식) | sequence start / stop을 `function`으로 제어 | 적용 검토 |
+| **`fork` - `join_none`** | 돌려놓고 **외부에서 기다렸다가 제어** | 이 방식으로 설계해 보기로 함 |
+
+---
+
+## 4. 검증 작성 순서
+
+| 단계 | 할 일 | 내 v2 TB 기준 |
+|---|---|---|
+| 1. seq_item | 신호 list 작성 | `reset` · `run_stop` · `mode` · `clear` · `count` |
+| 2. 시나리오 | mode · run_stop · clear 시나리오 작성, **스케줄링을 어떻게 할지** 결정 | mode `0` up / `1` down, run_stop `1`일 때만 동작, clear는 동기 초기화 |
+| 3. structure | 검증 환경 구조 잡기 | gen → drv → DUT → mon → scb |
+| 4. timing | mon / drv / scb 타이밍 정하기 | drv는 `negedge`에 인가, mon은 `posedge`에 샘플 |
+
+---
+
+## 5. Assertion
+
+| 항목 | 내용 |
+|---|---|
+| 의미 | **"반드시" 일어나야 하는 사건**을 체크 |
+| 위치 | 체크하는 모듈, 인터페이스 모듈 등 — **모듈 설계 안에도** 넣음 |
+| 예시 | tick 다음 몇 클럭 안에 나와야 한다 |
+| 용도 | 디버깅 |
+
+| 연산자 | 검사 시점 | 비유 |
+|---|---|---|
+| `\|->` | 조건이 성립한 **같은 클럭** (현재 시간) | 조합논리 |
+| `\|=>` | 조건이 성립한 **다음 클럭** | 순차논리 |
 
 
 
-1106 수업
+
+11/09 (월) 수업
 
 
-레이스 컨디션 - 시뮬레이션이 누가 먼저 처리할 것이냐 할 때 발생하는 문제
-			  - 간혹가다 레이스 컨디션을 피하려고 하다가 클럭이 한사이클씩 밀리는 문제가 발생할 수 있다.
-			  
+
+숙제 피드백
+
+교수님 생각 
+
+3cycle 이상 counter 
+
+inside [3:256] -> 조건이 3cycle 이상 
+
+기준 설정 - run stop을 특정 cycle 이상 유지 
+
+plan 
+
+hold를 어디서 할 것인가? - driver ? generator ?
+
+transaction 아이템에 hold count를 추가하면 된다!
+
+1. generator 에서  : run_stop_hold >=3 , <=16
+					  
+					  runstop : 5:5
+			
+					  mode : 5:5
+					  clear : 9:1
 
 
-counter256 검증
-
-++ 연산은 기본적으로 블로킹 연산
-설계시는 사용되지 않는다
-
-```
-<v1> 
-검증방법 - gen은 아직 없음
-종료 시점 - join any 
 
 
-```
-gen - 보통은 여기서 gen count 로 
+# 1109 검증 주제 (RAM)
 
-DRV - preset  
+addr 6bit 
+width 8bit 
 
-mon - posedge clk 
+we = 1 -write
+re = ~we - read 
 
-scb  - rst "0"  카운터 증가
-	   rst "1"  카운터 초기화 
+rdata가 ~we일때 바로 나오나? - 조합출력
+rdata가 ~we일때 clk edge 뒤에 나오나? - 순차출력
 
 
+
+검증 시나리오?
+
+
+
+1. 모든 addr을 검사한다
+	addr ram data wirte/read test
+
+주소 랜덤
+write 랜덤 
+we 랜덤
+
+
+2. we =1 일때만 ram에 저장
+
+
+
+3. 조합출력 방식 검증 
+
+
+
+negdge driver 
+
+-> posedge에서 ram에 써진다. 
+
+-> 이 때 써진 값도 모니터링 해야한다. 
+next negedge에서 
+
+
+
+
+monitoring posedge에서 
+
+
+scb pass/fail
+
+
+
+we =1 일 때 버퍼 데이터가 필요함.
+
+queue는 주소가 없으므로 부적절 
+
+그 번지에 같이 w
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 시험시간
+2시간
+
+ASM -> 코드화
+스키메틱도 봐야함. 
+스티메틱보고 코딩 
+Compartor, FIFO, UART
+MUXER, SYNCRONIZER, 조합 순차 회로 
+rance conditon 
+
+
+
+
+
+
+# UVM 발표 계획
+
+- 11월 23일 발표 예정 
+
+< 해당 두 TOP을 검증할 계획>
+1. control unit -> 10000진 카운터 -> fnd_controller
 	
-```
-v2 - 런 스탑 클리어
-```
 
-counter 256 run stop clear
+2. UART_FIFO_ASCII_DECODER 
+	
+	UART_LOOP_BACK + ASCII_DECODER 
 
-GEN - 어떻게 시간을 쓸 것인지 
-	  1.evt trigger 방식 
-	  	탈출은 어떻게 할 것인가? - fork_join any 어떻게 탈출할 것인지
-		uvm 같은 경우 enable을 사용 
-		-sequence start/stop -> function 으로 만든다
-		- 이방법으로 하면 어떨까
-
-	-> fork join_none으로 돌려보자
-	   외부에서 기다렸다가 제어하는 방법으로 설계
-	   (이전에는 repeat로 
+2개중 하나 선택해서 발표 -> 어떻게 검증할 것인지 
 
 
-
-# 1. seq_item : list 작성
-
-# 2. 시나리오 작성 
-
-1. mode
-
-
-2. run_stop
-
-
-3. clear
-
--스케줄링 어떻게 할 것인지?
-
-# 3. structure
-
-# 4. timing  mon/ drv / scb
-
-
-
-
-assert - "반드시" 일어나야 하는 사건 
-체크하는 모듈 - 인터페이스 모듈, 등등
-
-tick 다음에 몇클럭 안에 나와야한다~! -> 디버깅용으로 쓴다 
-모듈 설계 안에도 넣는다. 
-
-|=> 순차논리 (다음 타임 슬랏)
-|-> 조합논리 (현재 시간)
+-> 23일 이후 RISC -VI APB BUS
 
 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+gen -> scb(메일박스 2개) 
 
 
 

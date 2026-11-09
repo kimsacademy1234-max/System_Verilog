@@ -6,6 +6,14 @@
 
 ## 업데이트 이력
 
+### 2026-11-09 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 변경 | 28단계 | tmux pane 돌리기를 `Ctrl+b Ctrl+o`에 더해 `Ctrl+b Alt+o`까지 끄기 (`rotate-window` 키 전부 해제). `Ctrl+b o`(다음 pane), `Ctrl+b {` / `}`(맞바꾸기)는 그대로 | `~/.tmux.conf` |
+| 변경 | 28단계 | tmux `Ctrl+b Space`(레이아웃 순환)도 끄기. 실수로 눌리면 pane 배치가 바뀌던 것 | `~/.tmux.conf` |
+| 추가 | 29단계 | tmux `Ctrl+b d`(detach) 끄기. 실수로 눌리면 확인 없이 바로 tmux에서 나가지던 것. 나갈 때는 셸에서 `tmux detach` | `~/.tmux.conf` |
+
 ### 2026-11-07 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -152,7 +160,8 @@
 | 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 | `~/.vim/keystate.ps1`, `~/.vimrc` |
 | 26 | `xsv`로 터미널에서 Vivado xsim 시뮬 실행 (`-g` 파형 창, `rl` 다시 컴파일) + `simkill`로 안 끝나는 시뮬 강제 종료 | `~/.xsv.sh`, `~/.bashrc`, `~/.local/bin/simkill` |
 | 27 | vim에서 Verilog/SV 키워드를 역할별 색으로 (`module`/`class` 경계, `task`, `initial`, 타입, 포트 방향, 구분선 주석) | `~/.vim/after/syntax/`, `~/.vimrc` |
-| 28 | tmux에서 `Ctrl+b Ctrl+o`로 pane 위치가 바뀌지 않게 (pane 돌리기 끄기) | `~/.tmux.conf` |
+| 28 | tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`로 pane 배치가 바뀌지 않게 (pane 돌리기, 레이아웃 순환 끄기) | `~/.tmux.conf` |
+| 29 | tmux에서 `Ctrl+b d`로 세션에서 나가지지 않게 (detach 키 끄기) | `~/.tmux.conf` |
 
 ## 전제 환경
 
@@ -1939,29 +1948,55 @@ rm -rf $T
 
 ---
 
-## 28단계. tmux: `Ctrl+b Ctrl+o`(pane 돌리기) 끄기
+## 28단계. tmux: `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o`(pane 돌리기), `Ctrl+b Space`(레이아웃 순환) 끄기
 
-tmux 좌우 pane 위치가 갑자기 바뀌는 문제 (2026-11-07).
-- 원인: tmux 기본 키 `Ctrl+b` 다음 `Ctrl+o`는 `rotate-window`(pane 전체를 한 칸씩 돌림)이다. `Ctrl+b o`(다음 pane으로 이동)를 누를 때 Ctrl을 늦게 떼면 `Ctrl+o`로 들어가서 pane 위치가 바뀐다.
-- 해결: prefix 다음 `C-o` 바인딩만 지운다. `Ctrl+b o`(다음 pane)는 그대로다.
-- 그대로인 것: `Ctrl+b {` / `Ctrl+b }`(pane 맞바꾸기), `Ctrl+b Alt+o`(반대 방향 돌리기) — 직접 위치를 바꾸고 싶을 때 쓴다.
+tmux 좌우 pane 위치가 갑자기 바뀌는 문제 (2026-11-07, `Alt+o`·`Space` 추가 2026-11-09).
+- 원인: tmux 기본 키 `Ctrl+b` 다음 `Ctrl+o`는 `rotate-window`(pane 전체를 한 칸씩 돌림)이고, `Ctrl+b` 다음 `Alt+o`는 반대 방향 돌리기다. `Ctrl+b o`(다음 pane으로 이동)를 누를 때 Ctrl을 늦게 떼면 `Ctrl+o`로 들어가서 pane 위치가 바뀐다. `Ctrl+b` 다음 `Space`는 `next-layout`(가로/세로 배치를 순환)이라 실수로 눌리면 배치가 바뀐다.
+- 해결: prefix 다음 `C-o`, `M-o`, `Space` 바인딩을 지운다. `Ctrl+b o`(다음 pane)는 그대로다.
+- 그대로인 것: `Ctrl+b {` / `Ctrl+b }`(pane 맞바꾸기) — 직접 위치를 바꾸고 싶을 때 쓴다.
 
-사전 확인: `tmux list-keys -T prefix | grep ' C-o '` → `rotate-window`가 나오면 적용 전이다 (출력이 없으면 적용된 것).
+사전 확인: `tmux list-keys -T prefix | grep -E ' (C-o|M-o|Space) '` → `rotate-window`나 `next-layout`이 나오면 적용 전이다 (출력이 없으면 적용된 것).
 
 `~/.tmux.conf` 백업(`cp ~/.tmux.conf ~/.tmux.conf.bak_ctrlo`) 후, 21단계의 `bind-key W choose-tree -Zw` 줄 아래에 추가:
 ```bash
-# Ctrl+b Ctrl+o (pane 돌리기) 끄기: Ctrl+b o (다음 pane) 누를 때 Ctrl을 늦게 떼면 pane 위치가 바뀌던 것
+# Ctrl+b Ctrl+o / Ctrl+b Alt+o (pane 돌리기) 끄기: Ctrl+b o (다음 pane) 누를 때 Ctrl을 늦게 떼면 pane 위치가 바뀌던 것
 unbind-key C-o
+unbind-key M-o
+# Ctrl+b Space (레이아웃 순환) 끄기: 실수로 눌리면 pane 배치가 바뀌던 것
+unbind-key Space
 ```
-적용: `tmux unbind-key C-o` (실행 중인 tmux에 바로 적용, `source-file`은 지운 키를 되살리지 않으므로 이것만으로 충분)
+적용: `tmux unbind-key C-o; tmux unbind-key M-o; tmux unbind-key Space` (실행 중인 tmux에 바로 적용, `source-file`은 지운 키를 되살리지 않으므로 이것만으로 충분)
 
 검증:
 ```bash
-tmux list-keys -T prefix | grep -c ' C-o '                     # → 0
-tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | grep -c ' C-o '; tmux -L ctrlotest kill-server   # → 0 (새 서버에서도)
+tmux list-keys -T prefix | grep -cE ' (C-o|M-o|Space) '        # → 0
+tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | grep -cE ' (C-o|M-o|Space) '; tmux -L ctrlotest kill-server   # → 0 (새 서버에서도)
 tmux list-keys -T prefix | grep -E ' o +select-pane'            # → 다음 pane 이동은 그대로
 ```
 
+---
+
+## 29단계. tmux: `Ctrl+b d`(detach) 끄기
+
+tmux 작업 중 갑자기 세션에서 나가지는 문제 (2026-11-09).
+- 원인: tmux 기본 키 `Ctrl+b` 다음 `d`는 `detach-client`이고, `Ctrl+b x` / `Ctrl+b &`와 달리 확인 없이 바로 실행된다.
+- 해결: prefix 다음 `d` 바인딩을 지운다. 세션은 전과 같고, 나가야 할 때는 셸에서 `tmux detach`를 실행한다.
+- 그대로인 것: `Ctrl+b x`(현재 pane 닫기), `Ctrl+b &`(현재 window 닫기) — 둘 다 y/n 확인을 거친다.
+
+사전 확인: `tmux list-keys -T prefix | grep -E ' d +detach-client'` → 출력이 나오면 적용 전이다 (출력이 없으면 적용된 것).
+
+`~/.tmux.conf` 백업(`cp ~/.tmux.conf ~/.tmux.conf.bak_detach`) 후, 28단계의 `unbind-key Space` 줄 아래에 추가:
+```bash
+# Ctrl+b d (detach) 끄기: 실수로 눌리면 바로 tmux에서 나가지던 것 (나갈 때는 셸에서 tmux detach)
+unbind-key d
+```
+적용: `tmux unbind-key d` (실행 중인 tmux에 바로 적용)
+
+검증:
+```bash
+tmux list-keys -T prefix | grep -c ' d  *detach-client'        # → 0
+tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | grep -c ' d  *detach-client'; tmux -L ctrlotest kill-server   # → 0 (새 서버에서도)
+```
 
 ---
 
@@ -1999,7 +2034,8 @@ tmux list-keys -T prefix | grep -E ' o +select-pane'            # → 다음 pan
 - [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (DUT 인스턴스 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
 - [ ] `xsv-kill` → `xsv-kill: 실행 중인 Vivado 시뮬 없음` (돌고 있으면 `xsv-kill: 종료 xsimk.exe (PID …)`)
 - [ ] `simkill` → `실행 중인 시뮬 프로세스 없음` (시뮬이 돌고 있으면 끈 프로세스와 PID 출력)
-- [ ] tmux에서 `Ctrl+b Ctrl+o`를 눌러도 pane 위치가 안 바뀜, `Ctrl+b o`는 다음 pane으로 이동
+- [ ] tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`를 눌러도 pane 배치가 안 바뀜, `Ctrl+b o`는 다음 pane으로 이동
+- [ ] tmux에서 `Ctrl+b d`를 눌러도 세션에서 안 나가짐, 셸에서 `tmux detach`로는 나가짐
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
 
 ## 사용자에게 전달할 사용법 요약
@@ -2014,7 +2050,7 @@ tmux list-keys -T prefix | grep -E ' o +select-pane'            # → 다음 pan
 | 화살표 방향으로 이동 (한 번 누르면 한 번만) | `Ctrl+b` 다음 `←↑↓→` (화살표만으로는 이동 안 함) |
 | 이전 window / window 목록 (Caps Lock 켜져 있어도 됨) | `Ctrl+b` 다음 `p` / `w` (`Ctrl+B`, `P` / `W`) |
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
-| pane 위치 맞바꾸기 (`Ctrl+b Ctrl+o`는 꺼 둠) | `Ctrl+b` 다음 `{` / `}` |
+| pane 위치 맞바꾸기 (`Ctrl+b Ctrl+o` / `Alt+o` / `Space`는 꺼 둠) | `Ctrl+b` 다음 `{` / `}` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
 | Verilog 자동완성 (입력 모드) | `↑`/`↓`로 고르고 `Tab`으로 완성 (선택 없이 `Tab` = 첫 후보) |
@@ -2067,5 +2103,7 @@ tmux list-keys -T prefix | grep -E ' o +select-pane'            # → 다음 pan
 - xsv: `~/.bashrc`의 `[ -f ~/.xsv.sh ] && source ~/.xsv.sh` 줄 삭제, `rm ~/.xsv.sh` (또는 `~/.bashrc.bak_xsv` 복원)
 - simkill: `rm ~/.local/bin/simkill`
 - Verilog 키워드 색: `~/.vimrc`의 "Verilog / SV 색" 섹션 삭제, `rm ~/.vim/after/syntax/verilog.vim ~/.vim/after/syntax/systemverilog.vim` (또는 `~/.vimrc.bak_vlogcolor` 복원). class 이름 색만 빼려면 "Verilog / SV 색" 섹션의 `vlogClassName` highlight 줄과 `s:VlogClassNames()` / `vlog_classnames` augroup 삭제
-- `Ctrl+b Ctrl+o` 끄기: `~/.tmux.conf`의 "Ctrl+b Ctrl+o (pane 돌리기) 끄기" 2줄 삭제 후 `tmux bind-key C-o rotate-window` (또는 `~/.tmux.conf.bak_ctrlo` 복원)
+- `Ctrl+b Ctrl+o` / `Alt+o` 끄기: `~/.tmux.conf`의 "Ctrl+b Ctrl+o / Ctrl+b Alt+o (pane 돌리기) 끄기" 3줄 삭제 후 `tmux bind-key C-o rotate-window; tmux bind-key M-o rotate-window -D` (또는 `~/.tmux.conf.bak_ctrlo` 복원)
+- `Ctrl+b Space` 끄기: `~/.tmux.conf`의 "Ctrl+b Space (레이아웃 순환) 끄기" 2줄 삭제 후 `tmux bind-key Space next-layout`
+- `Ctrl+b d` 끄기: `~/.tmux.conf`의 "Ctrl+b d (detach) 끄기" 2줄 삭제 후 `tmux bind-key d detach-client`
 - TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제

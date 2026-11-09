@@ -1,0 +1,20 @@
+{ "signal": [
+  { "name": "phase", "wave": "=.=.....=.....=.=.=...", "data": ["IDLE","WRITE","READ","we=0","OVERWRITE","READ"] },
+  {},
+  { "name": "clk",   "wave": "n..........", "period": 2 },
+  { "name": "we",    "wave": "0.1.....0.......1.0..." },
+  { "name": "addr",  "wave": "x.=.=.=.=.=.=.=.....=.", "data": ["00","01","02","00","01","02","01","00"] },
+  { "name": "wdata", "wave": "x.=.=.=.x.....=...x...", "data": ["AA","BB","CC","DD"] },
+  {},
+  ["MEM",
+    { "name": "ram[00]", "wave": "x..=..................", "data": ["AA"] },
+    { "name": "ram[01]", "wave": "x....=...........=....", "data": ["BB","DD"] },
+    { "name": "ram[02]", "wave": "x......=..............", "data": ["CC"] }
+  ],
+  {},
+  { "name": "rdata", "wave": "x..=x=x==.=.=.=..=..=.", "data": ["AA","BB","CC","AA","BB","CC","BB","DD","AA"] }
+],
+  "head": { "text": "RAM 64x8 (동기 쓰기 / 조합 읽기)" },
+  "foot": { "text": "입력은 clk 하강엣지에서 변경, ram[]은 we=1일 때 상승엣지에서 갱신 / rdata는 addr와 ram[] 변화에 클럭 없이 바로 반응" },
+  "config": { "hscale": 2 }
+}

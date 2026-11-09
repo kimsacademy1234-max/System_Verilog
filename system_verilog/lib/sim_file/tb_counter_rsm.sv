@@ -407,7 +407,7 @@ class environment;
 
 			#3000;
 			gen.enable = 0 ;
-			#10;
+			#1;
 			scb.report();
 
 			disable fork;

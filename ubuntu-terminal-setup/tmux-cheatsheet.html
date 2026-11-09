@@ -106,7 +106,6 @@
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>z</kbd></td><td>현재 창 최대화 / 복귀</td></tr>
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>x</kbd></td><td>현재 창 닫기 (셸에서 <code>exit</code>도 가능)</td></tr>
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>Ctrl+방향키</kbd></td><td>창 크기 조절 (마우스로 경계선 드래그도 가능)</td></tr>
-        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>Space</kbd></td><td>레이아웃 순환 (균등 배치, 세로 배치 등)</td></tr>
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>{</kbd> / <kbd>}</kbd></td><td>창 위치 서로 바꾸기</td></tr>
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>Ctrl+l</kbd> <span class="tag">내 설정</span></td><td>셸 화면 지우기 (<code>clear</code>와 같음)</td></tr>
       </table>
@@ -118,7 +117,7 @@
         <tr><td><code>tmux ls</code></td><td>세션 목록 (번호, 생성 시각, 접속 중 여부)</td></tr>
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>s</kbd></td><td><b>세션 트리 + 미리보기.</b> <kbd>Enter</kbd> 이동, <kbd>x</kbd> 종료</td></tr>
         <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>w</kbd></td><td>세션과 창 전체를 트리로 보기</td></tr>
-        <tr><td><kbd>Ctrl+b</kbd><span class="then">→</span><kbd>d</kbd></td><td>세션에서 나가기 (세션은 계속 실행됨)</td></tr>
+        <tr><td><code>tmux detach</code></td><td>세션에서 나가기 (세션은 계속 실행됨)</td></tr>
         <tr><td><code>tmux attach</code></td><td>마지막 세션에 다시 접속</td></tr>
         <tr><td><code>tmux attach -t 21</code></td><td>21번 세션에 접속</td></tr>
         <tr><td><code>tmux kill-session -t 21</code></td><td>21번 세션 종료</td></tr>
@@ -153,7 +152,7 @@
 vim StopWatch.v         # 왼쪽 위에서 코드 편집
 Ctrl+w w                # 옆 창(터미널)으로 이동해서 시뮬레이션 실행
 Ctrl+b z                # 보고 싶은 창만 잠깐 크게 보기, 한 번 더 누르면 복귀
-Ctrl+b d                # 작업 두고 나가기 → 나중에 tmux attach 로 이어서</pre>
+tmux detach             # 작업 두고 나가기 → 나중에 tmux attach 로 이어서</pre>
       <p class="note">설정 파일을 바꾼 뒤에는 <code>tmux source-file ~/.tmux.conf</code>, 셸 alias를 바꾼 뒤에는 이미 열린 창에서 <code>source ~/.bashrc</code>를 실행해야 적용됩니다.</p>
     </section>
   </div>
