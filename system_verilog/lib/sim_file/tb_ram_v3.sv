@@ -126,7 +126,7 @@ class driver;
 			ram_vif.we = tr.we;
 			ram_vif.addr = tr.addr;
 			ram_vif.wdata = tr.wdata;
-			->mon_next_evt; // nba tiggered  혼합해서 못사용함
+			->>mon_next_evt; // nba tiggered  혼합해서 못사용함
 
 		end
 	endtask
@@ -162,9 +162,9 @@ class monitor;
 	task run();
 
 			forever begin
-				@(mon_next_evt);    // blockng assignment 
+				wait(mon_next_evt.triggered);    // blockng assignment 
 				@(posedge ram_vif.clk);
-				#1;
+				//#1;
 				tr = new();
 				tr.rdata = ram_vif.rdata ;
 				tr.we	=   ram_vif.we ;   
@@ -241,6 +241,10 @@ class scoreboard;
 			else begin
 					w_fail_count ++;
 					t_fail_count ++;
+
+					$display("=========================================================================");
+					$display("%t  FAIL : tr.rdata  = %d  / expected_rdata = %d",$time,tr_mon.rdata,tr_gen.wdata);
+					$display("=========================================================================");
 
 			end	
 			expected_rdata[tr_gen.addr] = tr_gen.wdata;
