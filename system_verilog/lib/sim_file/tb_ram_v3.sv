@@ -35,7 +35,7 @@ constraint addr_dist{
 }
 
 constraint wdata_dist{		 
-		wdata inside{[0:63]};
+		wdata inside{[0:255]};
 }
 
 
