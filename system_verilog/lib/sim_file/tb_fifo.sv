@@ -259,12 +259,6 @@ class scoreboard;
 	int empty_pass_count;
 
 
-	// 판정 기준: monitor 는 negedge 에서 샘플 → 이번 사이클 입력 + 다음 posedge 전의 DUT 상태
-	//  1) rst = 1 : DUT 는 비동기 reset 으로 바로 비워짐 → 큐도 비우고, 이 사이클 push/pop 은 무시
-	//  2) full / empty : push/pop 과 상관없이 매 사이클 큐 개수와 비교
-	//  3) push/pop 처리 여부는 DUT 플래그가 아니라 큐(기대값) 기준으로 결정
-	//     (full 이면 push 무시, empty 면 pop 무시 → push+pop 동시에도 DUT 와 같은 결과)
-	//  4) pop 이면 pop_data(= 다음 posedge 에 빠질 맨 앞 값)를 큐 맨 앞과 비교한 뒤 꺼냄
 	task run();
 
 		forever begin
@@ -276,7 +270,6 @@ class scoreboard;
 			if(tr.rst)begin
 				reset_count ++;
 				expected_fifo.delete();
-				// reset 직후 DUT 플래그도 확인 (full = 0, empty = 1)
 				check_flags(0, 1);
 			end
 
@@ -317,17 +310,17 @@ class scoreboard;
 	endtask
 
 
-	function void check_flags(bit want_full, bit want_empty);
-		if(tr.full === want_full) full_pass_count ++;
+	function void check_flags(bit expec_full, bit expec_empty);
+		if(tr.full === expec_full) full_pass_count ++;
 		else begin
 			full_fail_count ++;
-			$display("%t  FULL FAIL  : full = %b / expected_full = %b (queue size = %0d)",$time,tr.full,want_full,expected_fifo.size());
+			$display("%t  FULL FAIL  : full = %b / expected_full = %b (queue size = %0d)",$time,tr.full,expec_full,expected_fifo.size());
 		end
 
-		if(tr.empty === want_empty) empty_pass_count ++;
+		if(tr.empty === expec_empty) empty_pass_count ++;
 		else begin
 			empty_fail_count ++;
-			$display("%t  EMPTY FAIL : empty = %b / expected_empty = %b (queue size = %0d)",$time,tr.empty,want_empty,expected_fifo.size());
+			$display("%t  EMPTY FAIL : empty = %b / expected_empty = %b (queue size = %0d)",$time,tr.empty,expec_empty,expected_fifo.size());
 		end
 	endfunction
 
@@ -444,7 +437,7 @@ initial begin
 	
 	$timeformat(-9,0,"ns",0);
 	env = new(fifo_if);
-	env.run(5000,3);
+	env.run(5000,0);
 	$finish;
 
 end
