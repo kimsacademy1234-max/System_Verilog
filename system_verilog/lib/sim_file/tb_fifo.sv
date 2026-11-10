@@ -67,10 +67,22 @@ class generator;
 	endfunction
 
 
+
 	task run(int run_count,int option);
 		repeat(run_count)begin
 			tr = new();
 			tr.randomize();
+            gen_tr(option);
+			gen2drv_mbox.put(tr);
+			$display("=========================================================================");
+			tr.debug_print("GEN");
+			@(gen_next_evt);		
+		end	
+
+	endtask
+
+function void gen_tr(int option);
+     
 
 			case(option)
 	
@@ -101,14 +113,16 @@ class generator;
 
 			endcase	
 
+endfunction
 
-			gen2drv_mbox.put(tr);
-			$display("=========================================================================");
-			tr.debug_print("GEN");
-			@(gen_next_evt);		
-		end	
 
-	endtask
+
+
+        
+
+
+
+
 
 endclass
 
