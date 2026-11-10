@@ -76,18 +76,21 @@ class generator;
 	
 				0:begin
 					tr.randomize();
+					tr.rst = 0;
 					tr.push = 1;
 					tr.pop  = 0;
 				  end
 
 				1:begin
 					tr.randomize();
+					tr.rst = 0;
 					tr.push = 0;
 					tr.pop  = 1;
 				  end
 
 				2:begin
 					tr.randomize();
+					tr.rst = 0;
 					tr.push = 1;
 					tr.pop  = 1;
 				  end
