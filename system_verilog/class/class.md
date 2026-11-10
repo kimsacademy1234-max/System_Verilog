@@ -5,6 +5,8 @@
 | [1104 (수)](#1104-수--class-기반-검증-환경) | Class 기반 검증 환경 · event · mailbox · fork-join · scheduling |
 | [1105 (목)](#1105-목--sv-특징--crv--uvm--자료형) | SV 특징 · CRV · UVM 개요 · Verilog vs SV · queue · IPC · 8-bit register 실습 |
 | [1106 (금)](#1106-금--counter-검증--race--assertion) | Race condition · counter256 검증 v1/v2 · 검증 작성 순서 · Assertion |
+| [1109 (월)](#1109-월--hold-count--ram-검증--시험--uvm-발표) | Hold count 피드백 · RAM 검증 시나리오 · 타이밍 · scoreboard · 시험 · UVM 발표 계획 |
+| [1110 (화)](#1110-화--drive-방식--scheduling--transaction-공유--fifo) | blocking vs nonblocking drive · 출력 지연 · 스케줄링 다이어그램 (Verilog vs SV) · transaction 공유 · FIFO 설계 |
 
 ---
 
@@ -607,200 +609,339 @@ CRV로 대량 검증  →  coverage 측정  →  구멍(미도달 corner case) �
 | `\|->` | 조건이 성립한 **같은 클럭** (현재 시간) | 조합논리 |
 | `\|=>` | 조건이 성립한 **다음 클럭** | 순차논리 |
 
+---
 
+# 1109 (월) — Hold Count · RAM 검증 · 시험 · UVM 발표
 
+> **핵심 한 줄** : "N cycle 이상 유지"는 **hold count를 transaction에 넣어 랜덤화**하면 되고, RAM은 scoreboard에 **주소별 expected 버퍼(`logic` 배열)**를 두어 검증한다.
 
-11/09 (월) 수업
+| # | 목차 |
+|---|------|
+| 1 | 숙제 피드백 — 3 cycle 이상 유지 |
+| 2 | RAM 스펙 & 출력 방식 |
+| 3 | RAM 검증 시나리오 |
+| 4 | 타이밍 (drv / mon / scb) |
+| 5 | Scoreboard 설계 |
+| 6 | 시험 안내 |
+| 7 | UVM 발표 계획 |
 
+---
 
+## 1. 숙제 피드백 — 3 cycle 이상 유지
 
-숙제 피드백
+| 질문 | 결론 | 이유 |
+|---|---|---|
+| 무엇을 랜덤화하나? | **유지 cycle 수 자체**를 랜덤 변수로 만듦 | run_stop · mode · clear만 랜덤이면 "3 이상 연속"이 보장되지 않음 |
+| 범위는? | `inside [3:256]`에서 시작 → 수업에서 **3 ~ 16**으로 조정 | 무한히 갈 수 없어 상한이 필요하고, 256은 한 번이 너무 길어 반복을 많이 못 봄 |
+| 기준 신호는? | **run_stop**을 특정 cycle 이상 유지 | counter는 run일 때 동작하므로. mode까지 hold를 두면 복잡해져 하나씩 진행 |
+| hold는 어디서? (driver? generator?) | **transaction 아이템에 hold count 추가** → generator에서 랜덤 생성 | 랜덤 변수는 transaction에 있어야 constraint를 걸 수 있음 |
 
-교수님 생각 
+**generator 설정**
 
-3cycle 이상 counter 
+| 항목 | 값 |
+|---|---|
+| `run_stop_hold` | 3 이상, 16 이하 |
+| run_stop | 5 : 5 |
+| mode | 5 : 5 |
+| clear | 9 : 1 |
 
-inside [3:256] -> 조건이 3cycle 이상 
+---
 
-기준 설정 - run stop을 특정 cycle 이상 유지 
+## 2. RAM 스펙 & 출력 방식
 
-plan 
+| 항목 | 내용 |
+|---|---|
+| addr | 6 bit (64개 번지) |
+| data width | 8 bit |
+| write | `we = 1`, `posedge clk`에서 저장 |
+| read | `re = ~we` |
+| reset | 없음 → 쓰지 않은 번지는 **X** |
 
-hold를 어디서 할 것인가? - driver ? generator ?
+| 출력 방식 | rdata가 나오는 시점 |
+|---|---|
+| **조합 출력** | ~we일 때 **바로** 나옴 (주소가 바뀌면 출력도 바뀜) |
+| 순차 출력 | ~we일 때 **clk edge 뒤에** 나옴 |
 
-transaction 아이템에 hold count를 추가하면 된다!
+---
 
-1. generator 에서  : run_stop_hold >=3 , <=16
-					  
-					  runstop : 5:5
-			
-					  mode : 5:5
-					  clear : 9:1
+## 3. RAM 검증 시나리오
 
+| # | 시나리오 | 방법 |
+|---|---|---|
+| 1 | **모든 addr** 검사 | addr · wdata · we를 모두 랜덤으로 write / read test |
+| 2 | **we = 1일 때만** RAM에 저장되는지 | we 랜덤 + scoreboard 비교 |
+| 3 | **조합 출력** 방식 검증 | 아래 4장 타이밍으로 확인 |
 
+---
 
+## 4. 타이밍 (drv / mon / scb)
 
-# 1109 검증 주제 (RAM)
+| 시점 | 동작 |
+|---|---|
+| `negedge` | **driver**가 입력 인가 |
+| `posedge` | RAM에 write — **이때 써진 값도 monitoring** 해야 함 |
+| `posedge` 이후 | monitor가 scoreboard로 전달 → **pass / fail 판정** |
+| 다음 `negedge` | 다음 입력 인가 |
 
-addr 6bit 
-width 8bit 
+| 주의 | 내용 |
+|---|---|
+| drv 직후 event 전송 | 드라이브하자마자 monitor로 event를 보내면 **catch miss** 위험 → 지연 후 보내거나, race가 나도 잡히도록 설계 |
+| 모니터링 시점 | 드라이브 이후인 것은 확실. 정확히 몇 ns 뒤로 할지는 설계자가 결정 |
+| we = 1일 때 | monitor를 멈추지 않음. 그래야 scoreboard가 write 발생을 알 수 있음 (we가 랜덤이라 언제 쓸지 예측 불가) |
 
-we = 1 -write
-re = ~we - read 
+---
 
-rdata가 ~we일때 바로 나오나? - 조합출력
-rdata가 ~we일때 clk edge 뒤에 나오나? - 순차출력
+## 5. Scoreboard 설계
 
+**we = 1일 때 저장해 둘 버퍼 데이터가 필요하다.**
 
+| 질문 | 결론 | 이유 |
+|---|---|---|
+| 자료구조? | **64개 배열** | queue는 주소가 없어 부적절 (FIFO 구조) |
+| 언제 저장? | `we = 1`일 때 **그 번지에 같이 write** | RAM과 똑같은 내용을 scoreboard도 가짐 |
+| 언제 판정? | `we = 0`(read)일 때 buffer vs rdata 비교 | RAM에 잘 저장됐다면 read 값이 buffer와 같아야 함 |
+| `byte` vs `logic`? | **`logic`** 배열 + `===` 비교 | 안 쓴 번지는 RAM이 X. 2-state `byte`는 0이 되어 일치하지 않음 |
 
-검증 시나리오?
+**expected를 얻는 방법 (둘 다 가능)**
 
+| 방법 | 구조 | 주의 |
+|---|---|---|
+| A. gen → scb | scb가 **mailbox 2개**(gen, mon)를 받아 비교 | rising edge 이후에 판정해야 하는 등 타이밍 제약이 생김 |
+| B. mon만 사용 | we 0 / 1 모두 monitor가 올리고, scb가 1이면 저장 / 0이면 비교 | 버퍼와 판정 시점만 맞추면 비교적 단순 |
+
+> 방법은 하나가 아니다. **왜 그렇게 했는지 타이밍까지 설명할 수 있으면 된다.**
+
+---
+
+## 6. 시험 안내
+
+| 항목 | 내용 |
+|---|---|
+| 시간 | **2시간** (시간이 빠듯하다고 하심) |
+| 일정 | 11/16 (녹음본 기준) |
+| 형식 | ASM → **코드화**, **schematic 보고 코딩** + 개념 문제 |
+| 범위 | Comparator · FIFO · UART · MUX · Synchronizer · FSM · 조합 / 순차 회로 |
+| 개념 | race condition |
+
+---
 
+## 7. UVM 발표 계획
+
+| 항목 | 내용 |
+|---|---|
+| 일정 | **11/23** 발표 예정 |
+| 방식 | **2개 TOP 중 하나** 선택 → 어떻게 검증할 것인지 발표 |
+| 범위 | 설계는 기존 구현 그대로 쓰고 **검증 과정만** UVM으로 |
+| 이후 수업 | 23일 이후 RISC-V · APB BUS |
 
-1. 모든 addr을 검사한다
-	addr ram data wirte/read test
+| 선택지 | 구성 |
+|---|---|
+| TOP 1 | control unit → 10000진 카운터 → fnd_controller |
+| TOP 2 | UART_FIFO_ASCII_DECODER (UART_LOOP_BACK + ASCII_DECODER) |
 
-주소 랜덤
-write 랜덤 
-we 랜덤
+---
 
+# 1110 (화) — Drive 방식 · Scheduling · Transaction 공유 · FIFO
 
-2. we =1 일때만 ram에 저장
+> **핵심 한 줄** : blocking / nonblocking drive 중 무엇이 맞는지는 **시뮬레이터 스케줄링(time slot · region)**으로 판단한다. 인가와 샘플이 같은 edge에서 만나면 race가 생긴다.
 
+| # | 목차 |
+|---|------|
+| 1 | nonblocking drive → blocking drive, 왜 해도 될까? |
+| 2 | driver 코드 비교 |
+| 3 | 출력 지연이 있는 경우 |
+| 4 | 시뮬레이터 스케줄링 다이어그램 (Verilog vs SV) |
+| 5 | Q&A — transaction 객체 공유 |
+| 6 | FIFO 설계 (새 프로젝트) |
+
+---
+
+## 1. nonblocking drive → blocking drive, 왜 해도 될까?
 
-
-3. 조합출력 방식 검증 
-
-
-
-negdge driver 
-
--> posedge에서 ram에 써진다. 
-
--> 이 때 써진 값도 모니터링 해야한다. 
-next negedge에서 
-
-
-
-
-monitoring posedge에서 
-
-
-scb pass/fail
-
-
-
-we =1 일 때 버퍼 데이터가 필요함.
-
-queue는 주소가 없으므로 부적절 
-
-그 번지에 같이 w
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# 시험시간
-2시간
-
-ASM -> 코드화
-스키메틱도 봐야함. 
-스티메틱보고 코딩 
-Compartor, FIFO, UART
-MUXER, SYNCRONIZER, 조합 순차 회로 
-rance conditon 
-
-
-
-
-
-
-# UVM 발표 계획
-
-- 11월 23일 발표 예정 
-
-< 해당 두 TOP을 검증할 계획>
-1. control unit -> 10000진 카운터 -> fnd_controller
-	
-
-2. UART_FIFO_ASCII_DECODER 
-	
-	UART_LOOP_BACK + ASCII_DECODER 
-
-2개중 하나 선택해서 발표 -> 어떻게 검증할 것인지 
-
-
--> 23일 이후 RISC -VI APB BUS
-
-
-
-
-
-gen -> scb(메일박스 2개) 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+**한 time slot 안의 처리 순서 (current → next)**
+
+| 순서 | 영역 | 실행되는 것 |
+|---|---|---|
+| 1 | **Active** | blocking `=`, `assign`, `$display` |
+| 2 | **NBA** | `<=` 갱신 — **FF 효과**를 줄 수 있음 |
+| 3 | Postponed | 최종 값 확정 |
+| → | next time slot | 다음 시간으로 이동 |
+
+| 상황 | 결과 | 이유 |
+|---|---|---|
+| drv `negedge`, mon `posedge` | blocking drive여도 **문제 없음** | 인가와 샘플이 **서로 다른 time slot** → 순서 경쟁이 없음 |
+| mon이 **같은 edge**에서 blocking으로 샘플 | **race 발생** | 인가와 샘플이 둘 다 **Active**에서 실행되고, Active 안의 순서는 보장되지 않음 |
+| nonblocking drive | 같은 edge에서 샘플하는 쪽은 **갱신 전 값**을 읽음 | 값이 NBA에서 바뀜 → FF처럼 동작 |
+
+> 따라서 **시뮬레이션의 스케줄링을 이해해야 한다.**
+
+---
+
+## 2. driver 코드 비교
+
+**① blocking drive**
+
+```systemverilog
+class driver
+	task run();
+		forever begin
+			@(negedge ram_vif.clk);
+			gen2drv_mbox.get(tr);
+			tr.debug_print("  DRV  ");
+			ram_vif.we = tr.we;
+			ram_vif.addr = tr.addr;
+			ram_vif.wdata = tr.wdata;
+			->mon_next_evt; // nba tiggered  혼합해서 못사용함
+		end
+```
+
+**② nonblocking drive**
+
+```systemverilog
+	task run();
+		forever begin
+			@(negedge ram_vif.clk);
+			gen2drv_mbox.get(tr);
+			tr.debug_print("  DRV  ");
+			ram_vif.we <= tr.we;
+			ram_vif.addr <= tr.addr;
+			ram_vif.wdata <= tr.wdata;
+			->mon_next_evt; // nba tiggered  혼합해서 못사용함
+		end
+```
+
+**event 트리거도 영역이 다르다 (보충)**
+
+| 문법 | 트리거되는 영역 | 주의 |
+|---|---|---|
+| `->` | **Active** (즉시) | `<=` 인가와 섞으면, 깨어난 쪽이 **값이 갱신되기 전**에 읽을 수 있음 |
+| `->>` | **NBA** | `<=` 갱신과 같은 영역에서 트리거됨 |
+
+---
+
+## 3. 출력 지연이 있는 경우
+
+**문제** : DUT 출력에 지연이 있으면 `posedge + 1ns` 샘플이 통하지 않는다. 어떤 방법이 적절한가?
+
+| 방법 | 장점 | 한계 |
+|---|---|---|
+| 출력 지연만큼 **똑같이 지연**을 줌 | 단순 | DUT 지연값을 알아야 하고, 바뀌면 TB도 수정 |
+| nonblocking drv + blocking 샘플 조합 | 인가 쪽 race 해결 | 출력 지연 문제는 그대로 |
+| **clocking block** (SV) | input skew로 edge **직전 값** 샘플, output skew로 edge **이후** 인가 | SV 문법을 추가로 익혀야 함 |
+
+> SystemVerilog 시뮬레이터에는 이 문제를 위한 **clocking block**이 존재한다. (수업에서는 질문으로 남김 · 표의 장단점은 보충)
+
+---
+
+## 4. 시뮬레이터 스케줄링 다이어그램 (Verilog vs SV)
+
+**Verilog (IEEE 1364) — stratified event queue**
+
+```
+[현재 time slot]
+
+  Active  ◀──────┐   blocking =, assign, $display, <= 우변 계산
+    │            │
+    ▼            │
+  Inactive ──────┤   #0
+    │            │
+    ▼            │
+  NBA update ────┘   <= 좌변 갱신 (새 이벤트가 생기면 Active로 돌아감)
+    │
+    ▼
+  Monitor            $monitor, $strobe (최종 값)
+    │
+    ▼
+  Future             #지연 이벤트 → 다음 time slot
+```
+
+**SystemVerilog (IEEE 1800) — event region** (PLI 영역 생략)
+
+```
+[현재 time slot]
+
+  Preponed               값 샘플 (assertion, clocking block 입력)
+    │
+    ▼
+  ┌ Active  ◀─────┐      blocking =, assign, $display, <= 우변 계산
+  │   │           │
+  │   ▼           │
+  │ Inactive ─────┤      #0
+  │   │           │
+  │   ▼           │
+  └ NBA ──────────┘      <= 좌변 갱신           ← 설계(module) 영역
+    │
+    ▼
+  Observed               concurrent assertion 평가
+    │
+    ▼
+  ┌ Reactive ◀────┐      program 블록 코드, assertion action
+  │   │           │
+  │   ▼           │
+  │ Re-Inactive ──┤      program 안의 #0
+  │   │           │
+  │   ▼           │
+  └ Re-NBA ───────┘      program 안의 <=        ← 검증(TB) 영역
+    │                    (새 Active 이벤트가 생기면 다시 Active로)
+    ▼
+  Postponed              $monitor, $strobe (최종 값)
+    │
+    ▼
+[다음 time slot]
+```
+
+| 비교 | Verilog | SystemVerilog |
+|---|---|---|
+| 샘플 전용 영역 | 없음 | **Preponed** (edge 직전 값) |
+| assertion 영역 | 없음 | **Observed** |
+| TB 전용 영역 | 없음 → DUT와 TB가 같은 Active에서 경쟁 | **Reactive** set → DUT가 안정된 **후** TB 실행 |
+| 결과 | race를 코딩 규칙으로 피해야 함 | 구조적으로 race 회피 가능 (`program`, clocking block) |
+
+> 영역별 상세 설명은 [1104 · 7. Scheduling](#7-scheduling-event-region) 참고.
+> 원본 그림: IEEE 1800-2017 **Figure 4-1** (Event scheduling regions), Cummings & Salz, *SystemVerilog Event Regions, Race Avoidance & Guidelines* (SNUG 2006)
+
+---
+
+## 5. Q&A — transaction 객체 공유
+
+**질문** : 현재 코드에서 driver와 scoreboard가 mailbox에서 값을 **읽어오기만** 하는 상황이면, transaction 객체 하나를 공유해도 문제가 없나요? (값을 쓰면 문제가 될 것 같음)
+
+| 항목 | 답 |
+|---|---|
+| 객체가 사라지나? | 아직 tr 객체가 사용되고 있으므로 **GC가 삭제하지 않는다** |
+| 읽기만 할 때 | 문제 없음 |
+| 다시 쓰는 구조일 때 | 같은 객체를 **공유**하므로 race condition이 발생할 수 있음 |
+| 대응 (보충) | 쓰는 쪽이 있다면 객체를 **복사(새로 `new`)**해서 넘김 |
+
+> 실제 환경과 유사하게 시뮬레이션하는 것이 좋다.
+
+---
+
+## 6. FIFO 설계 (새 프로젝트)
+
+**FIFO vs LIFO**
+
+| 구조 | 다른 이름 | 꺼내는 순서 |
+|---|---|---|
+| **FIFO** | queue | **먼저** 넣은 데이터가 먼저 나옴 |
+| LIFO | stack | **나중에** 넣은 데이터가 먼저 나옴 |
+
+### 6-1. FIFO 동작 모델링
+
+> 직접 설계한 코드 : `system_verilog/lib/fifo.sv`
+
+| # | 경우 | 동작 (내 `fifo.sv` 기준) |
+|---|---|---|
+| 0 | **초기 상태** (reset), push = 0, pop = 0 | wptr = rptr = 0, full = 0, **empty = 1** |
+| 1 | **push only** | full이 아니면 write 후 wptr + 1, empty = 0. 다음 wptr이 rptr과 같으면 **full = 1** |
+| 2 | **pop only** | empty가 아니면 rptr + 1, full = 0. 다음 rptr이 wptr과 같으면 **empty = 1** |
+| 3 | **push / pop 동시** | full이면 pop만, empty면 push만, 그 외에는 wptr · rptr 둘 다 + 1 |
+
+### 6-2. 비동기 FIFO
+
+| 항목 | 내용 |
+|---|---|
+| 질문 | 비동기 FIFO는 어떻게 설계하는가? |
+| 방법 | 포인터를 **gray code로 변환**해서 넘김 |
+| 이유 (보충) | 읽기 · 쓰기 clock이 달라 포인터를 다른 clock domain으로 넘겨야 함. gray code는 한 번에 **1 bit만** 바뀌어 synchronizer로 넘겨도 값이 크게 틀어지지 않음 |
+| 수업 메모 | 요즘엔 잘 안 쓴다 |

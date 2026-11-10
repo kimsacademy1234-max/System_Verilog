@@ -6,6 +6,12 @@
 
 ## 업데이트 이력
 
+### 2026-11-10 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 30단계 | vim `:!pdf`, `:!xsv` 등이 안 되던 것 (`:!`는 `.bashrc`를 안 읽는 `bash -c`라 셸 함수가 없음) → `.bashrc` / `.xsv.sh`의 함수를 불러와 실행하는 `~/.local/bin` 실행 파일 + 심볼릭 링크 (`pdf` `png` `ppt` `md` `wh` `xsv`). `:!` 뒤 `Tab` 자동완성도 됨 | `~/.local/bin/.bashrc-fn`, `~/.local/bin/{pdf,png,ppt,md,wh,xsv}` |
+
 ### 2026-11-09 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -163,6 +169,7 @@
 | 27 | vim에서 Verilog/SV 키워드를 역할별 색으로 (`module`/`class` 경계, `task`, `initial`, 타입, 포트 방향, 구분선 주석) | `~/.vim/after/syntax/`, `~/.vimrc` |
 | 28 | tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`로 pane 배치가 바뀌지 않게 (pane 돌리기, 레이아웃 순환 끄기) | `~/.tmux.conf` |
 | 29 | tmux에서 `Ctrl+b d`로 세션에서 나가지지 않게 (detach 키 끄기) | `~/.tmux.conf` |
+| 30 | vim `:!`에서 셸 함수(`pdf`, `xsv` 등) 실행 + `Tab` 자동완성 | `~/.local/bin/.bashrc-fn` + 심볼릭 링크 |
 
 ## 전제 환경
 
@@ -2001,6 +2008,51 @@ tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | g
 
 ---
 
+## 30단계. vim `:!`에서 셸 함수(`pdf`, `xsv` 등) 실행 + 자동완성
+
+vim에서 `:!pdf`, `:!xsv`가 `command not found`이고 `Tab` 자동완성에도 안 나오는 문제 (2026-11-10).
+- 원인: vim의 `:!`는 `bash -c`로 실행하고, `bash -c`(비대화형 셸)는 `~/.bashrc`를 읽지 않는다. `pdf` / `png` / `ppt` / `md` / `wh`는 `~/.bashrc`의 함수, `xsv`는 `~/.xsv.sh`의 함수라 vim 안에서는 없는 명령이 된다. vim의 `:!` 자동완성도 PATH의 실행 파일만 찾는다.
+- 해결: `~/.local/bin/.bashrc-fn` 하나를 만들고, 함수 이름으로 심볼릭 링크를 건다. 링크 이름과 같은 함수를 `~/.bashrc`(또는 `~/.xsv.sh`)에서 불러와 실행하므로 함수 코드는 복사하지 않는다 (`.bashrc`만 고치면 vim에도 반영).
+- 터미널에서는 셸 함수가 PATH보다 먼저라 동작이 그대로다.
+- 제외: `pro` / `tsv` / `iv`(폴더 이동, tmux 화면 구성이라 `:!`로는 의미 없음), `xsv-kill` / `xsv-clean`(alias), `xsv -re`(실행한 터미널에 남은 기록을 씀).
+
+사전 확인: `ls -la ~/.local/bin/pdf` → `.bashrc-fn`을 가리키는 링크면 적용된 것. 같은 이름의 다른 명령이 없는지도 확인: `for n in pdf png ppt md wh xsv; do bash -c "command -v $n"; done` → 출력 없으면 적용 전.
+
+`~/.local/bin/.bashrc-fn` 작성:
+```bash
+#!/bin/bash
+# vim 의 :! 처럼 ~/.bashrc 를 읽지 않는 셸에서도 ~/.bashrc / ~/.xsv.sh 의 함수를 쓰게 하는 실행 파일
+#  - ~/.local/bin/<함수 이름> 심볼릭 링크로 실행 → 같은 이름의 함수를 불러와 실행
+#  - 함수 코드는 ~/.bashrc / ~/.xsv.sh 한 곳에만 있음 (여기에 복사하지 않음)
+#  - 터미널에서는 셸 함수가 먼저 실행되므로 이 파일은 vim :! 같은 곳에서만 쓰임
+name=$(basename "$0")
+if [ "$name" = xsv ]; then
+  source ~/.xsv.sh
+else
+  def=$(sed -n "/^${name}() {/,/^}/p" ~/.bashrc)
+  [ -n "$def" ] || { echo "$name: ~/.bashrc 에서 '${name}() {' 함수를 찾지 못함" >&2; exit 1; }
+  eval "$def"
+fi
+"$name" "$@"
+```
+링크:
+```bash
+chmod +x ~/.local/bin/.bashrc-fn
+cd ~/.local/bin && for n in pdf png ppt md wh xsv; do ln -s .bashrc-fn $n; done
+```
+- `.bashrc`의 함수는 `이름() {`로 시작하고 `}`가 줄 맨 앞에 있어야 불러온다 (지금 함수들은 모두 이 형태). 새 함수를 vim에서도 쓰려면 같은 형태로 만들고 링크를 하나 더 건다.
+
+검증 (없는 파일 이름을 넣어서 창은 안 열림):
+```bash
+for c in 'pdf zz_none' 'png zz_none' 'ppt zz_none' 'md zz_none' 'wh' 'xsv'; do bash -c "$c" 2>&1 | head -1; done
+# → 각 함수의 "없음" / 사용법 메시지 (command not found 가 아니면 성공)
+vim -Nes -c 'call writefile([string(getcompletion("pd","shellcmd")), string(getcompletion("xsv","shellcmd"))], "/dev/stdout")' -c 'qa!'
+# → ['pdf', ...] / ['xsv']
+bash -ic 'type -t pdf xsv'   # → function / function (터미널에서는 그대로 함수)
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -2037,6 +2089,7 @@ tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | g
 - [ ] `simkill` → `실행 중인 시뮬 프로세스 없음` (시뮬이 돌고 있으면 끈 프로세스와 PID 출력)
 - [ ] tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`를 눌러도 pane 배치가 안 바뀜, `Ctrl+b o`는 다음 pane으로 이동
 - [ ] tmux에서 `Ctrl+b d`를 눌러도 세션에서 안 나가짐, 셸에서 `tmux detach`로는 나가짐
+- [ ] vim에서 `:!pd` + `Tab` → `pdf` 자동완성, `:!pdf 없는이름` → `pdf: ... 없음` (`command not found` 아님)
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
 
 ## 사용자에게 전달할 사용법 요약
@@ -2053,6 +2106,7 @@ tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | g
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
 | pane 위치 맞바꾸기 (`Ctrl+b Ctrl+o` / `Alt+o` / `Space`는 꺼 둠) | `Ctrl+b` 다음 `{` / `}` |
 | 셸 화면 지우기 | `Ctrl+b` 다음 `Ctrl+l` (또는 `clear`) |
+| vim 안에서 PDF/그림/PPT 열기, 시뮬 실행 | `:!pdf 이름`, `:!png 이름`, `:!xsv -g top 파일.sv` (`Tab` 자동완성) |
 | 폴더 검색해서 바로 이동 | `Ctrl+q` (또는 `cd **` + `Tab`) |
 | Verilog 자동완성 (입력 모드) | `↑`/`↓`로 고르고 `Tab`으로 완성 (선택 없이 `Tab` = 첫 후보) |
 | HTML 파일을 브라우저로 열기 | `watch_html "파일명.html"` |
@@ -2107,4 +2161,5 @@ tmux -L ctrlotest -f ~/.tmux.conf new-session -d -s a \; list-keys -T prefix | g
 - `Ctrl+b Ctrl+o` / `Alt+o` 끄기: `~/.tmux.conf`의 "Ctrl+b Ctrl+o / Ctrl+b Alt+o (pane 돌리기) 끄기" 3줄 삭제 후 `tmux bind-key C-o rotate-window; tmux bind-key M-o rotate-window -D` (또는 `~/.tmux.conf.bak_ctrlo` 복원)
 - `Ctrl+b Space` 끄기: `~/.tmux.conf`의 "Ctrl+b Space (레이아웃 순환) 끄기" 2줄 삭제 후 `tmux bind-key Space next-layout`
 - `Ctrl+b d` 끄기: `~/.tmux.conf`의 "Ctrl+b d (detach) 끄기" 2줄 삭제 후 `tmux bind-key d detach-client`
+- vim `:!` 셸 함수: `cd ~/.local/bin && rm pdf png ppt md wh xsv .bashrc-fn`
 - TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제

@@ -25,7 +25,7 @@ class transaction;
 
 
 rand  bit [5:0] addr;
-randc bit we;
+rand bit we;
 rand  bit [7:0] wdata;
 logic [7:0] rdata;
 
@@ -38,6 +38,9 @@ constraint wdata_dist{
 		wdata inside{[0:255]};
 }
 
+constraint we_dist{		 
+		 we dist{ 0:/ 5, 1:/ 5};
+}
 
 
 
@@ -126,7 +129,7 @@ class driver;
 			ram_vif.we = tr.we;
 			ram_vif.addr = tr.addr;
 			ram_vif.wdata = tr.wdata;
-			->>mon_next_evt; // nba tiggered  혼합해서 못사용함
+			->mon_next_evt; // nba tiggered  혼합해서 못사용함
 
 		end
 	endtask
@@ -162,7 +165,17 @@ class monitor;
 	task run();
 
 			forever begin
-				wait(mon_next_evt.triggered);    // blockng assignment 
+				@(mon_next_evt);    // blockng assignment 
+				@(posedge ram_vif.clk);
+				#1;
+				tr = new();
+				tr.rdata = ram_vif.rdata ;
+				tr.we	=   ram_vif.we ;   
+				tr.addr	= ram_vif.addr  ;
+				tr.wdata=	ram_vif.wdata ;
+				mon2scb_mbox.put(tr);
+				tr.debug_print("  MON  ");
+				@(mon_next_evt);    // blockng assignment 
 				@(posedge ram_vif.clk);
 				#1;
 				tr = new();

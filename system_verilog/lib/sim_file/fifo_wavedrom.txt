@@ -1,0 +1,21 @@
+{ "signal": [
+  {"name": "phase", "wave": "=.=.......=.=.=.=.....=.=.=.", "data": ["RST", "PUSH", "PUSH(full)", "POP", "PUSH+POP", "POP", "POP(empty)", "PUSH+POP(empty)", "IDLE"]},
+  {},
+  {"name": "clk", "wave": "n.............", "period": 2},
+  {"name": "rst", "wave": "1.0........................."},
+  {"name": "push", "wave": "0.1.........0.1.0.......1.0."},
+  {"name": "pop", "wave": "0...........1.............0."},
+  {"name": "push_data", "wave": "x.=.=.=.=.=.x.=.x.......=.x.", "data": ["11", "22", "33", "44", "55", "66", "77"]},
+  {},
+  {"name": "we(!full&push)", "wave": "0.1......0....1.0.......1.0."},
+  {"name": "wptr", "wave": "x=.=.=.=.=.....=.........=..", "data": ["0", "1", "2", "3", "0", "1", "2"]},
+  {"name": "rptr", "wave": "x=...........=.=.=.=.=......", "data": ["0", "1", "2", "3", "0", "1"]},
+  {},
+  {"name": "full", "wave": "x0.......1...0.............."},
+  {"name": "empty", "wave": "x1.0.................1...0.."},
+  {"name": "pop_data", "wave": "x..=.........=.=.=.=.=...=..", "data": ["11", "22", "33", "44", "66", "22", "77"]}
+],
+  "head": {"text": "FIFO DEPTH=4"},
+  "foot": {"text": "inputs change @negedge, regs update @posedge, pop_data while empty = old data"},
+  "config": {"hscale": 2}
+}
