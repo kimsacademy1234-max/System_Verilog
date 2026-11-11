@@ -7,6 +7,7 @@
 | [1106 (금)](#1106-금--counter-검증--race--assertion) | Race condition · counter256 검증 v1/v2 · 검증 작성 순서 · Assertion |
 | [1109 (월)](#1109-월--hold-count--ram-검증--시험--uvm-발표) | Hold count 피드백 · RAM 검증 시나리오 · 타이밍 · scoreboard · 시험 · UVM 발표 계획 |
 | [1110 (화)](#1110-화--drive-방식--scheduling--transaction-공유--fifo) | blocking vs nonblocking drive · 출력 지연 · 스케줄링 다이어그램 (Verilog vs SV) · transaction 공유 · FIFO 설계 |
+| [1111 (수)](#1111-수--fifo-검증--queue) | FIFO 검증 · 크기 제한 queue · queue로 FIFO 동작 만들기 · queue 메서드 |
 
 ---
 
@@ -945,3 +946,52 @@ class driver
 | 방법 | 포인터를 **gray code로 변환**해서 넘김 |
 | 이유 (보충) | 읽기 · 쓰기 clock이 달라 포인터를 다른 clock domain으로 넘겨야 함. gray code는 한 번에 **1 bit만** 바뀌어 synchronizer로 넘겨도 값이 크게 틀어지지 않음 |
 | 수업 메모 | 요즘엔 잘 안 쓴다 |
+
+---
+
+# 1111 (수) — FIFO 검증 · queue
+
+> **핵심 한 줄** : FIFO의 expected 모델은 **queue**로 만든다. 크기를 제한한 queue에 한쪽으로 넣고 반대쪽으로 꺼내면 FIFO와 똑같이 동작한다.
+
+| # | 목차 |
+|---|------|
+| 1 | queue 선언 (크기 제한) |
+| 2 | queue로 FIFO 동작 만들기 |
+| 3 | queue 기본 메서드 |
+
+---
+
+## 1. queue 선언 (크기 제한)
+
+| 선언 | 크기 | 용도 |
+|---|---|---|
+| `ram[$]` | **무한대** (제한 없음) | 일반 버퍼 |
+| `expected_fifo[$:3]` | **최대 4개** (인덱스 0 ~ 3) | FIFO 깊이(4)와 같은 expected 모델 |
+
+> 보충 : 크기를 제한한 queue에 최대 크기를 넘게 넣으면 넘친 데이터는 버려진다.
+
+---
+
+## 2. queue로 FIFO 동작 만들기
+
+**FIFO처럼 동작하려면? → 넣는 쪽과 꺼내는 쪽을 반대로**
+
+| 넣기 | 꺼내기 | 결과 |
+|---|---|---|
+| `push_back()` | `pop_front()` | **FIFO** (먼저 넣은 것이 먼저 나옴) |
+| `push_front()` | `pop_back()` | **FIFO** (방향만 반대) |
+| 같은 쪽 (예: `push_back()` → `pop_back()`) | | LIFO (stack) |
+
+---
+
+## 3. queue 기본 메서드
+
+| 메서드 | 동작 |
+|---|---|
+| `push_back()` | **뒤에서** 집어넣기 |
+| `push_front()` | **앞에서** 집어넣기 |
+| `pop_front()` | **앞에서** 꺼내기 |
+| `pop_back()` | **뒤에서** 꺼내기 |
+| `size()` | queue의 **현재 크기** 반환 |
+
+> 전체 메서드는 [1105 · 5-2. queue 메서드](#5-2-queue-메서드) 참고.

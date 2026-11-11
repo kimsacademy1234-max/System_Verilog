@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+# vim ALE 가 verilator 를 실행할 때 끼워 넣는 래퍼 (b:ale_command_wrapper)
+#  - verilator 는 covergroup 을 지원하지 않아 "Unsupported: covergroup" 오류가 뜸 (-Wno 로도 못 끔)
+#  - 검사할 파일에 covergroup 이 있으면, covergroup 블록과 그 사용처만 지운 임시 복사본으로 검사
+#      covergroup ... endgroup        → 빈 줄 (줄 번호 유지)
+#      cg = new; / cg.sample();       → ;   (빈 문장)
+#      cg.cp.get_coverage()           → 0.0
+#  - 오류 메시지의 파일 경로는 원래 경로로 되돌림 → ALE 표시 위치 그대로
+#  - 원본 파일 / vim 버퍼는 건드리지 않음, covergroup 이 없으면 verilator 를 그대로 실행
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+args = sys.argv[1:]
+if not args:
+    sys.exit("usage: verilator-cgstrip verilator [options] file.sv")
+
+COMMENT = re.compile(r'//[^\n]*|/\*.*?\*/', re.S)
+
+
+def mask_comments(text):
+    # 주석 내용을 공백으로 (길이·줄바꿈 유지, verilator lint_off 같은 메타 주석은 남김)
+    def repl(m):
+        s = m.group(0)
+        if re.search(r'\b(verilator|synopsys)\b', s):
+            return s
+        return re.sub(r'[^\n]', ' ', s)
+    return COMMENT.sub(repl, text)
+
+
+def strip_covergroups(text):
+    work = mask_comments(text)
+    names = set()
+
+    def blank_block(m):
+        names.add(m.group(1))
+        return '\n' * m.group(0).count('\n')
+
+    work = re.sub(r'\bcovergroup\s+(\w+)\b.*?\bendgroup\b(\s*:\s*\w+)?', blank_block, work, flags=re.S)
+    if not names:
+        return None
+
+    # module 에서 covergroup 을 타입으로 쓴 인스턴스 선언 :  cg_t cg_i = new;
+    handles = set(names)
+    for n in names:
+        decl = re.compile(r'\b' + re.escape(n) + r'\s+(\w+)\s*(=\s*new\b[^;]*)?;')
+        handles.update(m.group(1) for m in decl.finditer(work))
+        work = decl.sub(';', work)
+
+    for h in handles:
+        H = r'(\bthis\s*\.\s*)?\b' + re.escape(h) + r'\b'
+        work = re.sub(H + r'\s*=\s*new\b\s*(\([^;]*\))?\s*;', ';', work)
+        work = re.sub(H + r'(\s*\.\s*\w+)*\s*\.\s*(get_coverage|get_inst_coverage)\s*\([^()]*\)', '0.0', work)
+        work = re.sub(H + r'(\s*\.\s*\w+)*\s*\.\s*\w+\s*\([^;]*?\)\s*;', ';', work)
+    work = re.sub(r'\$get_coverage\s*\(\s*\)', '0.0', work)
+    return work
+
+
+src_idx = None
+for i in range(len(args) - 1, 0, -1):
+    if re.search(r'\.(sv|svh|v|vh)$', args[i]) and os.path.isfile(args[i]):
+        src_idx = i
+        break
+
+if src_idx is None:
+    os.execvp(args[0], args)
+
+src_path = args[src_idx]
+text = open(src_path, encoding='utf-8', errors='surrogateescape').read()
+cleaned = strip_covergroups(text) if 'covergroup' in text else None
+if cleaned is None:
+    os.execvp(args[0], args)
+
+tmpdir = tempfile.mkdtemp(prefix='cgstrip_')
+tmp_path = os.path.join(tmpdir, os.path.basename(src_path))
+try:
+    with open(tmp_path, 'w', encoding='utf-8', errors='surrogateescape') as f:
+        f.write(cleaned)
+    run = list(args)
+    run[src_idx] = tmp_path
+    p = subprocess.run(run, capture_output=True)
+    for data, stream in ((p.stdout, sys.stdout), (p.stderr, sys.stderr)):
+        out = data.decode('utf-8', 'surrogateescape').replace(tmp_path, src_path)
+        stream.write(out)
+        stream.flush()
+    sys.exit(p.returncode)
+finally:
+    try:
+        os.remove(tmp_path)
+        os.rmdir(tmpdir)
+    except OSError:
+        pass

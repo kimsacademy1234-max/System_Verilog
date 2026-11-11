@@ -6,6 +6,13 @@
 
 ## 업데이트 이력
 
+### 2026-11-11 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 31단계 | `exl` / `exl "파일명"` / `exl "폴더명"`: 엑셀 파일(`.xlsx` `.xlsm` `.xls` `.csv`)을 Windows Excel로 열기 (`pdf`와 같은 방식, 확장자 생략 가능, 잠금파일 `~$*` 건너뜀). vim `:!exl`도 되도록 30단계 링크 추가 | `~/.bashrc`, `~/.local/bin/exl` |
+| 추가 | 32단계 | vim에서 SV `covergroup`에 뜨던 빨간 오류(`Unsupported: covergroup`, verilator 미지원이라 `-Wno`로도 못 끔) 없애기: ALE가 verilator를 부를 때 covergroup 블록과 사용처만 지운 임시 복사본으로 검사하는 래퍼. 줄 번호·다른 오류는 그대로 | `~/.local/bin/verilator-cgstrip`(저장소 `ubuntu-terminal-setup/verilator-cgstrip`), `~/.vimrc` |
+
 ### 2026-11-10 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -170,6 +177,8 @@
 | 28 | tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`로 pane 배치가 바뀌지 않게 (pane 돌리기, 레이아웃 순환 끄기) | `~/.tmux.conf` |
 | 29 | tmux에서 `Ctrl+b d`로 세션에서 나가지지 않게 (detach 키 끄기) | `~/.tmux.conf` |
 | 30 | vim `:!`에서 셸 함수(`pdf`, `xsv` 등) 실행 + `Tab` 자동완성 | `~/.local/bin/.bashrc-fn` + 심볼릭 링크 |
+| 31 | `exl` (현재 폴더 전부) / `exl "파일명"` (확장자 생략 가능) / `exl "폴더명"`으로 엑셀 파일을 Windows Excel에서 열기 | `~/.bashrc`, `~/.local/bin/exl` |
+| 32 | vim ALE(verilator)에서 `covergroup` "Unsupported" 오류 표시 안 나게 | `~/.local/bin/verilator-cgstrip`, `~/.vimrc` |
 
 ## 전제 환경
 
@@ -2053,6 +2062,110 @@ bash -ic 'type -t pdf xsv'   # → function / function (터미널에서는 그�
 
 ---
 
+## 31단계. `exl [파일명|폴더명]`: 엑셀 파일을 Windows Excel로 열기
+
+16단계 `pdf`와 같은 방식이다 (Windows 경로로 바꿔서 `cmd.exe /c start`, 확장자에 연결된 앱 = Excel로 열림). 인자 없이 `exl`이면 현재 폴더의 엑셀 파일 전부, `exl 이름`이면 그 파일(확장자 생략 가능, `.xlsx` → `.xlsm` → `.xls` → `.csv` 순으로 찾음), 폴더를 주면 그 안의 엑셀 파일 전부를 연다 (하위 폴더는 안 봄, 대소문자 무시). Excel이 파일을 열 때 만드는 잠금파일(`~$파일.xlsx`)은 건너뛴다 (14단계 `ppt`와 같음).
+
+사전 확인: `bash -ic 'type -t exl'` → `function`이면 적용된 것. 같은 이름의 다른 명령이 없는지: `bash -c 'command -v exl'` → 출력 없으면 적용 전.
+
+`~/.bashrc` 백업(`cp ~/.bashrc ~/.bashrc.bak_exl`) 후, `pdf()` 함수 바로 아래에 추가:
+```bash
+# ==========================================
+#  exl [이름] : 현재 폴더의 엑셀 파일(.xlsx/.xlsm/.xls/.csv)을 Windows Excel로 열기
+#   - exl            → 현재 폴더의 엑셀 파일 전부
+#   - exl 이름       → 현재 폴더의 "이름" / "이름.xlsx" / "이름.xlsm" / "이름.xls" / "이름.csv" (확장자 생략 가능)
+#   - exl 폴더명     → 그 폴더 안의 엑셀 파일 전부
+#   - Excel 잠금파일(~$*.xlsx)은 건너뜀
+# ==========================================
+exl() {
+    local target="${1:-.}" files=() f c
+    if [ $# -gt 1 ]; then
+        echo "사용법: exl  |  exl \"파일명\"  |  exl \"폴더명\"" >&2
+        return 1
+    fi
+    if [ -d "$target" ]; then
+        shopt -s nullglob nocaseglob
+        for f in "$target"/*.xlsx "$target"/*.xlsm "$target"/*.xls "$target"/*.csv; do
+            [[ "$(basename "$f")" == '~$'* ]] || files+=("$f")
+        done
+        shopt -u nullglob nocaseglob
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "exl: '$(realpath "$target")' 폴더에 .xlsx/.xlsm/.xls/.csv 파일이 없음" >&2
+            return 1
+        fi
+    else
+        for c in "$target" "$target.xlsx" "$target.xlsm" "$target.xls" "$target.csv"; do
+            [ -f "$c" ] && { files=("$c"); break; }
+        done
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "exl: '$PWD'에 '$target'(.xlsx/.xlsm/.xls/.csv) 없음" >&2
+            return 1
+        fi
+    fi
+    for f in "${files[@]}"; do
+        f=$(realpath "$f")
+        echo "열기: $f"
+        (cd /mnt/c && cmd.exe /c start "" "$(wslpath -w "$f")")
+    done
+}
+```
+vim `:!exl`도 되도록 30단계 링크 추가 (30단계를 이미 적용한 경우):
+```bash
+cd ~/.local/bin && ln -s .bashrc-fn exl
+```
+적용: 열려 있는 터미널에서 `source ~/.bashrc`
+
+검증 (실제로 Excel 창을 띄우지 않도록 `cmd.exe`를 출력으로 바꿔서 확인):
+```bash
+bash -ic 'cmd.exe() { echo "→ cmd.exe $*"; }; cd 엑셀있는폴더 && exl && exl 파일이름 && exl 없는이름'
+# → "열기: ..." + "→ cmd.exe /c start  D:\...\파일.xlsx" / 없는 이름은 "exl: ... 없음"
+bash -c 'exl 없는이름'   # → "exl: ... 없음" (vim :! 방식, command not found 가 아니면 성공)
+```
+
+---
+
+## 32단계. vim ALE(verilator)에서 `covergroup` 오류 표시 없애기
+
+TB에 `covergroup`을 넣으면 vim에 빨간 오류가 뜨는 문제 (2026-11-11).
+- 원인: vim 문법 검사기(ALE)가 쓰는 verilator(5.032)가 covergroup을 지원하지 않는다 → `%Error-UNSUPPORTED: Unsupported: covergroup` / `cover point` / `cover bin specification` / `covergroup within class`. 경고가 아니라 지원 안 함 오류라 `-Wno-UNSUPPORTED` 같은 옵션으로 못 끈다 (`Unknown warning specified`). 클래스 안에 빈 클래스를 넣어 흉내 내는 방법도 `class within class` 미지원이라 안 된다.
+- 코드 문제는 아니다: Vivado(xvlog/xsim)는 covergroup을 정상 컴파일·실행한다.
+- 해결: ALE의 `b:ale_command_wrapper`로 verilator 앞에 래퍼(`verilator-cgstrip`)를 끼운다. 래퍼는 검사할 파일에 `covergroup`이 있을 때만 **임시 복사본**을 만들어 아래처럼 바꾼 뒤 verilator를 돌리고, 메시지의 파일 경로를 원래대로 되돌린다.
+  - `covergroup … endgroup` → 빈 줄 (줄 번호 유지)
+  - `cg = new;` / `this.cg = new;` / `cg.sample();` → `;` (빈 문장)
+  - `cg.cp.get_coverage()` / `get_inst_coverage()` → `0.0`
+  - 모듈에서 covergroup을 타입으로 쓴 인스턴스 선언(`cg_t cg_i = new;`)도 같이 처리
+- 원본 파일과 vim 버퍼는 건드리지 않는다. covergroup이 없는 파일은 verilator를 그대로 실행한다. 다른 오류는 원래 줄 번호로 그대로 표시된다.
+
+사전 확인: `grep -n ale_covergroup ~/.vimrc` → 나오면 적용된 것.
+
+스크립트 설치 (저장소 폴더에서):
+```bash
+cp ubuntu-terminal-setup/verilator-cgstrip ~/.local/bin/ && chmod +x ~/.local/bin/verilator-cgstrip
+```
+`~/.vimrc` 백업(`cp ~/.vimrc ~/.vimrc.bak_cgstrip`) 후, `augroup ale_tb … augroup END` 바로 아래에 추가:
+```vim
+" covergroup : verilator 가 지원하지 않아 "Unsupported: covergroup" 오류가 뜸 (-Wno 옵션으로도 못 끔)
+"  → 검사할 때만 covergroup 블록과 사용처(new / sample / get_coverage)를 지운 임시 복사본으로 verilator 실행
+"    (~/.local/bin/verilator-cgstrip, 원본 파일·버퍼는 그대로, covergroup 없는 파일은 verilator 그대로 실행)
+augroup ale_covergroup
+    autocmd!
+    autocmd FileType verilog,systemverilog
+        \ let b:ale_command_wrapper = expand('~/.local/bin/verilator-cgstrip') . ' %*'
+augroup END
+```
+적용: 열려 있는 vim은 파일을 다시 열거나(`:e`) vim 재시작.
+
+검증 (covergroup 있는 TB, 예: `sim_file/tb_fifo_pre.sv`):
+```bash
+D=$(pwd)   # TB 가 있는 폴더
+ALE="verilator --lint-only -Wall -Wno-DECLFILENAME -I$D -y $D --timing -Wno-BLKSEQ -Wno-VARHIDDEN"
+$ALE tb_fifo_pre.sv 2>&1 | grep -c 'Unsupported: cover'                                  # → 1 이상 (래퍼 없이)
+~/.local/bin/verilator-cgstrip $ALE tb_fifo_pre.sv 2>&1 | grep -c 'Unsupported: cover'   # → 0 (래퍼 사용)
+```
+- vim에서 TB를 열고 `:echo b:ale_command_wrapper` → `…/verilator-cgstrip %*`, covergroup 줄에 빨간 표시가 없으면 성공. 일부러 오타를 넣으면 그 줄에 오류가 그대로 뜬다.
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -2090,6 +2203,8 @@ bash -ic 'type -t pdf xsv'   # → function / function (터미널에서는 그�
 - [ ] tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`를 눌러도 pane 배치가 안 바뀜, `Ctrl+b o`는 다음 pane으로 이동
 - [ ] tmux에서 `Ctrl+b d`를 눌러도 세션에서 안 나가짐, 셸에서 `tmux detach`로는 나가짐
 - [ ] vim에서 `:!pd` + `Tab` → `pdf` 자동완성, `:!pdf 없는이름` → `pdf: ... 없음` (`command not found` 아님)
+- [ ] 엑셀 파일 폴더에서 `exl` / `exl 파일` / `exl 폴더` 로 Windows Excel에서 열림 (`~$` 잠금파일은 안 열림), vim `:!exl`도 동작
+- [ ] vim에서 `covergroup`이 있는 TB를 열어도 `Unsupported: covergroup` 빨간 표시가 없음, 다른 오타는 그대로 표시됨
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
 
 ## 사용자에게 전달할 사용법 요약
@@ -2113,6 +2228,7 @@ bash -ic 'type -t pdf xsv'   # → function / function (터미널에서는 그�
 | System_Verilog 작업 폴더로 이동 | `viva` |
 | PPT 파일(또는 폴더 안 PPT 전부)을 PowerPoint로 열기 | `ppt` / `ppt "파일명"` / `ppt "폴더명"` |
 | PDF 파일(또는 폴더 안 PDF 전부) 열기 | `pdf` / `pdf "파일명"` / `pdf "폴더명"` |
+| 엑셀 파일(또는 폴더 안 엑셀 전부) 열기 | `exl` / `exl "파일명"` / `exl "폴더명"` (`.xlsx` `.xlsm` `.xls` `.csv`) |
 | Markdown을 VS Code 미리보기처럼 실시간으로 보기 (탭 닫으면 자동 종료) | `md` / `md "파일명"` / `md "폴더명"` |
 | vim에서 md 편집하면서 실시간 미리보기 | `:md` (끄기 `:mdstop`) |
 | vim에서 md 렌더링 화면 보기 (화면 전체) | `:glow` (닫기 `q`, 테마 바꾸기 `:glow 이름` + `Tab`) |
@@ -2161,5 +2277,7 @@ bash -ic 'type -t pdf xsv'   # → function / function (터미널에서는 그�
 - `Ctrl+b Ctrl+o` / `Alt+o` 끄기: `~/.tmux.conf`의 "Ctrl+b Ctrl+o / Ctrl+b Alt+o (pane 돌리기) 끄기" 3줄 삭제 후 `tmux bind-key C-o rotate-window; tmux bind-key M-o rotate-window -D` (또는 `~/.tmux.conf.bak_ctrlo` 복원)
 - `Ctrl+b Space` 끄기: `~/.tmux.conf`의 "Ctrl+b Space (레이아웃 순환) 끄기" 2줄 삭제 후 `tmux bind-key Space next-layout`
 - `Ctrl+b d` 끄기: `~/.tmux.conf`의 "Ctrl+b d (detach) 끄기" 2줄 삭제 후 `tmux bind-key d detach-client`
-- vim `:!` 셸 함수: `cd ~/.local/bin && rm pdf png ppt md wh xsv .bashrc-fn`
+- vim `:!` 셸 함수: `cd ~/.local/bin && rm pdf png ppt md wh xsv exl .bashrc-fn`
+- `exl`: `~/.bashrc`의 "exl [이름]" 주석 블록과 `exl()` 함수 삭제 (또는 `~/.bashrc.bak_exl` 복원), `rm ~/.local/bin/exl`
+- covergroup 래퍼: `~/.vimrc`의 `augroup ale_covergroup … augroup END` 블록(주석 3줄 포함) 삭제 (또는 `~/.vimrc.bak_cgstrip` 복원), `rm ~/.local/bin/verilator-cgstrip`
 - TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제
