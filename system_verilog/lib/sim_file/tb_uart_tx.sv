@@ -25,23 +25,28 @@ endinterface
 
 class transaction;
 
- rand bit tx_start; 
  rand bit [7:0] tx_data;
+ logic [7:0] expected_data;
+ logic [7:0] result_data;
  logic tx;
+ logic rst;
  logic tx_busy;
-  
+ logic tx_start;
+ 
+ rand int interval;
 
 
-//constraint push_data_gen{push_data inside{[0:255]};}
+
+constraint tx_data_gen{tx_data inside{[0:255]};}
 //constraint rst_gen{ rst dist{ 0:/ 9 , 1:/ 1  }; }
 //constraint push_gen{ push dist{ 0:/ 5 , 1:/ 5 }; }
 //constraint pop_gen{ pop   dist{ 0:/ 5 , 1:/ 5 }; }
 
 function void debug_print(string name);
-	$display("%t :[%s] rst = %d, push = %d ,pop = %d, full = %d, i);
+	$display("%t :[%s] reset =  %d , start = %d , tx_data = %d , interval = %d , tx_busy =  %d"
+				,$time,name,rst,tx_start,tx_data,interval,tx_busy);
 
-
-
+endfunction
 
 
 endclass 
@@ -57,7 +62,6 @@ class generator;
     transaction tr;
 	mailbox #(transaction) gen2drv_mbox;
 	event gen_next_evt;
-	int       step     = 0;
 	
 	function new(mailbox #(transaction) gen2drv_mbox, event gen_next_evt);
 		
@@ -67,11 +71,10 @@ class generator;
 
 
 
-	task run(int option);
+	task run();
 		forever begin
 			tr = new();
 			tr.randomize();
-            gen_tr(option);
 			gen2drv_mbox.put(tr);
 			$display("=========================================================================");
 			tr.debug_print("GEN");
@@ -80,47 +83,7 @@ class generator;
 
 	endtask
 
-function void gen_tr(int option);
      
-			case(option)
-	
-				0:begin
-					tr.randomize();
-					tr.rst  = 0;
-					tr.pop  = 0;
-					case(step % 6)
-						0,1,2,3 : begin tr.push = 1;  end
-						4       : begin tr.push = 1;             end
-						5       : begin tr.push = 0; tr.rst = 1; end
-					endcase
-					step++;
-				  end
-
-				1:begin
-					tr.randomize();
-					tr.rst  = 0;
-					if(step % 9 < 4) begin tr.push = 1; tr.pop = 0;  end
-					else             begin tr.push = 0; tr.pop = 1;  end
-					step++;
-				  end
-
-				2:begin
-					tr.randomize();
-					tr.rst = 0;
-					tr.push = 1;
-					tr.pop  = 1;
-				  end
-				
-				3:begin
-					tr.randomize();
-					tr.rst = 0;
-				  end
-
-				4:begin
-					tr.randomize();
-				  end
-			endcase	
-endfunction
 
 
 endclass
@@ -159,15 +122,12 @@ class driver;
 
 	task run();
 		forever begin
-			@(posedge uart_vif.clk);
-			#1;
 			gen2drv_mbox.get(tr);
-			tr.debug_print("DRV"); 
-			uart_vif.rst	   = tr.rst;
-			uart_vif.push_data = tr.push_data;
-			uart_vif.push = tr.push;
-			uart_vif.pop = tr.pop;
-
+			tr.debug_print("DRV");
+			uart_vif.tx_data = tr.tx_data;	
+			uart_vif.tx_start = 1;
+			#10; 
+			uart_vif.tx_start = 0;
 		end
 	endtask
 
@@ -185,10 +145,11 @@ class monitor;
 
 	transaction tr;
 	mailbox #(transaction) mon2scb_mbox;
+
 	virtual uart_interface uart_vif;
 
 
-	function new( mailbox#(transaction) mon2scb_mbox ,
+	function new( mailbox#(transaction) mon2scb_mbox,
 					virtual uart_interface uart_vif
 					);
 	
@@ -196,22 +157,106 @@ class monitor;
 		this.uart_vif = uart_vif;
 	endfunction
 	
+	parameter COUNT = 100_000_000/9600;
+
+	bit n_tx ;
+	bit n_tx_busy ;
+	
+	bit c_tx  ;
+	bit c_tx_busy  ;
+
+	
+	bit tx_edge = n_tx^c_tx;
+	bit busy_edge = n_tx_busy^c_tx_busy; 
+
+	bit count_enable;
+	bit[$clog2(COUNT/2)-1:0] count; 
+	bit [3:0] baud_cnt; 
+
+
+	bit [7:0] expected_data; 
+	bit [7:0] result_data;
+
+
 
 	task run();
 
 			forever begin
-				@(negedge uart_vif.clk);
-				tr 				= new();
-				tr.rst			= uart_vif.rst;
-				tr.pop_data 	= uart_vif.pop_data ;
-				tr.push_data	= uart_vif.push_data ;   
-				tr.push			= uart_vif.push  ;
-				tr.pop			= uart_vif.pop ;
-				tr.full			= uart_vif.full;		
-				tr.empty		= uart_vif.empty;
+				@(posedge uart_vif.clk)
+				#1; 
+				tr = new();
+				tr.tx_data	= uart_vif.tx_data ;   
+				tr.tx_busy	= uart_vif.tx_busy  ;
+				tr.tx	    = uart_vif.tx  ;
+				tr.tx_start = uart_vif.tx_start ;
+				tr.rst	= uart_vif.rst; 
 
-				mon2scb_mbox.put(tr);
-				tr.debug_print("MON");
+				c_tx = uart_vif.tx;
+				c_tx_busy = uart_vif.tx_busy;
+
+				if(tx_edge && busy_edge)begin
+					
+					count_enable = 1;
+					expected_data = tr.tx_data;
+					
+				end
+
+				else begin 
+				
+					if(count_enable)begin 
+						
+						if(tx_edge == 0 && busy_edge == 1)begin
+							
+								tr.result_data = result_data;
+								tr.expected_data = expected_data;
+								mon2scb_mbox.put(tr);
+								count_enable = 0;
+								$display("PUT RESULT DATA  : %d  EXPECTDATA : %d", result_data,expected_data); 
+
+						end
+
+
+						else begin
+							if(count == (COUNT/2 )-1 )begin
+									count = 0;
+
+									if(baud_cnt < 9 && baud_cnt >0)begin
+											
+											result_data = {uart_vif.tx, result_data[7:1]};
+											$display("[DATA %d], %5d", baud_cnt,uart_vif.tx);
+									end
+
+
+									baud_cnt ++; 
+
+							end
+							
+							else begin 
+									count ++;
+
+							end
+						end	
+		
+					end
+
+					else begin
+				
+						baud_cnt = 0; 
+						count = 0; 
+						result_data =0;
+						expected_data = 0; 
+				
+					end
+
+
+		
+				end
+
+				n_tx = uart_vif.tx;
+				n_tx_busy = uart_vif.tx_busy;
+
+
+			
 
 			end
 
