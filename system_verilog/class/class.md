@@ -8,6 +8,7 @@
 | [1109 (월)](#1109-월--hold-count--ram-검증--시험--uvm-발표) | Hold count 피드백 · RAM 검증 시나리오 · 타이밍 · scoreboard · 시험 · UVM 발표 계획 |
 | [1110 (화)](#1110-화--drive-방식--scheduling--transaction-공유--fifo) | blocking vs nonblocking drive · 출력 지연 · 스케줄링 다이어그램 (Verilog vs SV) · transaction 공유 · FIFO 설계 |
 | [1111 (수)](#1111-수--fifo-검증--queue) | FIFO 검증 · 크기 제한 queue · queue로 FIFO 동작 만들기 · queue 메서드 |
+| [1112 (목)](#1112-목--uart-tx-검증-플랜) | UART TX 검증 플랜 · 시나리오 · edge로 시작/종료 검출 · tick counter · mailbox in/out · 교수님 조언 |
 
 ---
 
@@ -996,214 +997,152 @@ class driver
 
 > 전체 메서드는 [1105 · 5-2. queue 메서드](#5-2-queue-메서드) 참고.
 
+---
+
+# 1112 (목) — UART TX 검증 플랜
 
+> **핵심 한 줄** : monitor가 **tx · tx_busy가 바뀌는 순간(edge)**을 잡아 시작 / 종료를 판단하고, 그 사이 tx를 bit 단위로 모아 기댓값과 비교한다. **왜 그 방법을 골랐는지** 설명할 수 있어야 한다.
+
+| # | 목차 |
+|---|------|
+| 1 | 검증 플랜 구성 |
+| 2 | 시나리오 |
+| 3 | monitor — edge로 시작 / 종료 검출 |
+| 4 | 이 방법이 유효한 이유 & 한계 |
+| 5 | 데이터 수집 (tick counter) |
+| 6 | scoreboard로 전달 |
+| 7 | 교수님 조언 |
+
+---
+
+## 1. 검증 플랜 구성
 
-1112 수업
-uart_tx 검증 플랜 
+| 항목 | 정할 것 |
+|---|---|
+| 시나리오 | 어떤 입력 상황을 만들 것인가 |
+| 기댓값 산출 방법 | expected를 **언제, 어디서** 가져올 것인가 |
+| monitor | 결과를 **언제** 읽고 **언제** scoreboard로 보낼 것인가 |
 
-시나리오
+**타이밍 기준 (100 MHz, 9600 bps)**
 
-기댓값 산출 방법
-monitor  
+| 항목 | 값 |
+|---|---|
+| 1 bit 시간 | 100,000,000 / 9600 ≈ **10416 clk** |
+| 반 bit | **5208 clk** (bit 가운데를 읽기 위한 시간) |
+| 한 프레임 | start 1 + data 8 + stop 1 = **10 bit** |
+
+---
 
+## 2. 시나리오
+
+| # | 시나리오 | 방법 |
+|---|---|---|
+| 1 | **reset** | assertion으로 확인 : `rst \|=>` 다음 클럭에 초기값 |
+| 2 | **normal case** | start · tx_data **random** |
+| | | start는 **1 clock** 펄스, **negedge drive** |
+| | | **tx_busy가 0일 때만** start |
+| | | busy가 끝나고 start를 주는 시간을 **random**하게 → start 시점을 조작할 필요가 있음 |
+| 3 | **busy 중 start** | tx_busy = 1일 때 start = 1 발생 주기를 **random**하게 |
 
+> 보충 : `uart_tx.sv`의 reset 초기값은 **tx = 1 (idle)**, **tx_busy = 0**이다. assertion에서 어떤 신호를 0으로 볼지 구분할 것.
 
+---
 
+## 3. monitor — edge로 시작 / 종료 검출
 
+**transaction에 넣을 내부 저장 변수 필요 (expect data)** → `bit [7:0] reg_tx_data`
 
+| 순서 | 할 일 |
+|---|---|
+| 1 | **시작 시점**(`posedge + 1ns`, tx_busy 0 → 1 · tx 1 → 0)에 tx_data를 기댓값으로 받아옴 → **xor gate**로 변화 검출 |
+| 2 | 그 이후 tick counter로 결과값 저장 |
+| 3 | count == 9이면 기댓값 · 결과값을 mailbox에 put |
 
-1. reset    rst |=> 0;
+**edge 검출** : 이전 값과 현재 값을 xor → 바뀌었으면 1
 
+| 구간 | tx (이전 → 현재) | tx_busy (이전 → 현재) | tx edge | busy edge | 동작 |
+|---|---|---|---|---|---|
+| **시작** | 1 → 0 | 0 → 1 | **1** | **1** | 기댓값 저장, 수집 시작 |
+| 데이터 | 1 → 0 / 0 → 1 / 유지 | 1 유지 | 0 또는 1 | 0 | 수집만 |
+| **종료** | 1 → 1 (stop bit) | 1 → 0 | **0** | **1** | 기댓값 · 결과 전송 (mon2scb) |
 
-2. nomal case 
+```
+<시작 시점>
+                11111000000
+tx_buff         ____‾‾‾____          tx 1 → 0
+                0000011111
+busy_buff       ____‾‾‾____          busy 0 → 1
+→ tx_buff && busy_buff == 1 일 때만 기댓값을 가져온다
 
-			start 	Tx_data  => random
-			start 1 clock / negedge drive
-			tx_busy 가 0일때만 start 시킨다 
+<종료 시점>
+                11111111111
+tx_buff         ___________          tx 1 유지
+                1111100000
+busy_buff       ____‾‾‾____          busy 1 → 0
+→ tx_buff == 0 && busy_buff == 1 → 기댓값 전송 (mon2scb)
+```
 
-			busy 끝나고 start 주는 시간을 random하게 해서 발생하는 시점을
-			start time을 조작할 필요가 있음
+---
 
-			monitor 계획 
+## 4. 이 방법이 유효한 이유 & 한계
 
-			   transaction에 넣을 내부 저장 변수 필요(expect data)
-			   	
-			   bit [7:0] reg_tx_data
-			   
+| 항목 | 내용 |
+|---|---|
+| 시작 | start 신호 → `posedge`에서 **busy 0 → 1, tx 1 → 0**이 동시에 바뀜 → 이 순간이 monitor 시점 |
+| 종료 | **busy 1 → 0, tx 1 → 1** (stop bit 유지) |
+| 결론 | **바뀐 순간을 체크해야** 정확한 검증이 됨 |
+| 기댓값 시점 | `posedge + 1` · tx_busy == 0 · tx 1 → 0일 때 `reg_tx_data = uart_vif.tx_data` (바로 transaction에 저장 X) |
+| **한계** | **tx_busy에 오류가 있으면?** → 시작 / 종료 판단이 틀어짐. 이것도 기댓값 산출에 넣어야 함 |
+| 대응 | 기댓값은 **tx_start** 시점에, 결과는 busy · tx로 → mailbox를 **in / out 2개**로 분리 (6장) |
 
-			1. monitor tx_data(기댓값을 받아오는 시점 posedge +1ns - 
-								tx_busy = 0 -> 1   tx  = 1 -> 0 일때) -> xor gate 를 쓰면 좋을 것 같다
+---
 
+## 5. 데이터 수집 (tick counter)
 
-				<시작 시점>
+```
+logic [7:0] compare_tx_data
+bit [$clog2(10416/2):0] tick_counter
+int count  -> 0~9   (0 : start / 1~8 : data 수집 / 9 : done)
+```
 
-								11111000000
-				tx_buff			____†-†____
+| count | 구간 | 동작 |
+|---|---|---|
+| 0 | start bit | **무시** |
+| 1 ~ 8 | data bit | `compare_tx_data = {tr.tx, compare_tx_data[7:1]}` (LSB부터 들어오므로 오른쪽으로 shift) |
+| 9 | stop bit | done → 6장으로 |
 
-								0000011111
-				busy_buff	    ____†-†____
-								
+> 보충 주의 : tick을 **5208 clk마다** 세면 count 1칸이 **반 bit**가 되어 bit 경계에서 읽게 된다. 시작 후 **5208 clk 한 번**(start bit 가운데)을 기다린 뒤에는 **10416 clk마다** 읽어야 매 bit의 가운데를 읽는다.
 
-				tx_buff && busy_buff == 1 일 때만 기댓값을 계속 가져온다.
+---
 
-				============================================================================
-				<DATA 전송>  
+## 6. scoreboard로 전달
 
-								11111000000
-				tx_buff			____†-†____
-				
+**count == 9이면 기댓값 · 결과값을 mailbox에 put**
 
-								1111111111
-				tx_buff			___________
-			
+```
+if(count == 9) begin
+    tr.expect_data  = reg_tx_data;
+    tr.compare_data = compare_tx_data;
+    tr.busy = uart_vif.busy;
+    ...
+    mon2scb.put(tr);
+end
+```
 
-								00000000000
-				tx_buff			___________
-			
+**mailbox 2개로 분리**
 
-								00000111111
-				tx_buff			____†-†____
-				
+| mailbox | 보내는 것 | 시점 |
+|---|---|---|
+| `mon2scb_in` | 기댓값 (입력 tx_data) | tx_start |
+| `mon2scb_out` | 결과값 (받은 data) | 프레임 수신 완료 |
 
-								00000000000
-				busy_buff	    ___________
+> tx_start + tx_busy + tx **조합**으로 판단한다.
 
+---
 
-				============================================================================
-				<종료 시점> 
+## 7. 교수님 조언
 
-								11111111111
-				tx_buff			___________      
-
-								1111100000
-				busy_buff	    ____†-†____
-
-
-					tx_buff == 0 && busy_buff == 1  -> 기댓값 전송 (mon2scb) 
-
-
-
-				============================================================================
-
-				tx_buff && busy_buff == 1 일 때만 기댓값을 계속 가져온다. 
-				
-				왜 이방법의 유효성? 
-				
-				start signal -> posedge 에서 busy = 0 -> 1 
-											 tx   = 1 -> 0
-											 		 ↑    ↑
-													 monitor 시점 
-										
-		
-											busy = 1 -> 0    
-											tx 	 = 1 -> 1
-
-
-											바뀐 순간을 체크해야 정확한 검증이 됨
-										
-
-
-
-			  =================================================================================================	
-			  posedge + 1  // tx.busy ==0 , tx = 1->0  reg_tx_data = uart_vif.tx_data (바로 트랜잭션에 저장 x)
-			  =================================================================================================
-			  tx.busy 에 오류가 있을 경우 어떻게 해야하나? - 이것도 기댓값 산출에 넣어야함.
-
-							    
-
-			  
-			2. 이 시점 이후로 int[$clog(10416/2)-1 : 0] - 결과값 저장 
-
-			=================================================================================================
-			logic [7:0] compare_tx_data
-
-			bit [$clog2(10416/2):0] tick_counter 
-
-			int count - > 0~9    (0 : start / 1~8 : data 수집 / 9 : done )	
-			=================================================================================================
-			5208 clk cycle마다 tick , count == 0 무시 , count 1~8 구간에서  compare_tx_data = {tr.tx, compare_tx_data[7:1]} 
-			
-
-
-			3. count == 9이면 기댓값 결과 값 mailbox에 put 
-
-			  =================================================================================================
-				if(count ==9) begin
-
-						tr.expect_data  = reg_tx_data ;
-						tr.compare_data = compare_tx_data;
-						tr.busy = uart_vif.busy 
-						.
-						.
-						.
-						mon2scb.put(tr);
-				
-						
-				end
-			  =================================================================================================
-			
-
-
-mon2scb_in
-mon2scb_out 
-
-
-
-
-
-
-tx_start  + tx_busy + tx 조합 
-
-
-
-
-
-
-3. tx_busy = 1 일 때,  start = 1 발생 주기 ( random )
-
-
-
-
-
-
-
-교수님 조언
-- 왜 그방법을 택했는지, 방법이 어떤 경우가 있었고, 왜 그 방법을 선택할 수 밖에 없었는지
-- 면접에서는 내가 했던거 코치코치 다 물어봄 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+| 조언 | 내용 |
+|---|---|
+| 방법 선택의 이유 | **왜 그 방법을 택했는지**, 어떤 방법들이 있었고, **왜 그 방법을 선택할 수밖에 없었는지** 설명할 수 있어야 함 |
+| 면접 | 내가 했던 것을 **꼬치꼬치 다** 물어봄 |
