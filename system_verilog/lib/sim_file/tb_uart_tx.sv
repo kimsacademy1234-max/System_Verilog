@@ -159,15 +159,17 @@ class monitor;
 	
 	parameter COUNT = 100_000_000/9600;
 
-	bit n_tx ;
-	bit n_tx_busy ;
-	
+	bit r_tx ;
+	bit r_tx_busy ;
+	bit r_tx_start; 
+
+
 	bit c_tx  ;
 	bit c_tx_busy  ;
 
 	
-	bit tx_edge = n_tx^c_tx;
-	bit busy_edge = n_tx_busy^c_tx_busy; 
+	bit tx_edge = r_tx^c_tx;
+	bit busy_edge = r_tx_busy^c_tx_busy; 
 
 	bit count_enable;
 	bit[$clog2(COUNT/2)-1:0] count; 
@@ -179,28 +181,80 @@ class monitor;
 
 
 
+
+
+task recevie();
+
+	if(!baud_cnt) begin
+		if(count == (COUNT/2) -1)begin
+				count = 0;
+		end
+		else begin
+				count ++;
+		end
+	
+	end
+	
+	else begin
+
+							if(count == (COUNT/2 )-1 )begin
+									count = 0;
+				
+									if(baud_cnt < 9 && baud_cnt >0)begin
+											
+											result_data = {uart_vif.tx, result_data[7:1]};
+											$display("[DATA %d], %5d", baud_cnt,uart_vif.tx);
+									end
+
+
+									baud_cnt ++; 
+
+							end
+							
+							else begin 
+									count ++;
+
+							end
+
+	end
+
+endtask
+
+
+
+
 	task run();
 
 			forever begin
 				@(posedge uart_vif.clk)
 				#1; 
 				tr = new();
-				tr.tx_data	= uart_vif.tx_data ;   
 				tr.tx_busy	= uart_vif.tx_busy  ;
 				tr.tx	    = uart_vif.tx  ;
 				tr.tx_start = uart_vif.tx_start ;
 				tr.rst	= uart_vif.rst; 
-
+				
 				c_tx = uart_vif.tx;
 				c_tx_busy = uart_vif.tx_busy;
 
+
+				
 				if(tx_edge && busy_edge)begin
 					
-					count_enable = 1;
-					expected_data = tr.tx_data;
-					
-				end
+					if(r_tx_start)begin	
+						count_enable = 1;
+						expected_data = tr.tx_data;
+					end
 
+					else begin
+					
+						$display(" busy_edge or tx_edge error "); 
+					
+					end
+					
+						
+				end
+				
 				else begin 
 				
 					if(count_enable)begin 
@@ -217,25 +271,8 @@ class monitor;
 
 
 						else begin
-							if(count == (COUNT/2 )-1 )begin
-									count = 0;
 
-									if(baud_cnt < 9 && baud_cnt >0)begin
-											
-											result_data = {uart_vif.tx, result_data[7:1]};
-											$display("[DATA %d], %5d", baud_cnt,uart_vif.tx);
-									end
-
-
-									baud_cnt ++; 
-
-							end
-							
-							else begin 
-									count ++;
-
-							end
-						end	
+						end
 		
 					end
 
@@ -252,9 +289,9 @@ class monitor;
 		
 				end
 
-				n_tx = uart_vif.tx;
-				n_tx_busy = uart_vif.tx_busy;
-
+				r_tx = uart_vif.tx;
+				r_tx_busy = uart_vif.tx_busy;
+				r_tx_start = uart_vif.tx_start;
 
 			
 

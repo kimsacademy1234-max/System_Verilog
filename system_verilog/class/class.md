@@ -9,6 +9,7 @@
 | [1110 (화)](#1110-화--drive-방식--scheduling--transaction-공유--fifo) | blocking vs nonblocking drive · 출력 지연 · 스케줄링 다이어그램 (Verilog vs SV) · transaction 공유 · FIFO 설계 |
 | [1111 (수)](#1111-수--fifo-검증--queue) | FIFO 검증 · 크기 제한 queue · queue로 FIFO 동작 만들기 · queue 메서드 |
 | [1112 (목)](#1112-목--uart-tx-검증-플랜) | UART TX 검증 플랜 · 시나리오 · edge로 시작/종료 검출 · tick counter · mailbox in/out · 교수님 조언 |
+| [1113 (금)](#1113-금--uart-tx-추가-검사--검사-스펙--커버리지) | start bit · interval · frame 길이 검사 · 기준점과 허용오차 · 0xAA/0x55 경계 조건 · 커버리지 |
 
 ---
 
@@ -1146,3 +1147,69 @@ end
 |---|---|
 | 방법 선택의 이유 | **왜 그 방법을 택했는지**, 어떤 방법들이 있었고, **왜 그 방법을 선택할 수밖에 없었는지** 설명할 수 있어야 함 |
 | 면접 | 내가 했던 것을 **꼬치꼬치 다** 물어봄 |
+
+---
+
+# 1113 (금) — UART TX 추가 검사 · 검사 스펙 · 커버리지
+
+> **핵심 한 줄** : 검사 스펙을 잡으려면 **기준점**과 **허용오차**부터 정한다. 데이터 값뿐 아니라 **시간 성분**(start bit 유지, frame 길이, interval)도 검사하고, 경계 데이터(0xAA, 0x55)로 커버리지를 채운다.
+
+| # | 목차 |
+|---|------|
+| 1 | 추가 검사 항목 |
+| 2 | 검사 스펙 — 기준점 & 허용오차 |
+| 3 | 경계 조건 데이터 (0xAA · 0x55) |
+| 4 | 커버리지 계획 |
+
+---
+
+## 1. 추가 검사 항목
+
+| 검사 | 내용 | 기준점 |
+|---|---|---|
+| **start bit 유지** | start bit가 0으로 **1 baud time 동안 유지**되는지 | tx 1 → 0 |
+| **interval** | 다음 start까지 interval **clock 수만큼** 적용됐는지 | **tx_busy의 negedge** |
+| **frame 길이** | tx_busy 구간 = frame 길이가 맞는지 (**시간 성분**) | tx_busy 0 → 1 ~ 1 → 0 |
+| **stop bit** | stop bit 에러를 어떻게 볼까? → **01010101 (0x55)** 전송 | 마지막 data bit → stop bit 경계 |
+
+---
+
+## 2. 검사 스펙 — 기준점 & 허용오차
+
+> 검사 스펙을 잡는 것 = **기준점을 잡고, 허용오차를 잡는다.**
+
+| 기준 | 허용오차 | 값 (100 MHz, 9600 bps) |
+|---|---|---|
+| bit 하나 (baud time) | **baud time × 1/16** = **1 tick** | 10416 clk 중 ±651 clk |
+| frame 전체 (10 bit) | **±½ baud time** — 10 bit 중 얼마나 밀렸는지 판단 | 104160 clk 중 ±5208 clk |
+
+**frame 길이 판정식**
+
+```
+baud_time × 10 − ½ baud_time  ≤  측정한 frame 길이  ≤  baud_time × 10 + ½ baud_time
+```
+
+---
+
+## 3. 경계 조건 데이터 (0xAA · 0x55)
+
+UART는 **LSB부터** 보낸다. start bit = 0, stop bit = 1.
+
+| data | 2진수 | LSB | MSB | 전송 순서 (start · D0~D7 · stop) | 의미 |
+|---|---|---|---|---|---|
+| **0xAA** | 1010_1010 | **0** | **1** | 0 · 0101_0101 · 1 | LSB = start bit, MSB = stop bit와 **같음** → 경계에서 tx가 **안 바뀜** |
+| **0x55** | 0101_0101 | **1** | **0** | 0 · 1010_1010 · 1 | LSB · MSB가 start · stop bit와 **다름** → 경계마다 tx가 **바뀜** |
+
+| 확인할 것 | 쓰는 데이터 | 이유 |
+|---|---|---|
+| start / stop bit 길이를 edge로 측정 | **0x55** | start → D0, D7 → stop 경계에서 edge가 생김 |
+| edge 없이도 bit를 구분하는지 | **0xAA** | 경계에서 값이 같아 edge가 없음 → 타이밍만으로 맞게 읽어야 함 |
+
+---
+
+## 4. 커버리지 계획
+
+| 대상 | 경계 조건 |
+|---|---|
+| **tx_data** | 0xAA, 0x55 (3장) |
+| **interval** | **interval == 0** (busy가 끝나자마자 바로 start) |
