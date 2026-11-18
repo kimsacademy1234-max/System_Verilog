@@ -1213,3 +1213,286 @@ UART는 **LSB부터** 보낸다. start bit = 0, stop bit = 1.
 |---|---|
 | **tx_data** | 0xAA, 0x55 (3장) |
 | **interval** | **interval == 0** (busy가 끝나자마자 바로 start) |
+
+---
+
+# 1116 (월) — VCS · Verdi · 서버 시뮬레이션 flow
+
+> **핵심 한 줄** : **VCS**로 컴파일·시뮬레이션해서 **FSDB**를 만들고, **Verdi**로 FSDB 파형을 보며 디버깅한다. 모든 작업은 **서버**에서 (MobaXterm으로 접속) 실행한다.
+
+| # | 목차 |
+|---|------|
+| 1 | VCS vs Verdi |
+| 2 | 검증 flow |
+| 3 | 실행 환경 |
+
+---
+
+## 1. VCS vs Verdi
+
+| 툴 | 역할 | 출력 / 특징 |
+|---|---|---|
+| **VCS** | **컴파일 + 시뮬레이션** 실행 | **tcl 기반 log** 출력, 파형 파일 **FSDB를 꼭 만들어야 함** |
+| **Verdi** | **파형 보는 용** (디버깅) | FSDB를 읽어서 파형 확인, 코드 수정까지 가능 |
+
+> **FSDB** = VCS 시뮬레이션 결과 파형 파일. 이게 없으면 Verdi에서 볼 게 없다.
+
+---
+
+## 2. 검증 flow
+
+```
+설계 ─▶ VCS (컴파일 / 시뮬레이션) ─▶ FSDB 생성 ─▶ Verdi (파형 디버깅, 코드 수정) ─▶ 설계 재검증
+  ▲                                                                                   │
+  └───────────────────────────────────────────────────────────────────────────────────┘
+```
+
+| 단계 | 하는 일 | 결과물 |
+|---|---|---|
+| 1. 설계 | RTL / TB 작성 | `.v` / `.sv` |
+| 2. VCS | 컴파일 → 시뮬레이션 실행 | log, **FSDB** |
+| 3. Verdi | FSDB 파형 보며 디버깅, 코드 수정 | 수정된 코드 |
+| 4. 재검증 | 다시 VCS 돌려서 확인 | 새 FSDB |
+
+---
+
+## 3. 실행 환경
+
+| 항목 | 내용 |
+|---|---|
+| **실행 위치** | **서버**에서 실행 (로컬 X) |
+| **접속 툴** | **MobaXterm** |
+
+---
+
+# 1118 (수) — 검증 툴 비교 · SV 자료형/기능 · package
+
+> **핵심 한 줄** : SystemVerilog를 **전부** 지원하는 시뮬레이터는 3대 EDA 회사(Synopsys · Cadence · Siemens) 툴이고, Vivado는 **일부만** 지원한다. SV 검증에는 **동적 배열 · 연관 배열 · clocking block · DPI**가 쓰이고, 공통 정의는 **package**로 묶어서 `import`한다.
+
+| # | 목차 |
+|---|------|
+| 1 | 업계 동향 — UVM 자동화 |
+| 2 | 검증 툴 비교 |
+| 3 | 동적 배열 vs 연관 배열 |
+| 4 | clocking block · DPI |
+| 5 | package 예시 & 해석 |
+
+---
+
+## 1. 업계 동향 — UVM 자동화
+
+| 항목 | 내용 |
+|---|---|
+| **AI 자동 디버깅** | UVM 환경에서는 **이미 AI로 자동 디버깅**을 하고 있음 |
+| **UVM 자동화** | 검증 환경 구성·디버깅을 자동화하는 방향으로 가는 중 → UVM 구조를 이해하고 있어야 함 |
+
+---
+
+## 2. 검증 툴 비교
+
+| 회사 | 툴 | 용도 | SystemVerilog 지원 범위 |
+|---|---|---|---|
+| **Synopsys** | **VCS / Verdi** | VCS = 컴파일·시뮬레이션, Verdi = 파형 디버깅 (FSDB) | **전체 지원** — 설계 + 검증(class, randomize, coverage, assertion), UVM |
+| **Cadence** | **Xcelium** | 시뮬레이션 (디버깅은 SimVision 등) | **전체 지원** — 설계 + 검증, UVM |
+| **Siemens** | **Questa** (구 Mentor) | 시뮬레이션 + 디버깅 | **전체 지원** — 설계 + 검증, UVM |
+| **AMD (Xilinx)** | **Vivado** | **FPGA** 합성·구현 + 내장 시뮬레이터(XSim) | **일부 지원** — 합성은 **합성 가능한 SV만**, XSim은 class·randomize·UVM 일부 지원, 커버리지 등은 **제한적** |
+
+> 3대 EDA 회사 툴 = 칩 회사 **실무 검증용**. Vivado = **FPGA 개발용**이라서 검증 기능이 상대적으로 약하다.
+
+---
+
+## 3. 동적 배열 vs 연관 배열
+
+| 구분 | **동적 배열** (dynamic array) | **연관 배열** (associative array) |
+|---|---|---|
+| 선언 모양 | `int arr[];` — **크기 비워둠** | `int arr[string];` — **[ ] 안에 index 타입** |
+| 크기 | 선언할 때 **사이즈 지정 X** → 실행 중에 **`new[크기]`**로 메모리 할당 | 크기 개념 없음 — **값을 넣는 순간** 그 칸이 생김 |
+| index | 0, 1, 2 … **연속된 정수** | **이름(key)**으로 접근 가능 ex) `arr["class1"]` |
+| 메모리 | `new` 한 크기만큼 한 번에 잡힘 | **쓴 칸만** 잡힘 → 넓은 주소 범위를 듬성듬성 쓸 때 유리 |
+| 자주 쓰는 메서드 | `size()`, `delete()` | `num()`/`size()`, `exists()`, `delete()`, `first()`/`next()` |
+| 쓰임 | 개수가 실행 중에 정해지는 데이터 (패킷 payload 등) | 메모리 모델(주소 → 데이터), 이름별 점수표 등 |
+
+> 참고 — 앞에서 배운 **queue**(`[$]`)는 앞/뒤로 넣고 빼기(push/pop) 전용, 동적 배열은 **크기를 정해서 한 번에 할당**.
+
+---
+
+## 4. clocking block · DPI
+
+| 기능 | 무엇인가 | 왜 쓰나 |
+|---|---|---|
+| **clocking block** | 특정 clock 기준으로 **신호를 묶고**, 입력을 언제 샘플링할지 / 출력을 언제 drive할지(**skew**)를 지정하는 블록. 주로 **interface 안에** 선언 | TB ↔ DUT 사이 **race condition 방지** (1110 스케줄링 내용과 연결) — driver/monitor가 clock 기준으로 안전하게 drive·sample |
+| **DPI** (Direct Programming Interface) | SV에서 **C 함수를 직접 호출** (`import "DPI-C"`), 반대로 C에서 SV 함수 호출(`export`)도 가능 | C로 짠 **reference model**(알고리즘, 골든 모델)을 그대로 가져와 scoreboard에서 비교 |
+
+---
+
+## 5. package 예시 & 해석
+
+**package = 여러 파일이 같이 쓰는 정의(typedef, parameter, function, class)를 한 곳에 모아두는 이름 공간**
+
+```systemverilog
+// ① package 정의 — uart_pkg.sv
+package uart_pkg;
+
+    parameter int BAUD_RATE = 9600;                 // 공통 상수
+
+    typedef enum logic [1:0] {                      // 공통 타입
+        IDLE, START, DATA, STOP
+    } state_e;
+
+    function automatic logic parity(logic [7:0] d); // 공통 함수
+        return ^d;
+    endfunction
+
+    class transaction;                              // 공통 class
+        rand logic [7:0] tx_data;
+    endclass
+
+endpackage
+
+
+// ② package 사용 — tb_uart_tx.sv
+module tb_uart_tx;
+
+    import uart_pkg::*;                // uart_pkg 안의 모든 것 가져오기
+
+    transaction tr;                    // package의 class 바로 사용
+    state_e     st;                    // package의 enum 타입 사용
+
+    initial begin
+        tr = new();
+        tr.randomize();
+        $display("baud=%0d parity=%b", BAUD_RATE, parity(tr.tx_data));
+        $display("baud=%0d", uart_pkg::BAUD_RATE);  // import 없이 :: 로 직접 지정도 가능
+    end
+
+endmodule
+```
+
+**구문 해석**
+
+| 구문 | 의미 |
+|---|---|
+| `package uart_pkg; … endpackage` | `uart_pkg`라는 이름 공간을 만들고 그 안에 공통 정의를 넣음 |
+| `parameter int BAUD_RATE` | 모든 파일이 같은 값을 쓰게 하는 공통 상수 |
+| `typedef enum … state_e` | 상태 이름을 타입으로 정의 → DUT/TB가 같은 상태 이름 공유 |
+| `function automatic …` | 공통 함수. `automatic` = 호출할 때마다 변수를 새로 잡음 (재귀·동시 호출 안전) |
+| `class transaction` | TB 컴포넌트들(gen/drv/mon/scb)이 같이 쓰는 transaction 정의 |
+| `import uart_pkg::*;` | package 안의 **모든** 이름을 현재 scope로 가져옴 → 이름만으로 사용 |
+| `uart_pkg::BAUD_RATE` | import 없이 **`package이름::항목`**으로 하나만 직접 지정 (`::` = scope 연산자) |
+
+**주의할 점**
+
+| 항목 | 내용 |
+|---|---|
+| **컴파일 순서** | package 파일을 **사용하는 파일보다 먼저** 컴파일해야 함 (VCS 파일 목록에서 앞에 둘 것) |
+| **`include` vs `import`** | `include` = 파일 내용을 그대로 **복사 붙여넣기**, `import` = 이미 컴파일된 package에서 이름을 **가져다 씀** |
+| **이름 충돌** | `*`로 import한 이름과 현재 scope 이름이 같으면 **현재 scope 쪽이 우선** → 헷갈리면 `pkg::이름`으로 명시 |
+
+
+
+
+패키지 방식 - import package 하면  하위에서 모두 쓸 수 있다 -uvm도 같은 방식 
+
+패키지 - 무엇을 담을 수 있나 
+
+담을 수 있는 것 vs 담을 수 없는 것 
+
+* package 안의 parameter는 바깥에서 재정의 할 수 없음. 설정값이 아니라 공용 상수( 즉, localparam 과 같음) 
+
+
+패키지를 참조하는 4가지 방법
+
+1. scope resolution 
+2. explicit import
+3. wildcard import -> 이걸 많이 사용 
+
+
+2, 3 번의 차이 
+
+가져오는 시점
+같은 이름의 지역 선언
+두 패키지에 같은 이름
+겹치면?
+추천 용도 
+
+
+-> 표로 정리 
+
+
+
+권장 방식 - 모듈 안에 넣고 써라( 권장하는 방법 단, 모듈 밖에서 사용 가능 )
+
+
+주의 할 점 -> 패키지 안에 변수는 쓰지 않는다 
+
+
+static 과 automatic
+(전역변수) (지역변수)
+automatic -> 불릴 때마다 생기고, 메모리에서 삭제 
+
+지정안하고 선언시, automatic임
+
+q. 지역변수는 메모리 어디 공간에 할당되는지 궁금 지역변수 선언시 메모리에 저장되는 루트 궁금 
+
+
+Systemverilog - # ns -> 단위별로 시간 설정이 가능 
+
+
+step - 정밀도 단위 - clocking 블록에서 많이 쓰인다
+
+
+
+'0 '1 'x 'z -> 폭에 맞춰 채우기 
+
+실무에서는 어떻게 쓰나?
+
+
+- assign full = (q == '1) ;
+- 또다른 예시도 들어줘 
+
+
+DD
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

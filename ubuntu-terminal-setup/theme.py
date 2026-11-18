@@ -14,11 +14,11 @@ WT = (glob.glob('/mnt/c/Users/*/AppData/Local/Packages/Microsoft.WindowsTerminal
 
 # 16색 순서: black red green yellow blue purple cyan white + bright 8색
 T = {
- 'catppuccin': dict(title='Catppuccin Mocha', bg='#1E1E2E', fg='#CDD6F4', cursor='#F5E0DC', sel='#585B70',
-   ansi=['#45475A','#F38BA8','#A6E3A1','#F9E2AF','#89B4FA','#F5C2E7','#94E2D5','#BAC2DE',
+ 'catppuccin': dict(title='Catppuccin Mocha', bg='#45475A', fg='#CDD6F4', cursor='#F5E0DC', sel='#585B70',
+   ansi=['#313244','#F38BA8','#A6E3A1','#F9E2AF','#89B4FA','#F5C2E7','#94E2D5','#BAC2DE',
          '#585B70','#F38BA8','#A6E3A1','#F9E2AF','#89B4FA','#F5C2E7','#94E2D5','#A6ADC8'],
    vim='colorscheme catppuccin_mocha',
-   tmux=dict(bar='#181825', text='#CDD6F4', dim='#6C7086', left='#89B4FA', cur='#CBA6F7', on='#1E1E2E', box='#313244', msg='#F9E2AF')),
+   tmux=dict(bar='#45475A', text='#CDD6F4', dim='#9399B2', left='#89B4FA', cur='#CBA6F7', on='#1E1E2E', box='#585B70', msg='#F9E2AF', border='#9399B2')),
  'tokyonight': dict(title='Tokyo Night', bg='#1A1B26', fg='#C0CAF5', cursor='#C0CAF5', sel='#33467C',
    ansi=['#15161E','#F7768E','#9ECE6A','#E0AF68','#7AA2F7','#BB9AF7','#7DCFFF','#A9B1D6',
          '#414868','#F7768E','#9ECE6A','#E0AF68','#7AA2F7','#BB9AF7','#7DCFFF','#C0CAF5'],
@@ -86,12 +86,12 @@ def write_tmux(t):
     c = t['tmux']
     s = f"""# 자동 생성 파일 (theme 명령) : {t['title']}
 set -g status-style "bg={c['bar']},fg={c['text']}"
-set -g status-left "#[bg={c['left']},fg={c['on']},bold] #S #[default] "
-set -g status-right "#[fg={c['dim']}]%Y-%m-%d #[bg={c['box']},fg={c['text']}] %H:%M "
-set -g status-left-length 30
+set -g status-left "#[bg={c['box']},fg={c['text']}] %Y-%m-%d %H:%M #[bg={c['left']},fg={c['on']},bold] #S #[default] "
+set -g status-right ""
+set -g status-left-length 50
 set -g window-status-format "#[fg={c['dim']}] #I:#W "
 set -g window-status-current-format "#[bg={c['cur']},fg={c['on']},bold] #I:#W "
-set -g pane-border-style "fg={c['box']}"
+set -g pane-border-style "fg={c.get('border', c['box'])}"
 set -g pane-active-border-style "fg={c['left']}"
 set -g message-style "bg={c['box']},fg={c['msg']}"
 set -g mode-style "bg={c['box']},fg={c['text']}"

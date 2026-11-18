@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+
 //==============================================================================
 // Module      : digit_splitter
 // Description : Binary -> 4 decimal digits (BCD). o_digit_1 = 1의 자리,
@@ -18,7 +18,7 @@ module digit_splitter #(
     output wire [3:0]       o_digit_1000
 );
 
-assign o_digit_1    =  i_data         % 10;
+assign o_digit_1    =  i_data         % 10; //
 assign o_digit_10   = (i_data / 10)   % 10;
 assign o_digit_100  = (i_data / 100)  % 10;
 assign o_digit_1000 = (i_data / 1000) % 10;

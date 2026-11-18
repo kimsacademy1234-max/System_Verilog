@@ -6,6 +6,14 @@
 
 ## 업데이트 이력
 
+### 2026-11-18 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| 추가 | 33단계 | 배경색을 `#45475A`(Catppuccin surface1)로: Windows Terminal 배경, vim 배경, tmux 상태바를 같은 색으로. ANSI black은 배경과 겹치지 않게 `#313244`로 | `~/.theme/theme.py`(저장소 `ubuntu-terminal-setup/theme.py`), `~/.vimrc` |
+| 추가 | 33단계 | vim 글자색 선명하게: 배경이 밝아져 흐려 보이던 글자색(guifg)을 색조는 그대로 밝기·채도만 올림 (모든 테마에 적용). `~`·Visual 선택색은 `#585b70` | `~/.vimrc` |
+| 변경 | 33단계 | tmux: 상태바를 화면 위로, 왼쪽 위에 날짜+시계 (오른쪽 날짜·시계 삭제). pane 테두리를 굵은 선(`┃━`) + 전용 색 `#9399B2`(활성 pane은 파랑 그대로) | `~/.tmux.conf`, `~/.theme/theme.py` |
+
 ### 2026-11-11 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -1102,6 +1110,7 @@ theme | head -2                                   # → "* catppuccin  Catppucci
 vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | echo g:colors_name synIDattr(hlID("Normal"),"bg#") | redir END | q'
 # → catppuccin_mocha #1e1e2e
 tmux show -g status-style                         # → bg=#181825,fg=#CDD6F4
+# (33단계까지 적용했으면 → #45475a / bg=#45475A,fg=#CDD6F4)
 ```
 
 ---
@@ -2166,6 +2175,101 @@ $ALE tb_fifo_pre.sv 2>&1 | grep -c 'Unsupported: cover'                         
 
 ---
 
+## 33단계. 배경색 `#45475A` 통일 + vim 글자 선명하게 + tmux 상태바 위로·굵은 pane 테두리
+
+Catppuccin Mocha 기본 배경(`#1E1E2E`)이 너무 어두워서, vim 선택 영역 색인 `#45475A`(surface1)를 배경으로 쓰기로 함 (2026-11-18).
+터미널·vim·tmux 상태바를 모두 같은 색으로 맞추고, 그에 맞춰 글자·테두리·상태바를 조정했다.
+
+사전 확인: `grep -n "my_bg" ~/.vimrc` 와 `grep -n "status-position top" ~/.tmux.conf` → 둘 다 나오면 적용된 것.
+
+### 33-1. `theme.py` 교체 (터미널 배경 + tmux 색·배치)
+저장소의 `ubuntu-terminal-setup/theme.py`를 다시 복사한다 (백업 먼저).
+```bash
+cp ~/.theme/theme.py ~/.theme/theme.py.bak_bg
+cp <저장소>/ubuntu-terminal-setup/theme.py ~/.theme/theme.py
+```
+15단계 버전과 달라진 점:
+- `catppuccin`: 터미널 배경 `bg='#45475A'`, ANSI black `'#313244'` (배경과 같으면 검은 글자가 안 보여서)
+- `catppuccin` tmux 색: 상태바 `bar='#45475A'`(배경과 같음), 시계 칸·메시지 `box='#585B70'`, 흐린 글자 `dim='#9399B2'`, pane 테두리 전용 `border='#9399B2'`
+- `write_tmux()`: 왼쪽에 날짜+시계 칸 → 세션 이름 (`status-left-length 50`), 오른쪽(`status-right`)은 비움. pane 테두리는 `border` 색 (없는 테마는 예전처럼 `box` 색)
+
+### 33-2. `~/.vimrc`: 배경색 + 글자색 선명하게
+백업(`cp ~/.vimrc ~/.vimrc.bak_bg`) 후, `if filereadable(expand('~/.vim/theme.vim'))` **바로 위**(22단계 줄번호 색 `augroup linenr_color` 보다 아래)에 추가:
+```vim
+" 배경색: 어떤 테마든 #45475a (Catppuccin surface1) 로 덮어씀
+" EndOfBuffer(~)·Visual 선택색이 원래 #45475a 라 안 보이게 되므로 한 단계 밝은 #585b70 으로
+" 배경이 밝아져 글자가 흐려 보이므로 모든 글자색(guifg)을 색조는 그대로, 밝기·채도만 올림
+"   밝기 L += (1-L)*0.5 , 채도 S += (1-S)*0.7  (숫자 키우면 더 진해짐)
+function! s:Brighten(hex) abort
+    let [r, g, b] = map([1, 3, 5], {_, i -> str2nr(a:hex[i : i+1], 16) / 255.0})
+    let mx = max([r, g, b]) | let mn = min([r, g, b])
+    let l = (mx + mn) / 2 | let d = mx - mn
+    let [h, s] = [0.0, 0.0]
+    if d > 0
+        let s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn)
+        let h = mx == r ? (g - b) / d + (g < b ? 6 : 0) : mx == g ? (b - r) / d + 2 : (r - g) / d + 4
+        let h = h / 6
+    endif
+    let l += (1 - l) * 0.5 | let s += (1 - s) * 0.7
+    let q = l < 0.5 ? l * (1 + s) : l + s - l * s | let p = 2 * l - q
+    let out = []
+    for t in [h + 1.0/3, h, h - 1.0/3]
+        let t = t < 0 ? t + 1 : t > 1 ? t - 1 : t
+        let c = t < 1.0/6 ? p + (q - p) * 6 * t : t < 0.5 ? q : t < 2.0/3 ? p + (q - p) * (2.0/3 - t) * 6 : p
+        call add(out, float2nr(round(c * 255)))
+    endfor
+    return printf('#%02x%02x%02x', out[0], out[1], out[2])
+endfunction
+function! s:BrightenAll() abort
+    for hl in hlget()
+        if has_key(hl, 'guifg') && hl.guifg =~? '^#\x\{6}$'
+            execute 'highlight' hl.name 'guifg=' . s:Brighten(hl.guifg)
+        endif
+    endfor
+endfunction
+augroup my_bg
+    autocmd!
+    autocmd ColorScheme * call s:BrightenAll()
+                      \ | highlight Normal      guibg=#45475a
+                      \ | highlight EndOfBuffer guifg=#585b70 guibg=#45475a
+                      \ | highlight Visual      guibg=#585b70
+augroup END
+if filereadable(expand('~/.vim/theme.vim'))
+```
+> - `ColorScheme` 때마다 실행되므로 `theme next`로 테마를 바꿔도 배경 `#45475a` + 선명한 글자색이 유지된다 (colorscheme이 매번 원래 색으로 다시 칠하므로 밝기가 누적되지 않음).
+> - 진하기 조절: `let l += (1 - l) * 0.5 | let s += (1 - s) * 0.7` 의 숫자 (앞 = 밝기, 뒤 = 채도, `0`이면 원래 색).
+> - 22단계 줄번호 색도 이 블록보다 먼저 칠해지므로 같이 밝아진다.
+> - tmux 안에서도 정확한 색이 나오려면 `termguicolors` + `t_8f`/`t_8b`(15단계 이전부터 있음)와 tmux `terminal-overrides ",*:RGB"`가 필요.
+
+### 33-3. `~/.tmux.conf`: 상태바 위로 + 굵은 pane 테두리
+백업(`cp ~/.tmux.conf ~/.tmux.conf.bak_border`) 후, `source-file -q ~/.tmux/theme.conf` **바로 아래**에 추가 (색이 아니라서 `theme.py`가 아닌 여기에 둠):
+```bash
+set -g pane-border-lines heavy   # pane 테두리를 굵은 선(┃━)으로
+set -g status-position top       # 상태바를 화면 위쪽에 (왼쪽 위에 시계)
+```
+
+### 33-4. 적용
+```bash
+theme catppuccin              # Windows Terminal 배경 + ~/.tmux/theme.conf 다시 만듦
+tmux source-file ~/.tmux.conf
+```
+열려 있는 vim은 `:source ~/.vimrc` 또는 다시 열기. Windows Terminal은 설정 파일이 바뀌면 바로 반영 (안 되면 새 탭).
+
+검증:
+```bash
+vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | echo g:colors_name synIDattr(hlID("Normal"),"bg#") synIDattr(hlID("Normal"),"fg#") synIDattr(hlID("String"),"fg#") | redir END | q'
+# → catppuccin_mocha #45475a #e2e8fd #cafbc6   (원래 글자색 #cdd6f4 / #a6e3a1 보다 밝고 진함)
+tmux show -gv status-style            # → bg=#45475A,fg=#CDD6F4
+tmux show -gv status-position         # → top
+tmux show -gv pane-border-lines       # → heavy
+tmux show -gv pane-border-style       # → fg=#9399B2
+tmux display -p '#{T:status-left}'    # → ... 2026-11-18 10:46 ... (오늘 날짜·시각)
+python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/Local/Packages/Microsoft.WindowsTerminal_*/LocalState/settings.json')[0],encoding='utf-8'));print([(x['background'],x['black']) for x in d['schemes'] if x['name']=='Catppuccin Mocha'])"
+# → [('#45475A', '#313244')]
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
@@ -2206,6 +2310,8 @@ $ALE tb_fifo_pre.sv 2>&1 | grep -c 'Unsupported: cover'                         
 - [ ] 엑셀 파일 폴더에서 `exl` / `exl 파일` / `exl 폴더` 로 Windows Excel에서 열림 (`~$` 잠금파일은 안 열림), vim `:!exl`도 동작
 - [ ] vim에서 `covergroup`이 있는 TB를 열어도 `Unsupported: covergroup` 빨간 표시가 없음, 다른 오타는 그대로 표시됨
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
+- [ ] 터미널·vim·tmux 상태바 배경이 모두 `#45475A`(회남색)로 같고, vim 글자가 흐리지 않음
+- [ ] tmux 상태바가 화면 맨 위, 왼쪽 위에 `날짜 시각`, pane 테두리가 굵은 선(`┃━`)이고 지금 pane 쪽만 파랑
 
 ## 사용자에게 전달할 사용법 요약
 
@@ -2281,3 +2387,5 @@ $ALE tb_fifo_pre.sv 2>&1 | grep -c 'Unsupported: cover'                         
 - `exl`: `~/.bashrc`의 "exl [이름]" 주석 블록과 `exl()` 함수 삭제 (또는 `~/.bashrc.bak_exl` 복원), `rm ~/.local/bin/exl`
 - covergroup 래퍼: `~/.vimrc`의 `augroup ale_covergroup … augroup END` 블록(주석 3줄 포함) 삭제 (또는 `~/.vimrc.bak_cgstrip` 복원), `rm ~/.local/bin/verilator-cgstrip`
 - TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제
+- 배경색 `#45475A` / 글자 선명하게: `~/.vimrc`의 "배경색: 어떤 테마든 #45475a" 주석 ~ `augroup my_bg … augroup END` 블록 삭제 (또는 `~/.vimrc.bak_bg` 복원), `~/.theme/theme.py.bak_bg` 복원 후 `theme catppuccin`
+- tmux 상태바 위로 / 굵은 테두리: `~/.tmux.conf`의 `pane-border-lines heavy`, `status-position top` 2줄 삭제 후 `tmux set -gu pane-border-lines \; set -gu status-position`
