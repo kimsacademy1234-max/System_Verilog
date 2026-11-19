@@ -10,6 +10,9 @@
 | [1111 (수)](#1111-수--fifo-검증--queue) | FIFO 검증 · 크기 제한 queue · queue로 FIFO 동작 만들기 · queue 메서드 |
 | [1112 (목)](#1112-목--uart-tx-검증-플랜) | UART TX 검증 플랜 · 시나리오 · edge로 시작/종료 검출 · tick counter · mailbox in/out · 교수님 조언 |
 | [1113 (금)](#1113-금--uart-tx-추가-검사--검사-스펙--커버리지) | start bit · interval · frame 길이 검사 · 기준점과 허용오차 · 0xAA/0x55 경계 조건 · 커버리지 |
+| [1116 (월)](#1116-월--vcs--verdi--서버-시뮬레이션-flow) | VCS vs Verdi · 검증 flow (VCS → FSDB → Verdi) · 서버 실행 환경 |
+| [1118 (수)](#1118-수--검증-툴--sv-자료형--package--static--class-심화-은닉화--상속--파라미터화) | 검증 툴 비교 · 동적/연관 배열 · clocking block · DPI · package · static vs automatic · `'1` · 매크로 · 은닉화 · 상속 · static 멤버 · `::` · extern · 파라미터화 class · TLM |
+| [1119 (목)](#1119-목--2-state-vs-4-state--casting--typedef--enum--다형성--추상-class--uvm-개요) | 4-state vs 2-state · `$isunknown` · casting 4가지 · `signed'()` vs `-` · struct packed 쪼개기 · `$cast` · const · typedef · enum · `super` · 다형성 · up/downcasting · virtual · UVM의 `$cast` · 추상 class · multi-agent · UVM 개요·트리 구조·동작 흐름 |
 
 ---
 
@@ -1265,9 +1268,9 @@ UART는 **LSB부터** 보낸다. start bit = 0, stop bit = 1.
 
 ---
 
-# 1118 (수) — 검증 툴 비교 · SV 자료형/기능 · package
+# 1118 (수) — 검증 툴 · SV 자료형 · package · static · class 심화 (은닉화 · 상속 · 파라미터화)
 
-> **핵심 한 줄** : SystemVerilog를 **전부** 지원하는 시뮬레이터는 3대 EDA 회사(Synopsys · Cadence · Siemens) 툴이고, Vivado는 **일부만** 지원한다. SV 검증에는 **동적 배열 · 연관 배열 · clocking block · DPI**가 쓰이고, 공통 정의는 **package**로 묶어서 `import`한다.
+> **핵심 한 줄** : SystemVerilog를 **전부** 지원하는 시뮬레이터는 3대 EDA 회사(Synopsys · Cadence · Siemens) 툴이고, Vivado는 **일부만** 지원한다. SV 검증에는 **동적 배열 · 연관 배열 · clocking block · DPI**가 쓰이고, 공통 정의는 **package**로 묶어서 `import`한다. class는 **`local`(자기만) / `protected`(자식까지)**로 멤버를 숨기고, `extends`로 상속한다. class의 **`static` 멤버는 모든 객체가 공유**하고, **파라미터화 class**는 타입을 바꿔 끼워 재사용한다 (UVM의 `uvm_driver #(item)`). UVM은 mailbox 대신 **TLM**(함수 호출로 핸들 전달)을 쓴다.
 
 | # | 목차 |
 |---|------|
@@ -1276,6 +1279,18 @@ UART는 **LSB부터** 보낸다. start bit = 0, stop bit = 1.
 | 3 | 동적 배열 vs 연관 배열 |
 | 4 | clocking block · DPI |
 | 5 | package 예시 & 해석 |
+| 6 | package 더 알아보기 (담을 수 있는 것 · 참조 방법 · explicit vs wildcard) |
+| 7 | static vs automatic |
+| 8 | SV 시간 단위 · step |
+| 9 | `'0` `'1` `'x` `'z` — 폭에 맞춰 채우기 |
+| 10 | 현재 폴더 `macro_demo.sv` 해석 — 매크로 |
+| 11 | 데이터 은닉화 — `local` |
+| 12 | 상속 — `local` vs `protected` |
+| 13 | class의 `static` 멤버 (exam_05) |
+| 14 | `::` 연산자 정리 |
+| 15 | `extern` — method 몸체를 밖에서 정의 (exam_06) |
+| 16 | 파라미터화 class (exam_07) |
+| 17 | UVM에서는? — 파라미터화 class · mailbox 대신 TLM |
 
 ---
 
@@ -1388,111 +1403,968 @@ endmodule
 | **`include` vs `import`** | `include` = 파일 내용을 그대로 **복사 붙여넣기**, `import` = 이미 컴파일된 package에서 이름을 **가져다 씀** |
 | **이름 충돌** | `*`로 import한 이름과 현재 scope 이름이 같으면 **현재 scope 쪽이 우선** → 헷갈리면 `pkg::이름`으로 명시 |
 
+---
 
+## 6. package 더 알아보기
 
+### 6-1. package 방식
 
-패키지 방식 - import package 하면  하위에서 모두 쓸 수 있다 -uvm도 같은 방식 
+> `import` 하면 **그 scope 안**(그 안의 class·function·begin 블록까지)에서 모두 쓸 수 있다. **UVM도 같은 방식** (`import uvm_pkg::*;`)
+>
+> ⚠️ 메모의 "하위에서 모두 쓸 수 있다"에서 **하위 = 그 scope 안쪽**이라는 뜻. 그 모듈이 **인스턴스한 하위 모듈에는 전달되지 않는다** → 하위 모듈 파일에서도 각자 `import` 해야 함 (그래서 UVM 파일마다 `import uvm_pkg::*;`가 붙어 있음).
 
-패키지 - 무엇을 담을 수 있나 
+| 위치 | 방법 | 권장 |
+|---|---|---|
+| **모듈 안** | `module tb; import pkg::*; …` → 그 모듈 안에서만 보임 | ✅ **권장** — 영향 범위가 그 모듈로 한정 |
+| 모듈 밖 | 파일 맨 위(`$unit`)에 `import pkg::*;` → 그 뒤에 컴파일되는 코드 전체에 보임 | 가능은 하지만 어디까지 영향 가는지 헷갈림 |
 
-담을 수 있는 것 vs 담을 수 없는 것 
+### 6-2. package에 담을 수 있는 것 vs 없는 것
 
-* package 안의 parameter는 바깥에서 재정의 할 수 없음. 설정값이 아니라 공용 상수( 즉, localparam 과 같음) 
+| 담을 수 있는 것 ✅ | 담을 수 없는 것 ❌ |
+|---|---|
+| `parameter` / `localparam` (공용 상수) | `module` · `interface` · `program` **인스턴스** |
+| `typedef` (enum, struct …) | `initial` / `always` 블록 |
+| `function` / `task` | `assign` (연속 할당) |
+| `class` | 다른 모듈 신호 **계층 참조** (`top.dut.sig` 같은 것) |
+| 다른 package `import` | — |
 
+| 주의 | 이유 |
+|---|---|
+| **package 안의 `parameter`는 바깥에서 재정의 불가** | 설정값이 아니라 **공용 상수** → 사실상 `localparam`과 같음 |
+| **package 안에 변수는 쓰지 않는다** | package 변수는 **static 하나**를 모든 사용처가 **공유** → 누가 언제 바꿨는지 추적이 어려움 |
 
-패키지를 참조하는 4가지 방법
+### 6-3. package를 참조하는 방법
 
-1. scope resolution 
-2. explicit import
-3. wildcard import -> 이걸 많이 사용 
+| # | 방법 | 모양 | 특징 |
+|---|---|---|---|
+| 1 | **scope resolution** | `pkg::BAUD_RATE` | import 없이 **매번 package 이름을 붙여** 씀 |
+| 2 | **explicit import** | `import pkg::BAUD_RATE;` | **필요한 이름 하나만** 가져옴 |
+| 3 | **wildcard import** | `import pkg::*;` | **전부** 가져옴 → **실무에서 가장 많이 씀** |
+| 4 | 모듈 헤더 import | `module m import pkg::*; (포트…);` | **포트 선언**에서도 package 타입을 쓰고 싶을 때 |
 
+> 메모에는 1~3번만 있어서, 4번(모듈 헤더 import)은 보충한 것.
 
-2, 3 번의 차이 
+### 6-4. explicit import vs wildcard import
 
-가져오는 시점
-같은 이름의 지역 선언
-두 패키지에 같은 이름
-겹치면?
-추천 용도 
+| 비교 | **explicit** (`import pkg::name;`) | **wildcard** (`import pkg::*;`) |
+|---|---|---|
+| **가져오는 시점** | import 하는 **즉시** 그 이름을 가져옴 | 미리 가져오지 않고 **그 이름이 실제로 쓰일 때** 가져옴 |
+| **같은 이름의 지역 선언** | 지역에 같은 이름을 선언하면 **에러** (충돌) | **지역 선언이 우선** → package 쪽 이름은 가려짐 |
+| **두 package에 같은 이름** | 두 package에서 같은 이름을 explicit import 하면 **에러** | 그 이름을 **안 쓰면 OK**, 쓰는 순간 **어느 쪽인지 모호 → 에러** |
+| **겹치면?** | 바로 에러 → 일찍 발견 | 지역 선언에 **조용히 가려질 수** 있음 → `pkg::이름`으로 명시해서 해결 |
+| **추천 용도** | 몇 개만 쓸 때, 이름 충돌을 확실히 막고 싶을 때 | UVM처럼 **많이 가져다 쓰는** package (`uvm_pkg::*`) |
 
+---
 
--> 표로 정리 
+## 7. static vs automatic
 
+| 구분 | **static** | **automatic** |
+|---|---|---|
+| 비유 | 전역변수처럼 | 지역변수처럼 |
+| 생기는 시점 | 시뮬레이션 시작 때 **한 번** | function/task가 **불릴 때마다 새로** 생김 |
+| 사라지는 시점 | 시뮬레이션 끝까지 유지 → **이전 호출 값이 남음** | 호출이 끝나면 **메모리에서 삭제** |
+| 동시 호출·재귀 | 변수 하나를 같이 써서 **값이 꼬임** | 호출마다 따로라서 **안전** |
 
+**지정 안 하고 선언하면? — 위치에 따라 다름 (직접 돌려서 확인)**
 
-권장 방식 - 모듈 안에 넣고 써라( 권장하는 방법 단, 모듈 밖에서 사용 가능 )
+| 선언 위치 | 기본값 | 같은 함수 3번 호출 (안에서 `c = 0; c++` 후 return) |
+|---|---|---|
+| **module / package** 안의 function·task | **static** | `1 2 3` → 값이 남아서 누적 |
+| `function automatic` 으로 명시 | automatic | `1 1 1` |
+| **class** 안의 method | **automatic** | `1 1 1` |
 
+> 메모의 "지정 안 하고 선언 시 automatic"은 **class method일 때만** 맞음. module·package 함수는 **static이 기본**이라서 package 함수에는 `automatic`을 붙여 쓰는 게 관례 (5번 예시의 `function automatic`).
 
-주의 할 점 -> 패키지 안에 변수는 쓰지 않는다 
+**Q. 지역변수(automatic)는 메모리 어디에 잡히나?**
 
+| 종류 | 할당 위치 (개념) | 언제 |
+|---|---|---|
+| static 변수 | 프로그램 전체에서 쓰는 **고정 영역** (C의 전역/데이터 영역 같은 곳) | elaboration 때 한 번 |
+| automatic 변수 | 호출할 때마다 만드는 **호출 프레임** (C의 스택 프레임 같은 것) | 호출 시 생성 → return 시 해제 |
+| class 객체 | **heap** (동적 메모리) | `new()` 할 때 생성, 아무도 핸들을 안 가지면 시뮬레이터가 회수 |
 
-static 과 automatic
-(전역변수) (지역변수)
-automatic -> 불릴 때마다 생기고, 메모리에서 삭제 
+> 실제 위치는 시뮬레이터 구현 몫. task는 `#`, `@`로 **중간에 멈출 수** 있어서, 시뮬레이터는 호출 프레임을 return 할 때까지 따로 살려둔다 (C의 스택처럼 바로 버리지 않음).
 
-지정안하고 선언시, automatic임
+---
 
-q. 지역변수는 메모리 어디 공간에 할당되는지 궁금 지역변수 선언시 메모리에 저장되는 루트 궁금 
+## 8. SV 시간 단위 · step
 
+| 항목 | 내용 | 예 |
+|---|---|---|
+| **시간 단위 직접 지정** | Verilog는 `#10`처럼 숫자만 쓰고 단위는 `timescale`을 따름. SV는 **숫자에 단위를 붙일 수 있음** | `#10ns`, `#2.5us`, `#100ps` |
+| **step** | **정밀도(time precision) 1단위** | `1step` |
+| step 쓰임 | **clocking block**에서 많이 씀 → `input #1step` = clock edge **바로 직전 값**을 샘플 | 1110 스케줄링 · 4번 clocking block과 연결 |
 
-Systemverilog - # ns -> 단위별로 시간 설정이 가능 
+---
 
+## 9. `'0` `'1` `'x` `'z` — 폭에 맞춰 채우기
 
-step - 정밀도 단위 - clocking 블록에서 많이 쓰인다
+| 표기 | 뜻 | 8비트에 넣으면 |
+|---|---|---|
+| `'0` | 모든 비트 0 | `0000_0000` |
+| `'1` | 모든 비트 1 | `1111_1111` |
+| `'x` | 모든 비트 x | `xxxx_xxxx` |
+| `'z` | 모든 비트 z | `zzzz_zzzz` |
 
+> 장점: **폭을 안 적어도** 변수 폭에 맞춰 채워짐 → parameter로 폭이 바뀌어도 코드를 안 고쳐도 됨. (Verilog에서는 `{WIDTH{1'b1}}`처럼 써야 했음)
 
+**실무에서 쓰는 예**
 
-'0 '1 'x 'z -> 폭에 맞춰 채우기 
+| 코드 | 쓰는 곳 | 설명 |
+|---|---|---|
+| `assign full = (q == '1);` | FIFO full, 카운터 최대값 검출 | q가 **모든 비트 1**(최대값)인지 비교 |
+| `if (!rst_n) q <= '0;` | 리셋 | 폭과 상관없이 0으로 초기화 |
+| `assign bus = oe ? data : 'z;` | 3상태(tri-state) 버스 | 출력 안 할 때 버스를 놓아줌 (high-Z) |
+| `mask = '1;` | 비트 마스크 | 전부 켠 마스크에서 시작 |
+| `data = 'x;` | TB 초기값 / 의미 없는 구간 | 값이 안 정해진 걸 파형에서 바로 보이게 → 잘못 쓰면 x가 퍼져서 버그 발견 |
+
+> ⚠️ `q == 1`과 `q == '1`은 다르다. `1`은 값 1(`0000_0001`), `'1`은 **전부 1**(`1111_1111`). (q = `1111_1111`일 때 `q == 1` → 0, `q == '1` → 1, 직접 돌려서 확인)
+
+---
+
+## 10. 현재 폴더 `macro_demo.sv` 해석 — 매크로(`` `define ``)
+
+| 매크로 | 정의 | 쓰인 기법 |
+|---|---|---|
+| `` `SHOW(v) `` | `` $display(`"v = %0d`",v) `` | **`` `" ``** = 문자열 안에서도 인자 `v`를 치환 (stringify) |
+| `` `MSG(s) `` | ``$display(`"name is `\`"s`\`"`")`` | **`` `\`" ``** = 문자열 안에 **큰따옴표(`"`) 자체**를 넣음 |
+| `` `FF(n) `` | ``logic [3:0] n``_d, n``_q;`` | **` `` `** (백틱 2개) = 토큰 **이어 붙이기** → `n`이 `state`면 `state_d`, `state_q` |
+
+| 코드 | 매크로가 펼쳐진 모양 | 출력 (직접 돌려서 확인) |
+|---|---|---|
+| `` `FF(state) `` | `logic [3:0] state_d, state_q;` | (신호 2개 선언) |
+| `` `SHOW(count); `` | `$display("count = %0d", count);` | `count = 7` |
+| `` `MSG(alu); `` | `$display("name is \"alu\"");` | `name is "alu"` |
+| `state_d = 4'd9; state_q = state_d;` 후 `` `SHOW(state_q); `` | `$display("state_q = %0d", state_q);` | `state_q = 9` |
+
+> 매크로는 컴파일 전에 **글자 그대로 바꿔치기**만 함 (함수 호출 X). 그래서 변수 **이름**을 문자열로 찍거나(`SHOW`), 신호 **이름**을 만들어내는(`FF`) 것이 가능.
+
+---
+
+## 11. 데이터 은닉화 — `local`
+
+| 항목 | 내용 |
+|---|---|
+| **`local`** | 그 **class 안에서만** 사용 가능 |
+| class 밖에서는? | 변수에 직접 접근 ❌, 대신 **method(function, task)는 사용 가능** → method를 통해서만 값을 읽고 바꿈 |
+| 사용 목적 | class 밖에서 **멤버 변수를 함부로 바꾸지 못하게** |
+
+```systemverilog
+class A;
+    local int a_cnt = 0;   // 이 변수는 밖에서 접근 불가능
+endclass
+```
+
+---
+
+## 12. 상속 — `extends` · `local` vs `protected`
+
+| 접근 지정 | class 안 | **자식 class** | class 밖 |
+|---|---|---|---|
+| (안 붙임) = public | ✅ | ✅ | ✅ |
+| **`protected`** | ✅ | ✅ | ❌ |
+| **`local`** | ✅ | ❌ (**상속받아도 수정 불가**) | ❌ |
+
+**상속 예시**
+
+```systemverilog
+class packet;                          // 부모 class
+    local     int id;                  // packet 안에서만
+    protected int len;                 // packet + 자식 class 까지
+    int           data;                // 어디서나 (public)
+
+    function new(int id, int len);
+        this.id  = id;
+        this.len = len;
+    endfunction
+
+    function int get_id();             // local 변수는 method 로만 꺼내 봄
+        return id;
+    endfunction
+
+    virtual function void print();
+        $display("[packet]     id=%0d len=%0d data=%0d", id, len, data);
+    endfunction
+endclass
+
+class err_packet extends packet;       // 자식 class : packet 의 멤버·method 를 물려받음
+    bit crc_err;                       // 자식에서 새로 추가한 멤버
+
+    function new(int id, int len);
+        super.new(id, len);            // 부모 생성자 먼저 호출
+    endfunction
+
+    function void make_long();
+        len = len * 2;                 // ✅ protected → 자식에서 접근 가능
+        // id = 0;                     // ❌ local → 자식에서도 접근 불가 (컴파일 에러)
+    endfunction
+
+    virtual function void print();     // 부모 method 재정의 (override)
+        super.print();                 // 부모 print 먼저 실행
+        $display("[err_packet] id=%0d crc_err=%0b", get_id(), crc_err);
+    endfunction
+endclass
+
+module tb;
+    err_packet ep;
 
-실무에서는 어떻게 쓰나?
+    initial begin
+        ep = new(7, 4);
+        ep.data    = 8'hA5;            // ✅ public
+        ep.crc_err = 1;
+        ep.make_long();                // len : 4 → 8
+        ep.print();
+        // ep.len = 0;                 // ❌ protected → class 밖에서 접근 불가
+        // ep.id  = 0;                 // ❌ local → class 밖에서 접근 불가
+    end
+endmodule
+```
 
+**실행 결과** (verilator로 직접 돌려서 확인)
+
+```
+[packet]     id=7 len=8 data=165
+[err_packet] id=7 crc_err=1
+```
 
-- assign full = (q == '1) ;
-- 또다른 예시도 들어줘 
+**구문 해석**
 
+| 구문 | 의미 |
+|---|---|
+| `class err_packet extends packet;` | `packet`을 **상속** → 부모의 멤버·method를 그대로 물려받고, 필요한 것만 추가/재정의 |
+| `super.new(id, len);` | 자식 생성자에서 **부모 생성자**를 먼저 호출해 부모 쪽 멤버 초기화 |
+| `len = len * 2;` (자식 안) | `protected` 라서 자식에서 **직접 수정 가능** |
+| `// id = 0;` (자식 안) | `local` 이라서 자식이어도 **에러** → `'id' is hidden as 'local'` |
+| `get_id()` | `local` 변수를 밖/자식에서 보려면 **부모가 열어준 method**로만 |
+| `virtual function … print()` | 자식이 **재정의(override)** 할 수 있는 method. 부모 핸들로 불러도 자식 버전이 실행됨 |
+| `super.print();` | 재정의한 method 안에서 **부모 버전**도 같이 실행 |
+| `// ep.len = 0;` (class 밖) | `protected` 라서 class 밖에서는 **에러** → `'len' is hidden as 'protected'` |
+
+---
+
+## 13. class의 `static` 멤버 — 모든 객체가 공유 (exam_05)
 
-DD
+> 메모: "static 변수 → 공용 전역화, compile 단계에서 할당"
+> → **정리** : class 안의 `static` 변수는 **객체마다 생기지 않고 class 전체에 딱 하나**. 시뮬레이션 **시작 전(컴파일·elaboration 단계)**에 만들어져서 **객체가 하나도 없어도 존재**한다.
 
+| 구분 | 일반 멤버 (`id`) | **static 멤버** (`count`) |
+|---|---|---|
+| 개수 | **객체마다** 하나씩 | **class 전체에 하나** (모든 객체가 공유) |
+| 생기는 시점 | `new()` 할 때 | 시뮬레이션 시작 전 → **객체 없이도 있음** |
+| 접근 | `p1.id` | `Paket::count` (객체 없이) 또는 `p1.count` (같은 변수) |
+| static method | — | `static function get_count()` → **static 멤버만** 쓸 수 있음 (특정 객체가 없으니 `this`도 없음) |
 
+> ⚠️ 7번의 static(수명: 호출이 끝나도 값 유지)과 이름은 같지만 **다른 이야기**. 여기 static은 "class에 하나, 모두가 공유"라는 뜻.
 
+**exam_05 실행 결과 해석** (서버 예제 `~/center/Ahnsung/example/4_example/exam_05.sv`, verilator로 직접 돌려서 확인)
 
+| 출력 | 왜 이렇게 나오나 |
+|---|---|
+| `(1) 객체가 없어도 count = 0` | 객체를 만들기 전인데도 `Paket::get_count()`로 static 변수를 읽을 수 있음 |
+| `(2) id : p1 = 1 , p2 = 2, p3 = 3` | `new()` 할 때마다 공유 `count`가 1씩 늘고, 그 값을 각자 `id`에 저장 |
+| `(3) count : p1 = 3 , p2 = 2, p3 = 3` | p1.count = **3** (공유 값). ⚠️ 코드가 `p2.id, p3.id`를 찍고 있어서 2, 3이 나온 것 → **`p2.count, p3.count`로 고쳐야** 라벨과 맞음 (그러면 3, 3, 3) |
+| `(4) p3.count = 100` | `p1.count = 100`으로 바꿨는데 p3에서도 100 → **같은 변수 하나**라는 증거 |
+| `(5) p4.count = 101 p4.id = 101` | p4를 `new()` 하면서 100 → 101, 그 값이 p4의 id |
 
+---
 
+## 14. `::` 연산자 (scope resolution) 정리
 
+| 형태 | 예 (예제 코드) | 의미 |
+|---|---|---|
+| **패키지 :: 이름** | `bus_pkg::WRITE`, `bus_pkg::WIDTH` | package 안의 이름 (6-3의 1번 방법) |
+| **클래스 :: static 멤버** | `Paket::get_count()`, `Packet::get_count()` | **객체 없이** static 변수·method 사용 |
+| **클래스 :: 타입·enum 이름** | `Packet::LARGE` | class 안에서 `typedef`한 타입/enum 값 |
+| **클래스 :: method** (extern 몸체) | `function Packet::new(...)` | class 밖에서 method **몸체를 정의**할 때 (15번) |
+| **파라미터 클래스 :: static** | `Stack#()::made` | 파라미터 조합별 static 멤버 (16번) |
 
+> ⚠️ 메모의 "클래스 :: 멤버"는 **static 멤버일 때만** 가능. 일반 멤버(`id`)는 객체마다 따로 있어서 `Paket::id`처럼 쓸 수 없음 → `p1.id`처럼 핸들로 접근.
 
+---
 
+## 15. `extern` — method 몸체를 class 밖에서 정의 (exam_06)
 
+> 메모: "extern function new → 나중에 쓸 거야, 클래스 밖에서"
+> → **정정** : "나중에 **쓰겠다(호출)**"가 아니라 "몸체(코드)는 class **밖에서 정의하겠다**"는 표시. 호출하는 방법은 똑같다 (`P = new(Packet::LARGE);`).
 
+| 위치 | 코드 | 역할 |
+|---|---|---|
+| class 안 | `extern function new(size_e size);` | **선언만** (이런 method가 있다는 원형) |
+| class 밖 | `function Packet::new(size_e size); … endfunction` | **몸체 정의** — `클래스이름::`을 붙여 어느 class 것인지 표시 |
 
+| 왜 쓰나 | 주의할 점 |
+|---|---|
+| class 선언부가 짧아져서 **어떤 method가 있는지 한눈에** 보임 (C++의 헤더/구현 분리와 비슷) | 밖에서 정의할 때 **인자 목록이 원형과 같아야** 함 |
+| 긴 method 코드를 class 밖으로 분리 | 반환 타입이 class 안의 타입이면 그것도 `Packet::size_e`처럼 써야 함 |
+
+**exam_06 실행 결과 해석** (verilator로 직접 확인)
+
+| 출력 | 설명 |
+|---|---|
+| `[1] kind = WRITE, WIDTH =           0` | `bus_pkg::kind_e` 타입 변수에 `bus_pkg::WRITE` 대입, `.name()`으로 enum 이름 출력. WIDTH 앞 공백은 `%d`가 32비트 폭만큼 자리를 잡아서 → **`%0d`로 쓰면 공백 없음** |
+| `(2) Packet 하나생성` / `size = LARGE` | `new(Packet::LARGE)` → class 밖에 정의한 `Packet::new`가 실행됨 → `show()`도 밖에서 정의한 몸체 |
+| `[3] count = 1` | 생성자에서 static `count++` → `Packet::get_count()` |
+
+---
 
+## 16. 파라미터화 class — 타입을 바꿔 끼우는 class (exam_07)
+
+```systemverilog
+class Stack #(type T = int, int DEPTH = 4);   // T : 타입 파라미터, DEPTH : 값 파라미터
+```
+
+| 파라미터 | 종류 | 의미 |
+|---|---|---|
+| `type T = int` | **타입** 파라미터 | 스택에 넣을 데이터 **타입**을 바꿔 끼움 (int, byte, string, transaction …) |
+| `int DEPTH = 4` | **값** 파라미터 | 스택 크기 (module parameter와 같은 개념) |
+
+| 선언 | T | DEPTH |
+|---|---|---|
+| `Stack #() s_int;` | int (기본값) | 4 (기본값) |
+| `Stack #(byte, 8) s_byte;` | byte | 8 |
+| `typedef Stack #(string, 2) str_stack_t;` | string | 2 → 긴 이름을 `typedef`로 줄여 씀 |
+
+> **파라미터가 다르면 서로 다른 class가 된다** → static 멤버 `made`도 **조합마다 따로** 있음. 다른 조합끼리는 핸들 대입도 안 됨 (`s_int = s_byte;` ❌).
+
+**exam_07 실행 결과 해석** (서버 VCS 로그 `sim.log`와 verilator 결과 동일)
 
+| 출력 | 설명 |
+|---|---|
+| `(1) int 스택 : size = 2  pop = 20` | 10, 20 push → size 2. `pop_back`이라 **마지막에 넣은 20**이 먼저 나옴 (스택 = LIFO) |
+| `(2) 세번째 push 결과 = 0` | `str_stack_t`는 DEPTH = 2 → 3번째 `push("C")`는 꽉 차서 **0(실패)** 반환 |
+| `(3) string 스택 : pop = B` | A, B만 들어가 있음 → 마지막 B |
+| `(4) made : int = 1 byte = 1 string = 2` | `made`는 **조합별** static. `s_str`, `s_str2`는 같은 조합(string, 2)이라 2 |
 
+| 코드 | 의미 |
+|---|---|
+| `local T items[$];` | 내부 queue를 `local`로 숨김 → push/pop method로만 조작 (11번 은닉화) |
+| `void'(s_int.push(10));` | function **반환값을 버린다**고 명시 (안 쓰면 경고가 나올 수 있음) |
+| `Stack#()::made` | 파라미터 조합까지 붙여서 static 멤버 접근 (14번) |
 
+> ⚠️ 검토 메모: 예제의 `pop()`은 비어 있는지 확인하지 않음 → 빈 스택에서 pop 하면 queue가 경고를 내고 기본값(0, "")을 돌려줌. 실제로 쓰려면 `if (items.size() == 0)` 검사를 넣는 게 안전.
 
+---
+
+## 17. UVM에서는? — 파라미터화 class · mailbox 대신 TLM
+
+### 17-1. UVM의 파라미터화 class
+
+> 메모: "드라이버 객체를 만들 때 파라미터화하겠다"
+> → **정정** : 객체를 만들 때(`new`)가 아니라 **class를 선언(상속)할 때** 다룰 transaction 타입을 파라미터로 정한다.
 
+| UVM 코드 | 의미 |
+|---|---|
+| `class my_driver extends uvm_driver #(bus_item);` | `uvm_driver`가 다룰 item 타입을 `bus_item`으로 지정 → 16번 `Stack #(T)`와 같은 원리 |
+| 효과 | 같은 `uvm_driver` 틀을 **item 타입만 바꿔서 재사용**. 내부의 sequencer 연결 포트도 `bus_item` 타입으로 맞춰짐 |
 
+### 17-2. mailbox vs TLM
 
+> 메모: "메일박스 대신 TLM을 쓴다 → share 메모리 방식"
+> → **정정** : TLM은 공유 메모리(같은 변수에 같이 읽고 쓰기)가 **아님**. **port ↔ export를 연결해 두고 함수 호출(`put` / `get` / `write`)로 transaction 핸들을 넘기는 방식**이다. 핸들(주소)을 넘기니까 보낸 쪽과 받은 쪽이 **같은 객체를 가리키게** 됨 → 그래서 "공유"처럼 보인 것 (1110의 transaction 공유 Q&A와 같은 이야기).
 
+| 비교 | **mailbox** (지금까지 만든 SV TB) | **TLM** (UVM) |
+|---|---|---|
+| 정체 | SV 내장 class: 내부 queue + `put`/`get` 블로킹 동기화 | Transaction Level Modeling: **port ↔ export** 연결 + **함수 호출** |
+| 넘기는 것 | transaction **핸들** | transaction **핸들** (객체 복사 X) |
+| 연결 | 같은 mailbox 핸들을 양쪽 컴포넌트에 넘겨줌 | env의 `connect_phase`에서 `port.connect(export)` |
+| 1 : N | 한 번 `get` 하면 꺼내져서 **한 곳만** 받음 | **analysis port** `write()` → scoreboard·coverage 등 **여러 곳이 동시에** 받음 |
+| 장점 | 간단 | 컴포넌트끼리 서로 몰라도 됨(**표준 인터페이스**) → 재사용·교체 쉬움 |
 
+> 메모의 "mailbox는 관리해 주므로 리소스를 많이 차지" → mailbox는 내부 queue와 대기(블로킹) 처리를 따로 관리하는 객체라는 뜻. 다만 UVM이 TLM을 쓰는 **핵심 이유는 리소스보다 표준 인터페이스·컴포넌트 분리·1:N 방송**이다.
 
+---
 
+# 1119 (목) — 2-state vs 4-state · casting · typedef · enum · 다형성 · 추상 class · UVM 개요
 
+> **핵심 한 줄** : 설계(RTL)는 **4-state(`logic`)**로 써서 X/Z를 보이게 하고, 2-state로 옮기기 전엔 **`$isunknown()`**으로 X를 검사한다. casting은 **값은 그대로 두고 해석(타입·폭·부호)만 바꾸는 static cast**와 **실행 중에 검사하는 `$cast`**로 나뉜다. 상태값은 **`typedef enum`**으로 만들어 파형·출력에서 **이름**으로 보이게 한다. (5장) **다형성** = 상속 + virtual + 부모 핸들 → 부모 핸들로 불러도 **실제 객체**의 method가 실행되고, 부모 → 자식 핸들은 **`$cast`로만**(실제 객체가 맞을 때만) 바꿀 수 있다. **추상 class**는 규격(약속)만 정하고 자식이 구현한다. **UVM**은 이 구조를 표준 라이브러리로 만든 것 — **컴포넌트(구조)**와 **시퀀스(자극)**가 분리되어 있다.
 
+| # | 목차 |
+|---|------|
+| 1 | 4-state vs 2-state 자료형 |
+| 2 | `$isunknown()` — 2-state로 옮기기 전 X 검사 |
+| 3 | casting 4가지 (static cast) |
+| 4 | 부호 casting — `signed'(a)` vs `-a` (질문 답변) |
+| 5 | 비트 쪼개기·묶기 — struct packed casting |
+| 6 | `$cast` (동적 casting) · static cast vs `$cast` |
+| 7 | `const` — 상수 변수 |
+| 8 | `typedef` — 사용자 정의 타입 · 이름 규칙 |
+| 9 | `enum` — 필요성 · 선언 문법 · 주의사항 |
+| 10 | enum에 값을 직접 주는 이유 (질문 답변) |
+| 11 | enum method |
+| 12 | (5장) `super` — 부모 method·생성자 부르기 |
+| 13 | 다형성 · upcasting vs downcasting |
+| 14 | virtual function |
+| 15 | UVM에서 다형성 + casting이 쓰이는 곳 |
+| 16 | 추상 class — `virtual class` · `pure virtual` |
+| 17 | multi-agent 기법 |
+| 18 | UVM이란? — SV TB 대응 · 트리 구조 · 동작 흐름 · 라이브러리 불러오기 |
 
+> 이 날 예시 코드의 출력은 전부 **서버 VCS (W-2024.09)**로 직접 돌려서 확인한 값.
 
+---
 
+## 1. 4-state vs 2-state 자료형
 
+| 구분 | 타입 | 폭 | 부호 기본값 | 가질 수 있는 값 |
+|---|---|---|---|---|
+| **4-state** | `logic` (= `reg`) | 지정 | unsigned | **0, 1, X, Z** |
+| | `integer` | 32 | signed | 0, 1, X, Z |
+| **2-state** | `bit` | 지정 | unsigned | **0, 1만** |
+| | `byte` | 8 | signed | 0, 1 |
+| | `shortint` | 16 | signed | 0, 1 |
+| | `int` | 32 | signed | 0, 1 |
+| | `longint` | 64 | signed | 0, 1 |
 
+> 메모의 `short int`, `long int` → 정확한 키워드는 띄어쓰기 없이 **`shortint`, `longint`**. 메모 표에 없던 `integer`(4-state 32비트)와 폭·부호 열은 보충.
 
+| 규칙 | 이유 |
+|---|---|
+| **설계(RTL)할 때는 2-state를 쓰지 마라** | 2-state는 X/Z를 **0으로 바꿔버림** → 리셋 안 된 레지스터, 신호 충돌(X), 연결 안 된 선(Z)이 **시뮬레이션에서 안 보임** → 버그가 숨는다 |
+| TB에서는 2-state 써도 됨 | 반복문 카운터, 점수 계산처럼 X가 나올 일 없는 값은 `int`가 편하고 시뮬레이션도 빠름 |
 
+---
 
+## 2. `$isunknown()` — 2-state로 옮기기 전 X 검사
 
+> 메모의 `$isunkown()` → 철자 **`$isunknown()`**. 값 안에 **X나 Z가 한 비트라도 있으면 1**을 돌려준다.
 
+**왜 필요한가** — DUT 출력(`logic`)을 TB의 `bit`/`int` 변수에 넣는 순간 X가 0으로 바뀌어서, **scoreboard가 틀린 값을 정상처럼 비교**하게 된다.
 
+| 코드 (TB) | 결과 (VCS 확인) |
+|---|---|
+| `dout = 8'bxxxx_0101;` (DUT 출력이 일부 X) | `dout = xxxx0101` |
+| `b = dout;` (`bit [7:0] b`) | `b = 00000101` → **X가 0으로 사라짐** |
+| `i = dout;` (`int i`) | `i = 5` → 정상 값처럼 보임 ⚠️ |
+| `$isunknown(dout)` | **1** → X가 있다는 걸 잡아냄 |
+| `$isunknown(b)` | 0 → 이미 옮긴 뒤에는 못 잡음 |
 
+**실무 사용 예 (monitor에서)**
 
+```systemverilog
+// DUT 출력을 transaction(2-state 변수)에 담기 전에 X 검사
+if ($isunknown(vif.dout))
+    $error("[MON] dout에 X/Z 발견 : %b", vif.dout);   // 여기서 바로 알림
+else
+    tr.dout = vif.dout;                               // 깨끗할 때만 옮김
+```
 
+---
 
+## 3. casting 4가지 (static cast)
 
+> casting = 자료형을 변환하는 것. 아래 4가지는 모두 **`타입'(값)`** 모양이고 **컴파일할 때 정해지는 static cast**. 검사 없이 그냥 변환한다.
 
+| # | 종류 | 모양 | 예 | 결과 (VCS 확인) |
+|---|---|---|---|---|
+| 1 | **타입** cast | `타입'(값)` | `int'(3.7)` | `4` (실수 → 정수, 반올림) |
+| 2 | **크기(폭)** cast | `폭'(값)` | `4'(8'hAB)` | `b` (윗비트 잘림) / `16'(8'hF0)` → `00f0` (0으로 확장) |
+| 3 | **부호** cast | `signed'(값)` / `unsigned'(값)` | `signed'(8'hF0)` | `-16` (비트는 그대로, 해석만 signed) |
+| 4 | **const** cast | `const'(값)` | `const'(x)` | 그 값을 상수로 취급 (거의 안 씀) |
+
+> ⚠️ 메모의 "실행 중에 값이 대상 타입에 맞는지 검사하고 할당"은 위 4가지가 아니라 **`$cast`(6번)**의 설명. static cast는 **검사하지 않는다**.
+
+---
+
+## 4. 부호 casting — `signed'(a)` vs `-a` (질문 답변)
+
+> 메모: "data를 보낼 때 unsigned라서 `signed'(a)`로 바꿔줘야 함"
+> **Q. `-` 연산을 쓰면 되는데 왜 굳이 casting? ALU에서 `-` 말고 이렇게 가공해야 하나?**
+
+**A. 둘은 하는 일이 다르다.** `-a`는 **값을 바꾸는 연산**(음수 만들기), `signed'(a)`는 **비트는 그대로 두고 "부호 있는 수로 읽어라"**라고 해석만 바꾸는 것.
+
+| `a = 8'hF0` (`1111_0000`) | 비트 | 값 | 의미 |
+|---|---|---|---|
+| `a` (unsigned) | `1111_0000` | **240** | 그대로 읽음 |
+| `signed'(a)` | `1111_0000` (그대로) | **-16** | 같은 비트를 2의 보수로 읽음 |
+| `-a` | `0001_0000` (**바뀜**) | 16 | 2의 보수를 **계산**한 새 값 |
+
+**언제 casting이 필요한가 — 데이터가 원래 부호 있는 값일 때 (VCS 확인)**
+
+| 상황 | unsigned 그대로 | `signed'()` 사용 |
+|---|---|---|
+| **비교** `a < 8'h10` | `240 < 16` → **0** (틀림) | `-16 < 16` → **1** (맞음) |
+| **폭 넓히기** 8 → 16비트 | `00f0` (0으로 채움 → 240) | `fff0` (**부호 확장** → -16 유지) |
+| **산술 시프트** `>>>` | 0으로 채움 | 부호 비트로 채움 |
+
+| ALU 예 | 설명 |
+|---|---|
+| `SLT` (signed less than) | `signed'(a) < signed'(b)` — 같은 비트라도 signed로 비교해야 음수 판정이 맞음 |
+| `SRA` (산술 오른쪽 시프트) | `signed'(a) >>> sh` |
+| 부호 확장 (immediate 등) | `32'(signed'(imm12))` |
+
+> 정리 : ALU가 "빼기"를 할 때는 `-`(또는 `a - b`)를 쓰는 게 맞다. casting은 **빼기 대신 쓰는 게 아니라**, 버스·포트로 들어온 unsigned 비트 묶음을 **signed 숫자로 비교·확장·시프트해야 할 때** 쓴다. (Verilog의 `$signed(a)`와 같은 역할)
+
+---
+
+## 5. 비트 쪼개기·묶기 — struct packed casting
+
+> 메모: "address bit를 쪼개고 묶고도 가능 → 예시 필요"
+
+`struct packed`는 필드들이 **한 줄로 붙은 비트 묶음**이라서, 같은 폭의 벡터와 casting으로 **바로 바꿀 수 있다**.
+
+```systemverilog
+typedef struct packed {
+    logic [3:0] tag;      // [15:12]
+    logic [7:0] index;    // [11:4]
+    logic [3:0] offset;   // [3:0]
+} addr_t;                 // 전체 16비트
+
+logic [15:0] addr;
+addr_t       af;
+
+addr = 16'hA3C5;
+af   = addr_t'(addr);     // 쪼개기 : 16비트 → 필드별
+//  af.tag = a, af.index = 3c, af.offset = 5
+addr = 16'(af);           // 묶기   : 필드 → 16비트 (a3c5)
+```
+
+| 동작 | 코드 | 결과 (VCS 확인) |
+|---|---|---|
+| 쪼개기 | `af = addr_t'(16'hA3C5);` | `tag = a`, `index = 3c`, `offset = 5` |
+| 묶기 | `16'(af)` | `a3c5` |
+| 쓰는 곳 | 캐시 주소(tag/index/offset), 버스 패킷 헤더, 레지스터 필드 | `addr[11:4]`처럼 숫자로 자르는 것보다 **이름으로** 읽혀서 실수가 적음 |
+
+---
+
+## 6. `$cast` (동적 casting) · static cast vs `$cast`
+
+| 비교 | **static cast** `타입'(값)` | **`$cast(목적지, 값)`** |
+|---|---|---|
+| 언제 | **컴파일** 때 | **실행 중** |
+| 검사 | ❌ 안 함 → 범위 밖 값도 그냥 들어감 | ✅ 대상 타입에 **맞는 값인지 검사** |
+| 실패하면 | (실패 개념 없음) | 함수로 쓰면 **0 반환**, 목적지는 **안 바뀜** / task로 쓰면 런타임 에러 |
+| 주 용도 | 폭·부호·타입 변환 | **int → enum**, **부모 class 핸들 → 자식 class 핸들** |
+
+**enum으로 확인 (`state_e = {IDLE, READ, WRITE}` → 0, 1, 2)**
+
+| 코드 | 결과 (VCS 확인) |
+|---|---|
+| `ok = $cast(st, 2);` | `ok = 1`, `st = WRITE` |
+| `ok = $cast(st, 3);` (3은 없는 값) | `ok = 0`, `st`는 **WRITE 그대로** |
+| `st = state_e'(3);` (static cast) | 검사 없이 `st = 3` 들어감 → `st.name()`이 **빈 문자열** ⚠️ |
+
+---
+
+## 7. `const` — 상수 변수
+
+| 항목 | 내용 |
+|---|---|
+| 의미 | 변수 값을 **상수로 고정** → 이후 변경 불가 |
+| 초기화 | **선언할 때 한 번만** (`const int MAXV = 10;`) |
+| 바꾸려 하면 | `MAXV = 3;` → **컴파일 에러** |
+| `parameter`와 차이 | `parameter`는 컴파일(elaboration) 때 정해지는 상수 → 배열 크기·폭에 쓸 수 있음. `const`는 **변수**라서 실행 중 값으로 초기화할 수 있지만 폭 지정 등에는 못 씀 |
+
+---
+
+## 8. `typedef` — 사용자 정의 타입 · 이름 규칙
+
+> 메모: "typedef : 재정의 / 사용자 정의형 **변수가 아니다**"
+> → **정리** : `typedef`는 **새 타입 이름**을 만드는 것이지 변수를 만드는 게 아니다. 변수는 그 타입으로 **따로 선언**해야 생긴다.
+
+| 효과 | 설명 |
+|---|---|
+| 가독성 | `logic [31:0]` 대신 `word_t` → 무슨 데이터인지 이름으로 보임 |
+| 재사용성 | 폭을 바꿀 때 typedef **한 곳만** 고치면 됨 |
+| 실수 방지 | 같은 의미의 신호는 항상 같은 폭·타입 |
+
+| 코드 | 의미 |
+|---|---|
+| `typedef logic [31:0] word_t;` | 32비트 타입 `word_t` 정의 (변수 아님) |
+| `word_t addr;` | 그 타입의 **변수** `addr` 선언 |
+| `typedef logic [3:0] nib_t;` | 4비트 타입 |
+| `nib_t [0:7] nibs;` | `nib_t` **8개를 붙인 packed 배열** (4 × 8 = 32비트) — 메모의 `nivs`는 오타로 보고 `nibs`로 정리 |
+
+**이름 규칙 & 선언 위치**
+
+| 규칙 | 이유 |
+|---|---|
+| 타입 이름 끝에 **`_t`** (enum은 `_e`, struct는 `_s`도 많이 씀 — exam_06의 `kind_e`, `size_e`) | 정의와 사용이 **다른 파일**에 있는 경우가 많음 → 이름만 보고 **타입인지** 알 수 있어야 읽기 쉬움 |
+| **package**에 선언 | `typedef enum`, `typedef struct`를 package에 모아두고 RTL·TB가 같이 `import` (1118 6번) |
+
+---
+
+## 9. `enum` — 필요성 · 선언 문법 · 주의사항
+
+### 9-1. 필요성
+
+| `define` / `parameter`로 상태를 만들면 | `enum`으로 만들면 |
+|---|---|
+| 파형·`$display`에 **숫자(값)**로 나옴 → `2`가 무슨 상태인지 코드를 찾아봐야 함 | 파형·`.name()`에 **이름**(`WRITE`)으로 나옴 → 보기 편함 |
+| 아무 숫자나 대입돼도 모름 | **정해진 이름만** 넣을 수 있음 → 실수 방지 |
+
+> 메모: "enum → 값으로 넣는 게 아니다. 오동작할 수 있다"
+> → **정리** : enum 변수에는 **이름(라벨)으로 대입**한다. 숫자를 직접 넣으면(`st = 2;`) 표준상 불법이고, 없는 값(3)도 들어갈 수 있어 오동작 위험. VCS는 이 경우 **Warning(ENUMASSIGN)만 내고 실행**하니 경고를 무시하지 말 것. 숫자를 넣어야 하면 `$cast`(6번).
+
+### 9-2. 선언 문법
+
+| # | 규칙 | 예 | 결과 / 설명 |
+|---|---|---|---|
+| 1 | **base type을 생략하면 `int`** (32비트 2-state) | `enum {IDLE, RUN}` | 폭·4-state가 필요하면 **base type을 명시** → `typedef enum logic [1:0] {…} state_e;` |
+| 2 | **라벨 범위 자동 생성** | `typedef enum logic [3:0] {DATA[4]} data_e;` | `DATA0, DATA1, DATA2, DATA3` (= 0~3) 생성. `DATA[1:3]`이면 `DATA1~DATA3` |
+| 3 | **값을 안 쓰면 순서대로** | `enum {b0 = 1'b0, b1, b2}` | 0, 1, 2 — 첫 라벨은 0부터, 다음은 **앞 값 + 1** |
+| 3' | 중간에 값을 주면 거기서 이어서 +1 | `enum {A = 1, B, C = 5, D}` | `A=1, B=2, C=5, D=6` (VCS 확인) |
+
+> 메모 2번의 "팩으로도 가능" → packed 배열이 아니라 **`이름[개수]`로 라벨을 여러 개 자동 생성**하는 문법. (VCS 확인 : `DATA2 = 2`, `first = DATA0`, `last = DATA3`, `num = 4`)
+>
+> ⚠️ 메모 3번 "always 안에서는 enum logic을 되도록 쓰지 마라"는 **확인이 필요**. FSM의 state 변수를 `enum logic`으로 선언하고 `always_ff`/`always_comb`에서 쓰는 건 **표준적인 방법**이다. "always 블록 **안에서 enum 타입을 선언하지 말고** module/package에서 `typedef` 하라"는 뜻이었을 가능성이 높음 → 교수님께 다시 확인 권장.
+
+### 9-3. 주의사항
+
+| 주의 | 이유 |
+|---|---|
+| **라벨 수에 맞는 최소 폭**을 명시 (라벨 3개 → `logic [1:0]`) | base type을 안 쓰면 `int` = **32비트 2-state** → 의도보다 넓고, **X가 안 보임**. 합성기가 안 쓰는 비트를 지우는 경우가 많지만 설계 의도를 코드에 분명히 쓰는 것이 원칙 |
+| 폭이 모자라면 에러 | 라벨 5개를 `logic [1:0]`(4개까지)에 넣으면 컴파일 에러 |
+| **서로 다른 enum끼리 대입 불가** | `color = state;` → VCS **Error-[ENUMASSIGNTYPE]** (직접 확인) |
+| enum → int는 OK, int → enum은 cast 필요 | `v = st;` 는 자동 변환(`READ` → 1) / 반대는 `$cast` |
+
+---
+
+## 10. enum에 값을 직접 주는 이유 (질문 답변)
+
+> **Q. FSM은 이름(string)으로 보려고 enum을 쓰는 건데, 값을 직접 주는 이유는? 값을 읽어야 하는 경우는 언제이고, 값으로 받을 때 casting 하나?**
+
+**A1. 값을 직접 주는 이유 — enum 값이 결국 하드웨어의 실제 비트가 되기 때문**
+
+| 이유 | 예 |
+|---|---|
+| **상태 인코딩 지정** (one-hot, gray 등) → 속도·전력·글리치 특성을 설계자가 정함 | `enum logic [3:0] {S_IDLE = 4'b0001, S_RUN = 4'b0010, S_DONE = 4'b0100}` → `S_RUN = 0010` (VCS 확인) |
+| **외부 규격과 값이 맞아야 할 때** | 명령어 opcode, 버스 명령 코드(`READ = 2'b01`), 레지스터 필드 값 → 스펙에 정해진 숫자가 실제로 선에 나가야 함 |
+| **소프트웨어/다른 블록이 값을 읽을 때** | 상태 레지스터를 CPU가 읽어서 숫자로 판단 |
+
+**A2. 값을 읽어야 하는 경우 & casting 여부**
+
+| 방향 | 방법 | casting? |
+|---|---|---|
+| enum → 숫자 (값 읽기) | `v = st;` → `READ`면 `1` | ❌ **필요 없음** (자동 변환) |
+| enum → 이름 (출력·디버그) | `st.name()` → `"READ"` | ❌ |
+| 숫자 → enum (버스·레지스터에서 읽은 값) | `$cast(st, bus_val)` → 없는 값이면 0 반환으로 걸러냄 | ✅ **필요** (`$cast` 권장, static cast는 검사 없음) |
+
+---
+
+## 11. enum method
+
+> 메모의 빈 표 채움. 예 : `typedef enum logic [1:0] {IDLE, READ, WRITE} state_e;` (출력은 VCS 확인)
+
+| method | 설명 | 예 → 결과 |
+|---|---|---|
+| `first()` | **첫 번째** 라벨 | `st.first()` → `IDLE` |
+| `last()` | **마지막** 라벨 | `st.last()` → `WRITE` |
+| `next(N)` | **N칸 다음** 라벨 (생략 시 1). 끝에서 넘어가면 **처음으로 돌아감** | `WRITE.next()` → `IDLE`, `READ.next(2)` → `IDLE` |
+| `prev(N)` | **N칸 이전** 라벨 (생략 시 1). 처음에서 넘어가면 **마지막으로** | `IDLE.prev()` → `WRITE` |
+| `num()` | 라벨 **개수** | `st.num()` → `3` |
+| `name()` | 현재 값의 **이름 문자열**. 없는 값이면 빈 문자열 | `READ.name()` → `"READ"` |
+
+> `next()`·`prev()`는 **값 +1이 아니라 선언 순서**를 따른다 (`A=1, B=2, C=5`에서 `B.next()`는 3이 아니라 `C`).
+> `.name()`은 `$display("%s", st.name())`처럼 TB 로그에서 상태를 사람이 읽기 좋게 찍을 때 많이 쓴다.
+
+---
+
+## 12. (5장) `super` — 부모 method·생성자 부르기
+
+| 규칙 | 설명 |
+|---|---|
+| **재정의한 method 안에서 `super.메서드()`** | 부모 버전을 **같이 실행** (부모 동작 + 자식에서 추가) |
+| **자식 생성자에서는 `super.new()`가 맨 처음** | 부모 쪽 멤버부터 초기화해야 하므로 **첫 줄**이어야 함. 생략하면 인자 없는 `super.new()`가 자동 호출 → 부모 `new`가 인자를 받으면 **에러** |
+| UVM에서 | `build_phase`, `run_phase` 등을 재정의할 때 첫 줄에 `super.build_phase(phase);` 를 부르는 이유가 이것 |
+
+> 메모: "super → 부모 객체를 뜻함"
+> → **정정** : 부모 객체가 **따로 있는 게 아니다**. `new()`로 만든 객체는 **하나**이고, `super`는 "이 객체 안에서 **부모 class에게 물려받은 부분**(멤버·method)"을 가리킨다.
+
+---
+
+## 13. 다형성 = 상속 + virtual method + 부모 핸들
+
+> 하나의 **부모 핸들**로 여러 **자식 객체**를 가리키고, 같은 method를 불러도 **실제 객체에 맞는 동작**이 실행되는 것.
+
+| 재료 | 역할 |
+|---|---|
+| 상속 | 자식들이 같은 부모 틀(method 이름)을 가짐 |
+| **virtual method** | 핸들 타입이 아니라 **실제 객체의 class** method가 실행되게 함 |
+| **부모 핸들** | `shape s = rect_obj;` 처럼 자식 객체를 부모 타입 핸들에 담음 (**upcasting**, 자동) |
+
+### 13-1. upcasting vs downcasting
+
+| 구분 | 방향 | 방법 | 항상 되나? |
+|---|---|---|---|
+| **upcasting** | 자식 객체 → **부모** 핸들 | `s = rr;` (그냥 대입) | ✅ 항상 됨 (자식은 부모의 모든 걸 갖고 있음) |
+| **downcasting** | 부모 핸들 → **자식** 핸들 | **`$cast(rr, s)`** 만 가능 | ⚠️ **실제 객체가 그 자식 타입일 때만** 성공 |
+
+> **Q. downcasting은 항상 안 되는 건가?** → **아니다.**
+> - `rr = s;`처럼 **직접 대입**하는 건 항상 **컴파일 에러** (VCS `Error-[SV-ICA] Illegal class assignment`, 직접 확인)
+> - `$cast(rr, s)`는 **실행 중에 실제 객체를 검사** → 부모 핸들이 진짜 `rect` 객체를 가리키고 있으면 **성공(1)**, `circle` 객체면 **실패(0)**
+
+### 13-2. 예시 — 다형성 · virtual · downcasting (VCS로 직접 확인)
+
+```systemverilog
+virtual class shape;                          // 추상 class (14번)
+    string name;
+    function new(string name); this.name = name; endfunction
+    pure virtual function real area();        // 약속만 (본문 없음)
+    virtual function void show();             // virtual
+        $display("[%s] area = %0.1f", name, area());
+    endfunction
+    function void hello();                    // virtual 아님
+        $display("hello from shape (%s)", name);
+    endfunction
+endclass
+
+class rect extends shape;
+    real w, h;
+    function new(real w, real h);
+        super.new("rect");                    // 맨 처음
+        this.w = w; this.h = h;
+    endfunction
+    virtual function real area(); return w * h; endfunction
+    function void hello(); $display("hello from rect"); endfunction
+endclass
+
+class circle extends shape;
+    real r;
+    function new(real r); super.new("circle"); this.r = r; endfunction
+    virtual function real area(); return 3.14 * r * r; endfunction
+    virtual function void show();
+        super.show();                         // 부모 show 먼저
+        $display("  (radius = %0.1f)", r);
+    endfunction
+endclass
+
+module tb;
+    shape  s;  shape list[$];
+    rect   rr, r2;  circle cc;
+    initial begin
+        rr = new(2, 3);
+        s  = rr;                              // upcasting (자동)
+        s.show();                             // virtual     → rect 의 area
+        s.hello();                            // non-virtual → shape 의 hello
+        rr.hello();
+        r2 = new(1, 4);  cc = new(1);
+        list.push_back(r2);  list.push_back(cc);
+        foreach (list[i]) list[i].show();     // 다형성 : 같은 show() 호출, 동작은 객체마다
+        if ($cast(rr, list[0])) $display("downcast list[0] -> rect OK, w=%0.1f", rr.w);
+        if (!$cast(rr, list[1])) $display("downcast list[1] -> rect FAIL (real type: %s)", list[1].name);
+    end
+endmodule
+```
+
+| 출력 | 왜 |
+|---|---|
+| `[rect] area = 6.0` | `s`는 shape 핸들이지만 `area()`가 **virtual** → 실제 객체(rect)의 `area` 실행 |
+| `hello from shape (rect)` | `hello()`는 **virtual 아님** → **핸들 타입(shape)**의 method 실행 |
+| `hello from rect` | rect 핸들로 부르면 rect 것 |
+| `[rect] area = 4.0` / `[circle] area = 3.1` / `(radius = 1.0)` | 같은 `list[i].show()`인데 객체마다 다르게 동작 = **다형성**. circle은 `super.show()` 후 반지름 추가 출력 |
+| `downcast list[0] -> rect OK, w=1.0` | list[0]의 실제 객체가 rect → `$cast` 성공 |
+| `downcast list[1] -> rect FAIL (real type: circle)` | 실제 객체가 circle → 실패 |
+
+---
+
+## 14. virtual function
+
+| virtual | 부모 핸들에 **자식 객체**가 들어있을 때 실행되는 것 |
+|---|---|
+| **있음** | **자식(실제 객체)**의 method |
+| 없음 | **부모(핸들 타입)**의 method |
+
+> 메모: "upcasting 시에 부모 핸들에 **자식 생성자**가 들어갔을 때" → **자식 객체**(생성자로 만든 객체)가 들어갔을 때.
+> 메모: "안전하게 내 class의 function을 실행시킬 때 virtual" → **정정** : virtual은 "핸들 타입과 상관없이 **실제 객체의 class** method를 실행"하게 하는 것. 부모 핸들로 다뤄도 각 자식의 동작이 나오게 하려고 쓴다.
+
+| 규칙 | 이유 |
+|---|---|
+| 재정의될 method는 **부모에서 `virtual`**로 선언 | 부모에서 virtual이면 자식에서 `virtual`을 안 써도 virtual로 유지됨 |
+| **`$cast`는 성공했는지 반드시 확인 + 메시지** | 실패하면 목적지 핸들이 **안 바뀐 채(null일 수도)** 진행 → 뒤에서 엉뚱한 에러가 남. `if (!$cast(...)) $error/uvm_error(...)` 형태로 쓴다 |
+
+---
+
+## 15. UVM에서 다형성 + casting이 쓰이는 곳
+
+> 메모: "각각의 시퀀스 아이템별로 캐스팅을 이용해서 pass/fail 판독" → 정리 요청
+
+UVM 라이브러리는 **어떤 transaction이 올지 모르기 때문에** 부모 타입(`uvm_object`, `uvm_sequence_item`)으로 받는다. 내가 만든 item의 필드를 보려면 **`$cast`로 downcasting** 해야 한다.
+
+| 곳 | 받는 타입 (부모) | 하는 일 |
+|---|---|---|
+| **`do_compare(uvm_object rhs, …)`** | `uvm_object` | `$cast(rhs_, rhs)`로 내 item 타입으로 바꾼 뒤 필드 비교 → scoreboard의 `exp.compare(act)` pass/fail |
+| **`do_copy(uvm_object rhs)`** | `uvm_object` | `$cast` 후 필드 복사 (clone 할 때 사용) |
+| `clone()` | `uvm_object`를 **돌려줌** | `$cast(tr2, tr.clone())` 로 받아야 내 타입으로 사용 가능 |
+| **factory override** | 부모 타입 핸들 | `type_id::create()`가 **자식 타입 객체**를 만들어 줘도 부모 핸들로 받아 그대로 동작 (= 다형성). 코드 수정 없이 item·driver를 바꿔 끼움 |
+| `virtual function` 재정의 | — | `build_phase`, `run_phase`, `do_compare` 등은 전부 **virtual** → 내 class 것이 실행됨 |
+
+**예시 — `do_compare`에서 `$cast` (서버 VCS + UVM 1.2로 직접 확인)**
+
+```systemverilog
+class bus_item extends uvm_sequence_item;
+    rand bit [7:0] addr, data;
+    `uvm_object_utils(bus_item)
+    function new(string name = "bus_item"); super.new(name); endfunction
+
+    virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
+        bus_item rhs_;
+        if (!$cast(rhs_, rhs)) begin                       // downcasting + 실패 체크
+            `uvm_error("CMP", "rhs is not a bus_item")
+            return 0;
+        end
+        return super.do_compare(rhs, comparer)
+               && addr == rhs_.addr && data == rhs_.data;  // 필드 비교
+    endfunction
+endclass
+```
+
+| 호출 | 결과 (직접 확인) |
+|---|---|
+| `exp.compare(act)` — addr·data 같음 | `1` (pass) |
+| `act.data`만 다르게 | `0` (fail) |
+| 다른 타입 item(`other_item`)과 compare | `UVM_ERROR … [CMP] rhs is not a bus_item` → `0` |
+
+---
+
+## 16. 추상 class — `virtual class` · `pure virtual`
+
+| 문법 | 의미 |
+|---|---|
+| **`virtual class`** | **객체를 만들 수 없는** class → **상속해서만** 쓴다 |
+| **`pure virtual function`** | **본문이 없는 약속** (이름·인자·반환 타입만). 자식이 **반드시 구현**해야 함 |
+
+**왜 class를 추상으로 만드나** — 실체(구체적인 동작)는 아직 정하지 않았지만, **공통된 규격(틀)**은 먼저 정해두고 싶을 때.
+→ "**약속만 한다 → 상속 → 자식이 약속을 지킨다(구현)**"
+
+| 위반하면 (VCS 확인) | 에러 |
+|---|---|
+| `s = new();` (추상 class 객체 생성) | `Error-[SV-ACCNBI] An abstract class cannot be instantiated` |
+| 자식이 pure virtual method를 구현 안 함 | `Error-[SV-VMNI] Virtual method 'area' not implemented in class 'sq'` |
+
+**예시** : 13-2의 `shape`가 추상 class.
+`area()`는 모양마다 계산법이 달라서 shape에서는 **약속만**(`pure virtual`) 하고, `rect`·`circle`이 각자 구현한다. 공통 동작(`show()`)은 부모에 한 번만 써두고, 그 안에서 `area()`를 부르면 자식 구현이 실행된다.
+
+| UVM의 추상 class | 확인 |
+|---|---|
+| `uvm_void`, **`uvm_object`**, **`uvm_component`** | UVM 1.2 소스에 `virtual class`로 선언됨 (서버 `$VCS_HOME/etc/uvm-1.2/src` 에서 확인) |
+| `uvm_sequence_item` | 추상이 **아님** (일반 class) — 그래도 보통 상속해서 내 item을 만든다 |
+
+> 그래서 UVM에서는 `uvm_component`를 바로 `new` 하지 않고, **상속해서 `my_driver`, `my_monitor`**를 만든다.
+
+---
+
+## 17. multi-agent 기법 (메모: "이게 뭔지 알아봐")
+
+> 지금 배우는 건 agent 하나짜리 기초 구조. 실무 DUT는 **인터페이스가 여러 개**라서 env 안에 **agent를 여러 개** 둔다.
+
+**agent 복습** : 인터페이스 **하나**를 담당하는 묶음 = sequencer + driver + monitor
+
+| 형태 | 예 | 핵심 |
+|---|---|---|
+| **종류가 다른 agent 여러 개** | UART 칩 = **APB agent**(CPU가 레지스터 설정) + **UART agent**(TX/RX 선 구동·관찰) | 인터페이스마다 agent 하나 |
+| **같은 agent 여러 개 (배열)** | 4포트 라우터 → `port_agent agt[4]` | 같은 class를 개수만큼 생성, config로 각자 다른 vif 연결 |
+| **active / passive** | active = driver + monitor (자극을 줌) / passive = **monitor만** (관찰만) | DUT 출력 쪽이나, 블록 TB를 시스템 TB에 재사용할 때 passive로 |
+
+| multi-agent에서 필요한 기법 | 하는 일 |
+|---|---|
+| **agent별 config object** + `uvm_config_db` | 각 agent에 **어느 vif를 쓸지, active/passive인지** 전달 |
+| **virtual sequencer / virtual sequence** | 여러 agent의 sequence를 **순서·타이밍 맞춰** 실행 (예: APB로 설정 → 그다음 UART 데이터 전송) |
+| **scoreboard 여러 입력** | 여러 monitor의 analysis port를 scoreboard에 연결 (`uvm_tlm_analysis_fifo`, `` `uvm_analysis_imp_decl `` 로 입력 구분) |
+
+> 1118 17번(TLM)의 analysis port가 여기서 쓰인다 → monitor 여러 개가 scoreboard 하나로 transaction을 보냄.
+
+---
+
+## 18. UVM이란?
+
+| 항목 | 내용 |
+|---|---|
+| 이름 | **U**niversal **V**erification **M**ethodology (메모의 "Methology" → **Methodology**) |
+| 정체 | SV로 작성된 **검증용 class 라이브러리 + 작성 방법론**. 지금까지 직접 만든 generator·driver·monitor·scoreboard 구조를 **표준 틀**로 만들어 둔 것 |
+| 배포 | 표준화 단체 **Accellera**(accellera.org)에서 라이브러리 다운로드 가능. IEEE 1800.2로 표준화 |
+| 우리 환경 | VCS에 **UVM 1.2가 내장** → 따로 받을 필요 없이 컴파일 옵션 `-ntb_opts uvm-1.2`로 사용 (예제 Makefile에 주석으로 있는 그 옵션) |
+
+### 18-1. 지금까지의 SV TB → UVM 대응
+
+| 직접 만든 SV TB | UVM | 역할 |
+|---|---|---|
+| transaction | **`uvm_sequence_item`** | 주고받는 데이터 묶음 |
+| generator | **`uvm_sequence`** | item을 만들고 **randomize** 해서 내보냄 (자극 생성) |
+| mailbox (gen → drv) | **`uvm_sequencer`** + TLM 포트 | sequence의 item을 **driver에게 전달** (여러 sequence가 있으면 순서 조정) |
+| driver | **`uvm_driver`** | item을 받아 **DUT 핀에 구동** |
+| monitor | **`uvm_monitor`** | DUT 핀을 **관찰**해서 item으로 만들어 보냄 |
+| scoreboard | **`uvm_scoreboard`** | 기대값과 비교 → pass/fail |
+| — | **`uvm_agent`** | 인터페이스 하나의 sequencer + driver + monitor를 **묶어 관리** |
+| environment | **`uvm_env`** | agent(들) + scoreboard(+ coverage)를 묶음 |
+| test (program/initial) | **`uvm_test`** | **동작시키는 최상위**: env를 만들고 설정하고, 어떤 sequence를 돌릴지 결정 (`+UVM_TESTNAME=`으로 선택) |
+
+### 18-2. UVM 트리 구조 ① — 컴포넌트 계층 (실행 중 객체 트리)
+
+```
+uvm_top (run_test()가 만듦)
+└── test                         : uvm_test       ← 동작시키는 최상위
+    └── env                      : uvm_env
+        ├── agent                : uvm_agent      ← 인터페이스 1개 담당
+        │   ├── sequencer        : uvm_sequencer  ← sequence 의 item 을 driver 로 전달
+        │   ├── driver           : uvm_driver     ← DUT 핀 구동
+        │   └── monitor          : uvm_monitor    ← DUT 핀 관찰
+        └── scoreboard           : uvm_scoreboard ← 비교·판정
+
+  sequence (uvm_sequence) ── 트리 밖. test 가 만들어서 sequencer 위에서 실행(start)
+```
+
+| 설명 | |
+|---|---|
+| 부모가 자식을 만든다 | test가 env를, env가 agent·scoreboard를, agent가 sequencer·driver·monitor를 `build_phase`에서 생성 |
+| 이름이 경로가 됨 | `uvm_test_top.env.agent.driver` 처럼 트리 경로로 각 컴포넌트를 찾음 (config_db 설정, 로그 출처 표시에 사용) |
+| multi-agent | env 아래 agent가 **여러 개** 붙는 형태 (17번) |
+
+### 18-3. UVM 트리 구조 ② — class 상속 트리 (UVM 1.2 소스에서 확인)
+
+```
+uvm_void                                   (추상)
+└── uvm_object                             (추상)  ── 데이터 쪽 : 실행 중 만들고 버림
+    ├── uvm_transaction                    (추상)
+    │   └── uvm_sequence_item                      ← 내 item 은 여기서 상속
+    │       └── uvm_sequence_base
+    │           └── uvm_sequence #(REQ,RSP)        ← 내 sequence 는 여기서 상속
+    └── uvm_report_object
+        └── uvm_component                  (추상)  ── 구조 쪽 : 시뮬레이션 내내 존재
+            ├── uvm_test / uvm_env / uvm_agent
+            ├── uvm_driver #(REQ,RSP) / uvm_monitor / uvm_scoreboard
+            └── uvm_sequencer_base → … → uvm_sequencer #(REQ,RSP)
+```
+
+### 18-4. 컴포넌트 그룹 vs 시퀀스 그룹 — 완전히 분리
+
+| 구분 | **컴포넌트 그룹** (`uvm_component`) | **시퀀스 그룹** (`uvm_object`) |
+|---|---|---|
+| 무엇 | test, env, agent, sequencer, driver, monitor, scoreboard | sequence, sequence_item |
+| 수명 | 시뮬레이션 **처음부터 끝까지** 존재 (고정된 TB **구조**) | 실행 중에 **만들고 버림** (흘러가는 **데이터·자극**) |
+| phase | `build_phase`, `connect_phase`, `run_phase` … 있음 | 없음 (sequence는 `body()`가 실행 내용) |
+| 분리해서 좋은 점 | **자극(시나리오)을 바꿔도 TB 구조는 그대로** → test에서 sequence만 바꿔 끼우면 새 시나리오 | |
+
+### 18-5. 동작 흐름
+
+> 메모: "test → sequence → sequencer → driver / monitor → scoreboard"
+> → **정정** : monitor는 driver에게서 받는 게 아니라 **DUT 핀을 직접 관찰**한다. (driver가 보낸 값이 아니라 DUT가 실제로 한 일을 봐야 검증이 됨)
+
+```
+test ──start──▶ sequence ──item(randomize)──▶ sequencer ──▶ driver ──▶ DUT
+                (= generator)                 (= 전달)                  │
+                                                                         ▼
+                                              scoreboard ◀── monitor ◀── (DUT 핀 관찰)
+                                                         analysis port
+```
+
+| 단계 | 하는 일 |
+|---|---|
+| test | env 생성·설정, 어떤 sequence를 어느 sequencer에서 돌릴지 정해 `start` |
+| sequence (`body()`) | item 생성 → `start_item` → **randomize** → `finish_item` 반복 |
+| sequencer | item을 driver에게 넘김 (driver가 `get_next_item`으로 요청) |
+| driver | item을 DUT 핀 신호로 구동 → `item_done` |
+| monitor | DUT 핀을 보고 item으로 복원 → analysis port `write()` |
+| scoreboard | 받은 item과 기대값 비교 (15번 `compare` / `$cast`) |
+
+### 18-6. UVM을 쓰려면 라이브러리를 불러와야 함
+
+```systemverilog
+`include "uvm_macros.svh"   // `uvm_object_utils, `uvm_info, `uvm_error 같은 매크로
+import uvm_pkg::*;          // uvm_driver, uvm_test … class 들이 들어있는 package
+```
+
+| 줄 | 왜 따로 필요한가 |
+|---|---|
+| `` `include "uvm_macros.svh" `` | **매크로(`` `define ``)는 package의 이름 공간에 속하지 않아서 `import`로 가져올 수 없다** (컴파일 전에 글자를 바꿔치기하는 것이라 — 1118 10번) → 파일로 직접 포함 |
+| `import uvm_pkg::*;` | UVM class들은 `uvm_pkg` package 안에 있음 → wildcard import (1118 6-3) |
+| 컴파일 옵션 | VCS : `vcs -sverilog -ntb_opts uvm-1.2 …` |
