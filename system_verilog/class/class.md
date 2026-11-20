@@ -13,6 +13,7 @@
 | [1116 (월)](#1116-월--vcs--verdi--서버-시뮬레이션-flow) | VCS vs Verdi · 검증 flow (VCS → FSDB → Verdi) · 서버 실행 환경 |
 | [1118 (수)](#1118-수--검증-툴--sv-자료형--package--static--class-심화-은닉화--상속--파라미터화) | 검증 툴 비교 · 동적/연관 배열 · clocking block · DPI · package · static vs automatic · `'1` · 매크로 · 은닉화 · 상속 · static 멤버 · `::` · extern · 파라미터화 class · TLM |
 | [1119 (목)](#1119-목--2-state-vs-4-state--casting--typedef--enum--다형성--추상-class--uvm-개요) | 4-state vs 2-state · `$isunknown` · casting 4가지 · `signed'()` vs `-` · struct packed 쪼개기 · `$cast` · const · typedef · enum · `super` · 다형성 · up/downcasting · virtual · UVM의 `$cast` · 추상 class · multi-agent · UVM 개요·트리 구조·동작 흐름 |
+| [1120 (금)](#1120-금--struct--union--packed-vs-unpacked-array--uvm-phase--sequence-driver-handshake--factory) | struct vs union · tagged union · packed vs unpacked array · array 합성 가이드 · 조회 함수 · UVM phase · objection · object vs component · sequence-driver handshake · factory · `uvm_config_db` |
 
 ---
 
@@ -2368,3 +2369,406 @@ import uvm_pkg::*;          // uvm_driver, uvm_test … class 들이 들어있�
 | `` `include "uvm_macros.svh" `` | **매크로(`` `define ``)는 package의 이름 공간에 속하지 않아서 `import`로 가져올 수 없다** (컴파일 전에 글자를 바꿔치기하는 것이라 — 1118 10번) → 파일로 직접 포함 |
 | `import uvm_pkg::*;` | UVM class들은 `uvm_pkg` package 안에 있음 → wildcard import (1118 6-3) |
 | 컴파일 옵션 | VCS : `vcs -sverilog -ntb_opts uvm-1.2 …` |
+
+---
+
+# 1120 (금) — struct · union · packed vs unpacked array · UVM phase · sequence-driver handshake · factory
+
+> **핵심 한 줄** : **struct**는 멤버를 **나란히 묶고**, **union**은 같은 비트를 **여러 이름으로 겹쳐 본다**. tagged union은 지금 어떤 멤버가 들어있는지 **tag로 기억**해서 잘못 읽으면 에러를 낸다. **packed** 배열은 **한 덩어리 벡터**(통째로 연산·부분 선택), **unpacked** 배열은 **원소가 따로**(메모리). 합성은 **고정 크기 배열만** 되고, 동적 배열·연관 배열·queue는 검증(TB) 전용이다. UVM은 **phase**(build → connect → end_of_elaboration → run → report)로 진행되고, run_phase는 **objection**이 다 내려가면 끝난다. sequence와 driver는 `start_item`/`finish_item` ↔ `get_next_item`/`item_done`으로 **handshake** 하며, 부품·item은 `new` 대신 **factory(`type_id::create`)**로 만들어 override 할 수 있게 한다.
+
+| # | 목차 |
+|---|------|
+| 1 | struct vs union (packed union) |
+| 2 | struct + union 조합 예시 |
+| 3 | tagged union |
+| 4 | unpacked array vs packed array |
+| 5 | array 합성 가이드 |
+| 6 | array 조회 함수 |
+| 7 | 합성되지 않는 array |
+| 8 | UVM phase — 작업 단위 |
+| 9 | objection — run_phase는 언제 끝나나 |
+| 10 | `uvm_object` vs `uvm_component` 계열 |
+| 11 | sequence ↔ driver handshake |
+| 12 | factory — `type_id::create` · `this` · override |
+| 13 | `uvm_config_db` — set / get 인자 해석 |
+
+> 이 날 예시 출력은 전부 **서버 VCS (W-2024.09)**로 직접 돌려서 확인한 값.
+
+---
+
+## 1. struct vs union (packed union)
+
+| 비교 | **struct** | **union** |
+|---|---|---|
+| 개념 | 멤버들을 **나란히 붙여** 하나로 묶음 | 멤버들이 **같은 비트를 공유** (겹쳐 놓음) |
+| 전체 크기 | 멤버 폭의 **합** | 가장 큰 멤버 폭 (**packed union은 멤버 폭이 모두 같아야 함**) |
+| 한 멤버를 바꾸면 | 그 멤버만 바뀜 | **다른 멤버로 읽어도 바뀐 값이 보임** (같은 비트니까) |
+| 쓰는 목적 | 관련 신호를 이름으로 묶기 (패킷 헤더, 레지스터 필드) | **같은 데이터를 여러 모양으로 보고 싶을 때** (32비트 통째로 / 바이트별 / 필드별) |
+
+> 메모: "union — member size가 동일 → 개별로 꺼내고 싶을 때"
+> → **정리** : 멤버 폭이 같아야 하는 건 **packed union**의 규칙. union의 목적은 **같은 비트를 다른 이름·모양으로 꺼내 보는 것**이다. (unpacked union은 폭이 달라도 되지만, 마지막에 쓴 멤버 말고 다른 멤버로 읽는 건 값이 보장되지 않아 잘 안 씀)
+
+---
+
+## 2. struct + union 조합 예시
+
+```systemverilog
+typedef struct packed {          // 필드별로 보기 (8 + 8 + 16 = 32비트)
+    logic [7:0]  opcode;
+    logic [7:0]  rd;
+    logic [15:0] imm;
+} instr_s;
+
+typedef union packed {           // 같은 32비트를 3가지로 보기 (모두 32비트)
+    logic [31:0]     word;       // 통째로
+    logic [3:0][7:0] bytes;      // 바이트별
+    instr_s          f;          // 필드별 (struct)
+} instr_u;
+
+instr_u u;
+u.word     = 32'h1234_ABCD;      // 통째로 쓰고
+// u.bytes[3] = 12, u.bytes[0] = cd, u.f.opcode = 12, u.f.rd = 34, u.f.imm = abcd
+u.f.opcode = 8'hFF;              // 필드 하나만 바꾸면
+// u.word = ff34abcd             // 통째로 읽어도 반영됨 (같은 비트)
+```
+
+| 동작 | 결과 (VCS 확인) |
+|---|---|
+| `u.word = 32'h1234_ABCD` | `bytes[3]=12`, `bytes[0]=cd`, `f.opcode=12`, `f.rd=34`, `f.imm=abcd` |
+| `u.f.opcode = 8'hFF` 후 `u.word` | `ff34abcd` |
+| 쓰는 곳 | 명령어 디코드, 버스로 받은 32비트를 필드별로 해석, 레지스터 맵 |
+
+---
+
+## 3. tagged union
+
+> union에 **이름표(tag)**를 붙여서, 지금 **어떤 멤버가 들어있는지 기억**하게 만든 union.
+
+```systemverilog
+typedef union tagged {
+    int         Imm;     // 즉시값
+    logic [4:0] Reg;     // 레지스터 번호
+} operand_t;
+
+operand_t x;
+int       y;
+
+x = tagged Imm 42;       // tag = Imm, 값 = 42 를 같이 넣음
+y = x.Imm;               // ✅ tag 가 Imm 이니까 OK → y = 42
+
+x = tagged Reg 5'd3;     // 이제 tag = Reg
+y = x.Imm;               // ❌ 실행 중 에러 (tag 가 Reg 인데 Imm 으로 읽음)
+```
+
+| 항목 | 내용 |
+|---|---|
+| 대입 | **`tagged 멤버이름 값`** → 값과 함께 "지금은 이 멤버"라는 tag가 저장됨 (메모의 "이름표 안에 값을 넣는다", "화살표 느낌") |
+| 읽기 | **현재 tag와 같은 멤버**로만 읽을 수 있음 |
+| 다른 멤버로 읽으면 | **런타임 에러** — VCS: `Error-[TU-INVMEMUSG] … The expected tag is 'Reg', but tag 'Imm' is used.` (직접 확인) |
+| tag로 분기 | `case (x) matches  tagged Imm .n : …  tagged Reg .r : …  endcase` → tag에 맞는 줄이 실행되고 값이 `n`/`r`에 들어감 (확인 : `Imm 42`) |
+| 일반 union과 차이 | 일반 union은 아무 멤버로나 읽어도 에러 없음 → 실수해도 모름. tagged union은 **잘못 읽기를 막아줌** |
+| ⚠️ VCS 옵션 | tagged union은 VCS에서 제한 기능(LCA) → 컴파일 옵션 **`-lca`** 필요 (없으면 `Error-[LCA_FEATURES_NEED_OPTION]`). 예제 Makefile의 `VCS_OPTS`에는 이미 `-lca`가 들어 있음 |
+| 합성 | 툴마다 지원이 제한적 → 주로 **검증·모델링**용 |
+
+---
+
+## 4. unpacked array vs packed array
+
+| 비교 | **unpacked array** | **packed array** |
+|---|---|---|
+| 차원 위치 | 이름 **뒤** : `logic [7:0] mem [0:3]` | 이름 **앞** : `logic [3:0][7:0] w` |
+| 구조 | **원소가 따로따로** 있는 묶음 | 비트가 **한 줄로 붙은 벡터**를 여러 차원으로 나눈 것 |
+| 크기 표기 | `[0:3]` = `[4]` (C처럼 개수만 써도 됨 → `[0:N-1]`) | `[3:0]`처럼 범위로 씀 |
+| 원소 타입 | 아무 타입 (int, real, class 핸들, struct …) | **비트 타입만** (`bit`, `logic`, packed struct/union, enum) |
+| 통째로 연산 | ❌ 산술 안 됨 (같은 모양끼리 **대입·`==` 비교만** 가능) | ✅ **벡터처럼** 산술·비교·시프트 (`w + 1`) |
+| 부분 선택 | 원소 하나 `mem[2]` | 원소 `w[3]`, **sub-array** `w[1:0]`, 비트 `w[3][7]` |
+| 통째로 대입 | `'{8'h11, 8'h22, 8'h33, 8'h44}` / `'{default: 0}` | 숫자 하나로 `w = 32'hA1B2C3D4` |
+| 합성 | **메모리(RAM)**로 추론되기 좋음 | **레지스터·버스(배선)** |
+| 주 용도 | 메모리, 레지스터 파일, 같은 신호 여러 개 | 버스를 바이트/필드로 나눠 보기 |
+
+| 예 (VCS 확인) | 결과 |
+|---|---|
+| `w = 32'hA1B2C3D4;` | `w[3] = a1`, `w[1:0] = c3d4`, `w + 1 = a1b2c3d5` |
+| `mem = '{8'h11, 8'h22, 8'h33, 8'h44};` | `mem[0] = 11`, `mem[3] = 44` |
+| `mem2 = mem;` (같은 모양 통째로 복사) | `mem2 == mem` → `1` |
+| `m3 = '{default: 8'hFF};` | `'{'hff, 'hff, 'hff, 'hff}` |
+
+> 메모: "일반적으로 unpacked array를 많이 사용한다"
+> → **정리** : **메모리처럼 원소를 하나씩 다루는 곳**은 unpacked가 일반적. 하지만 **비트를 통째로 다뤄야 하는 버스·데이터**는 packed를 쓴다. 둘을 섞은 `logic [3:0][7:0] regs [16]`(32비트 레지스터 16개, 각각 바이트로도 접근) 형태도 많이 쓴다.
+
+---
+
+## 5. array 합성 가이드
+
+> 메모의 항목(선언 · 값 할당 · 복사 · struct/union 조합 · 전달)별 정리. **고정 크기**면 합성 가능, 크기가 실행 중에 바뀌는 배열은 불가(7번).
+
+| 항목 | ✅ 합성 OK | ⚠️ 주의 / ❌ 불가 |
+|---|---|---|
+| **선언** | 고정 크기 packed / unpacked (`logic [7:0] mem [16]`, `logic [3:0][7:0] w`) | 동적 배열 `[]`, 연관 배열 `[string]`, queue `[$]` ❌ |
+| **값 할당** | 원소 대입 `mem[i] <= d;` / assignment pattern `'{default: '0}` (리셋) / packed는 `'0`, `'1` | 리셋 때 큰 메모리 전체를 한 번에 지우면 RAM이 아니라 **레지스터로 합성**될 수 있음 → RAM으로 쓰려면 전체 리셋 안 함 |
+| **복사** | 같은 모양 unpacked끼리 통째 대입 `a = b;` / packed는 벡터처럼 대입 | 모양(원소 수·폭)이 다르면 unpacked 통째 대입 에러 → 원소별로 |
+| **struct·union 조합** | **packed** struct/union, packed struct의 배열 (`instr_s prog [64]`) | unpacked struct 안의 동적 멤버 ❌, tagged union은 툴마다 제한 |
+| **전달** (포트·함수 인자) | SV는 **unpacked array도 포트로** 전달 가능 / 함수 인자 가능 / 타입을 `typedef`로 만들어 양쪽에서 같은 이름으로 사용 | 포트 양쪽의 **모양이 정확히 같아야** 함 → typedef를 package에 두고 import 하면 실수 방지 |
+
+---
+
+## 6. array 조회 함수
+
+> 메모의 `$dimensions(a)`, `$`, `$` … 빈칸 채움. 배열의 **크기·범위를 코드에 숫자로 박지 않고** 알아낼 때 사용 (parameter로 크기가 바뀌어도 코드가 따라감).
+> `dim` 생략 시 **1번 차원**(가장 바깥 = unpacked 쪽의 첫 차원). 차원 번호는 **unpacked 왼쪽 → packed 오른쪽** 순.
+
+| 함수 | 기능 | `logic [7:0] mem [0:3]` 결과 (VCS 확인) |
+|---|---|---|
+| **`$dimensions(a)`** | 전체 차원 수 (packed + unpacked) | `2` |
+| **`$unpacked_dimensions(a)`** | unpacked 차원 수 | `1` |
+| **`$left(a, dim)`** | 선언한 범위의 **왼쪽** 값 | `0` (`$left(mem,2)` = `7`) |
+| **`$right(a, dim)`** | 선언한 범위의 **오른쪽** 값 | `3` (`$right(mem,2)` = `0`) |
+| **`$low(a, dim)`** | 둘 중 **작은** 값 | `0` |
+| **`$high(a, dim)`** | 둘 중 **큰** 값 | `3` |
+| **`$increment(a, dim)`** | left ≥ right면 `1`, left < right면 `-1` | `-1` (`[0:3]`) / `1` (`[7:0]`) |
+| **`$size(a, dim)`** | 원소 개수 (`high - low + 1`) | `4` (`$size(mem,2)` = `8`) |
+
+| packed 배열 `logic [3:0][7:0] w` | 결과 |
+|---|---|
+| `$dimensions(w)` / `$unpacked_dimensions(w)` | `2` / `0` |
+| `$left(w)` / `$right(w)` / `$size(w)` / `$size(w,2)` | `3` / `0` / `4` / `8` |
+
+```systemverilog
+for (int i = $low(mem); i <= $high(mem); i++) mem[i] = '0;   // 크기가 바뀌어도 그대로 동작
+```
+
+---
+
+## 7. 합성되지 않는 array
+
+| 배열 | 이유 | 쓰는 곳 |
+|---|---|---|
+| **동적 배열** `int d[];` | 실행 중에 `new[n]`으로 크기가 바뀜 → 하드웨어는 크기가 고정 | TB (1118 3번) |
+| **연관 배열** `int a[string];` | 쓰는 순간 칸이 생김, key가 문자열 등 | TB — 메모리 모델, 이름별 표 |
+| **queue** `int q[$];` | `push`/`pop`으로 길이가 계속 바뀜 | TB — scoreboard 기대값 저장 (1111) |
+| 원소가 `real`, `string`, class 핸들인 배열 | 원소 타입 자체가 하드웨어로 못 만듦 | TB |
+
+> 정리 : **설계(RTL)는 고정 크기 packed/unpacked만**, 크기가 변하는 배열과 그 method(`size()`, `push_back()` …)는 **검증(TB) 전용**.
+
+---
+
+## 8. UVM phase — UVM의 작업 단위
+
+> UVM은 **phase**라는 단계로 일을 나눠서, 모든 컴포넌트가 **같은 단계를 같이** 진행한다. 직접 `initial`/task 순서를 짜던 SV TB와 달리 **실행 순서를 UVM이 관리**한다. phase는 더 잘게 세분화되어 있지만, 자주 쓰는 건 아래 5개.
+
+| 순서 | phase | 종류 | 실행 방향 | 하는 일 |
+|---|---|---|---|---|
+| 1 | **`build_phase`** | function (시간 0) | **위 → 아래** (부모 먼저) | 부품(하위 컴포넌트)을 **만든다** (`type_id::create`) — 부모가 있어야 자식을 만들 수 있으니 위에서부터 |
+| 2 | **`connect_phase`** | function (시간 0) | 아래 → 위 | **포트를 연결**한다 (`drv.seq_item_port.connect(sqr.seq_item_export)`) |
+| 3 | **`end_of_elaboration_phase`** | function (시간 0) | 아래 → 위 | **구조 확인** (트리 출력 `uvm_top.print_topology()` 등) |
+| 4 | **`run_phase`** | **task** (시간이 흐름) | **모든 컴포넌트가 동시에** | 실제 시뮬레이션. driver 구동, monitor 관찰 — "run task"라고 생각하면 되는데 **시작·끝을 UVM이 관리** |
+| 5 | **`report_phase`** | function | **아래 → 위** | **결과 요약** (scoreboard 통과/실패 수 출력 등) |
+
+**실행 순서 (서버 VCS + UVM 1.2로 직접 확인, test → e(env) → a(agent))**
+
+```
+[build]   uvm_test_top          ← 위에서
+[build]   uvm_test_top.e
+[build]   uvm_test_top.e.a      ← 아래로
+[connect] uvm_test_top.e.a      ← 아래에서
+[connect] uvm_test_top.e
+[connect] uvm_test_top          ← 위로
+   … run_phase (0 ~ 20ns) …
+[report]  uvm_test_top.e.a      ← 아래에서
+[report]  uvm_test_top.e
+[report]  uvm_test_top          ← 위로
+```
+
+> 메모: "시퀀스는 run_phase가 없음" → 맞음. sequence는 컴포넌트가 아니라 `uvm_object`라서 phase가 없고, 실행 내용은 **`body()` task**에 쓴다. sequence는 test(또는 env)의 run_phase 안에서 `seq.start(sequencer)`로 실행된다.
+
+---
+
+## 9. objection — run_phase는 언제 끝나나
+
+> 메모: "sv generator는 run task 횟수로 끝냄 → uvm에서는 `phase.raise_object` → drop → 이걸 env에서 하면 됨"
+> → **정정** : 정확한 이름은 **`raise_objection` / `drop_objection`**. 보통 **test의 run_phase**에서 sequence 시작 전후로 건다 (env에서도 걸 수는 있지만 일반적인 위치는 test).
+
+| SV TB | UVM |
+|---|---|
+| generator가 `repeat(N)` 다 돌면 끝, 또는 `#시간` 후 `$finish` | run_phase는 **"아직 할 일 있음(objection)"이 하나라도 걸려 있는 동안만** 진행 → 모두 drop 되면 다음 phase로 |
+
+```systemverilog
+task run_phase(uvm_phase phase);
+    phase.raise_objection(this);   // "나 아직 일하는 중" → run_phase 안 끝남
+    sq.start(env.agt.sqr);         // sequence 다 끝날 때까지 기다림
+    phase.drop_objection(this);    // "끝났음" → 모두 drop 되면 run_phase 종료
+endtask
+```
+
+| 실험 (VCS 확인) | 결과 |
+|---|---|
+| objection 걸고 실행 | item 2개 전송 → **20ns**에 run_phase 종료 → report |
+| objection **안 걸고** 실행 | driver가 첫 item을 받자마자 **0ns에 바로 종료** (report time=0) → item_done도 못 함 ⚠️ |
+
+---
+
+## 10. `uvm_object` 계열 vs `uvm_component` 계열
+
+> 메모의 빈 표 채움 (1119 18-4와 같은 내용을 더 자세히)
+
+| 비교 | **`uvm_object` 계열 (데이터)** | **`uvm_component` 계열 (부품)** |
+|---|---|---|
+| 예 | transaction(`uvm_sequence_item`), sequence(`uvm_sequence`), config 객체 | test, env, agent, sequencer, driver, monitor, scoreboard |
+| 수명 | **필요할 때 만들고 쓰고 버림** (실행 중 계속 생성) | 시뮬레이션 **처음(build)부터 끝까지** 존재 |
+| 트리(계층) | ❌ 부모 없음 — 트리에 안 붙음 | ✅ **부모가 있음** → `uvm_test_top.e.a.d` 같은 경로 |
+| phase | ❌ 없음 (sequence는 `body()`) | ✅ build / connect / run / report … |
+| 생성자 | `new(string name = "…")` — **이름만** | `new(string name, uvm_component parent)` — **이름 + 부모** |
+| factory 생성 | `item::type_id::create("it")` | `drv::type_id::create("d", this)` |
+| 등록 매크로 | **`` `uvm_object_utils(클래스) ``** | **`` `uvm_component_utils(클래스) ``** |
+| SV TB 대응 | transaction, generator | driver, monitor, scoreboard, environment |
+
+| SV TB | UVM |
+|---|---|
+| transaction | `uvm_sequence_item` (item) |
+| generator | `uvm_sequence` |
+
+---
+
+## 11. sequence ↔ driver — handshake 방식 전달
+
+```
+  sequence ──item──▶ sequencer ──item──▶ driver ──▶ DUT
+  (item 생성·random)  (전달 담당)          (구동)
+     start_item / finish_item      get_next_item / item_done
+```
+
+| 구간 | 연결 방법 | 누가 연결 |
+|---|---|---|
+| sequence ↔ sequencer | `seq.start(sqr)`로 실행 → 그 안에서 `start_item` / `finish_item` 호출 | test (sequence 시작할 때) |
+| sequencer ↔ driver | **TLM 포트** : `drv.seq_item_port.connect(sqr.seq_item_export)` | **agent의 `connect_phase`** (메모의 "에이전트가 드라이버와 커넥션을 연결") |
+
+> 메모: "1 TLM — 시퀀스와 드라이버 사이에 start_item, finish_item"
+> → **정리** : TLM **포트로 연결된 건 sequencer ↔ driver**. sequence는 포트가 아니라 sequencer 위에서 실행되면서 `start_item`/`finish_item`으로 sequencer에 item을 맡긴다. 결과적으로 item은 sequence → sequencer → driver로 간다.
+>
+> 메모: "시퀀서는 굳이 설계하지 않아도 존재"
+> → **정리** : sequencer는 **코드를 직접 짤 필요가 없다** (`uvm_sequencer #(item)`을 그대로 씀). 단, agent의 build_phase에서 **생성(create)은 해야** 한다.
+>
+> 메모: "TLM은 기존 SV에서 port 개념으로 바뀜" → SV의 **mailbox 자리**에 UVM은 **port ↔ export** 연결을 쓴다는 뜻. 메모의 "shared method 방식"은 **포트를 통해 상대 컴포넌트의 method(함수)를 호출해서 전달**하는 방식이라는 뜻 (1118 17-2).
+
+**handshake 순서 (메모의 빈 표 채움 — VCS 실행 로그 그대로, driver 구동 10ns, item 2개)**
+
+| 순서 | 시각 | 누가 | 일어나는 일 |
+|---|---|---|---|
+| 1 | 0 | driver | **`get_next_item`** 호출 → item이 올 때까지 **기다림** |
+| 2 | 0 | sequence | **`start_item(it)`** 호출 → driver가 요청할 때까지 대기 (sequencer가 허락) |
+| 3 | 0 | sequence | `start_item` 리턴 → 이제 **randomize** (보내기 직전에 값 결정) |
+| 4 | 0 | sequence | **`finish_item(it)`** 호출 → item을 driver에게 넘기고 **driver가 끝낼 때까지 대기** |
+| 5 | 0 | driver | `get_next_item` 리턴 → **item 받음** (data=6f) → DUT 구동 시작 |
+| 6 | 10 | driver | 구동 끝 → **`item_done`** → "처리 완료" 알림 |
+| 7 | 10 | driver | 다음 item을 위해 다시 `get_next_item` (1번으로) |
+| 8 | 10 | sequence | `finish_item` 리턴 → 다음 item 만들러 (2번으로) |
+| 9 | 20 | — | 2번째 item도 같은 순서로 끝남 → sequence 종료 → objection drop → run_phase 종료 |
+
+> 핵심 : sequence와 driver가 서로 **기다려 주며(handshake)** 한 개씩 주고받는다 → driver가 바쁜 동안 sequence가 item을 마구 쌓지 않음 (mailbox와 다른 점).
+
+| 메모 | 정리 |
+|---|---|
+| "test에서도, env에서도 시퀀스를 만들 수 있다" | 맞음. 보통은 **test**의 run_phase에서 만들고 `start` (어떤 시나리오를 돌릴지가 test의 역할이라서) |
+| driver / monitor → scb / cov | ⚠️ 정정 : scoreboard·coverage로 보내는 건 **monitor** (analysis port). driver는 DUT 구동만 함 (1119 18-5) |
+
+---
+
+## 12. factory — 객체 생성을 factory에 부탁
+
+> **직접 `new` 하지 않고 factory에게 "이 타입 만들어 줘"라고 부탁하는 간접 생성 방식.** 그래서 나중에 **override**로 다른 타입(자식 class)을 대신 만들게 할 수 있다.
+
+| 방식 | 코드 | 특징 |
+|---|---|---|
+| 직접 생성 | `agt = new("agt", this);` | 항상 **그 class** 객체 |
+| **factory 생성** | `agt = my_agent::type_id::create("agt", this);` | factory가 만들어 줌 → **override 설정이 있으면 자식 class로 바꿔서** 만들어 줌 |
+
+### 12-1. Q. 여기서 `this`는 뭐야?
+
+| 인자 | 의미 |
+|---|---|
+| `"agt"` | 만들 객체의 **이름** → 트리 경로의 한 칸이 됨 (`uvm_test_top.e.agt`) |
+| **`this`** | **부모 컴포넌트** = 지금 이 코드를 실행 중인 컴포넌트 자신. env의 build_phase에서 `this`라고 쓰면 **"이 env가 부모"** → 만든 agent가 env 아래에 붙는다 |
+
+> VCS 확인 : agent의 build_phase에서 `create("d", this)` → driver 경로 `uvm_test_top.e.a.d`, `get_parent()` = `a`.
+> object(item, sequence)는 트리에 안 붙으므로 **부모 인자 없이** `create("it")`만 쓴다.
+
+### 12-2. Q. `create`는 `uvm_component` 부모 class의 함수인가?
+
+**아니다.** `create`는 **`type_id`라는 별도 class의 static 함수**다.
+
+| 단계 | 내용 (UVM 1.2 소스에서 확인) |
+|---|---|
+| ① | `` `uvm_component_utils(my_agent) `` 매크로가 class 안에 **`typedef uvm_component_registry #(my_agent, "my_agent") type_id;`** 를 만들어 넣음 |
+| ② | `uvm_component_registry` class에 **`static function T create(string name, uvm_component parent, …)`** 가 있음 (`uvm_registry.svh` 109번째 줄) |
+| ③ | 그래서 `my_agent::type_id::create(…)` = "my_agent의 등록 정보(type_id)에게 create 부탁" → factory가 override를 확인하고 객체를 `new` 해서 돌려줌 |
+| object 쪽 | `` `uvm_object_utils `` → `uvm_object_registry` 의 `static function T create(string name = "", …)` |
+
+> `::`는 1118 14번의 **class :: static 멤버** 사용법 → static 함수라서 객체 없이 부를 수 있다.
+
+### 12-3. override 예
+
+```systemverilog
+// test 의 build_phase 에서, env 를 만들기 전에
+drv::type_id::set_type_override(drv2::get_type());   // "drv 를 만들 땐 drv2 로"
+e = env::type_id::create("e", this);
+```
+
+| 실험 (VCS 확인) | agent 안의 `drv::type_id::create("d", this)` 결과 |
+|---|---|
+| override 없음 | 타입 `drv` |
+| override 있음 | 타입 **`drv2`** — agent 코드는 **한 줄도 안 고쳤는데** 다른 driver로 바뀜 |
+
+> 그래서 UVM에서는 `new` 대신 **항상 `type_id::create`**로 만든다 → 나중에 test에서 원하는 부품·item으로 바꿔 끼울 수 있게 (1119 15번의 factory override + 다형성).
+
+---
+
+## 13. `uvm_config_db` — 컴포넌트에 설정값·인터페이스 전달
+
+> **왜 필요한가** : interface는 **module(top) 쪽**에 실제로 있고, driver·monitor는 **class**라서 port로 연결할 수 없다. 그래서 **전역 설정 게시판(config_db)**에 interface 핸들을 **올려두고(set)**, 필요한 컴포넌트가 **꺼내 가는(get)** 방식으로 전달한다. SV TB에서 `new(vif)`로 넘겨주던 걸 대신하는 것.
+
+```systemverilog
+// top 모듈 (run_test 전에)
+uvm_config_db #(virtual base_if)::set(null, "*", "base_vif", base_if);
+
+// driver / monitor 의 build_phase
+if (!uvm_config_db #(virtual base_if)::get(this, "", "base_vif", vif))
+    `uvm_fatal("NOVIF", "base_vif 를 못 찾음")
+```
+
+### 13-1. `set` 인자 해석
+
+| 부분 | 이 예에서 | 의미 |
+|---|---|---|
+| `#(virtual base_if)` | 저장할 값의 **타입** | interface **핸들** 타입. **set과 get의 타입이 정확히 같아야** 찾을 수 있음 |
+| ① `cntxt` | `null` | 경로의 **기준점**. `null` = 최상위(uvm_root)부터 = **절대 경로**. 컴포넌트 안에서 쓸 땐 보통 `this` |
+| ② `inst_name` | `"*"` | **누가 받을 수 있나** (경로 패턴). `"*"` = **모든 컴포넌트** |
+| ③ `field_name` | `"base_vif"` | 게시판의 **이름표(key)**. get에서도 같은 문자열로 찾음 |
+| ④ `value` | `base_if` | 올릴 **값** = top 모듈에 만든 **interface 인스턴스** |
+
+### 13-2. `get` 인자 해석
+
+| 부분 | 이 예에서 | 의미 |
+|---|---|---|
+| ① `cntxt` | `this` | **내 위치**(나 자신)를 기준으로 찾음 |
+| ② `inst_name` | `""` | 기준(나)에서 더 내려가지 않음 = **나 자신 앞으로 온 값** |
+| ③ `field_name` | `"base_vif"` | set 때 쓴 **이름표와 같아야** 함 |
+| ④ 변수 | `vif` | 찾은 값을 **담을 변수** |
+| 반환값 | `bit` | 찾으면 1, 못 찾으면 0 → **반드시 검사**하고 실패 시 `uvm_fatal` (안 하면 null 핸들로 진행하다 엉뚱한 곳에서 에러) |
+
+### 13-3. 실험 (서버 VCS + UVM 1.2로 직접 확인)
+
+| set 방법 | driver (`uvm_test_top.d`) | monitor (`uvm_test_top.m`) |
+|---|---|---|
+| `set(null, "*", "base_vif", base_if)` | ✅ OK | ✅ OK — **모두** 받음 |
+| `set(null, "uvm_test_top.d", "base_vif", base_if)` | ✅ OK | ❌ FAIL — **경로가 맞는 컴포넌트만** 받음 |
+| test에서 `set(this, "d", "depth", 16)` (int 값) | ✅ (d에게만) | ❌ FAIL |
+| driver가 받은 vif로 `vif.data = 8'h5A` | top의 interface 신호가 실제로 `5a`로 바뀜 → **같은 interface를 가리키는 핸들** | |
+
+### 13-4. 주의할 점
+
+| 주의 | 이유 |
+|---|---|
+| **set은 get보다 먼저** | top에서는 `run_test()` **전에** set (get은 build_phase에서 일어나므로) |
+| 타입·이름표가 정확히 같아야 | `#(virtual base_if)` ↔ `#(virtual base_if)`, `"base_vif"` ↔ `"base_vif"` — 하나라도 다르면 **못 찾음** (에러가 아니라 get이 0 반환) |
+| `"*"`는 편하지만 범위가 넓음 | interface가 여러 개(multi-agent)면 `"uvm_test_top.env.agt0*"`처럼 **경로를 좁혀서** 각 agent에 맞는 vif를 줌 (1119 17번) |
+| interface 말고도 전달 가능 | `int`(반복 횟수), `uvm_active_passive_enum`(active/passive), **config 객체** 등 아무 타입이나 |
