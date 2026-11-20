@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# srun : ~/center (서버 sshfs 연결 폴더) 안에서 치면, 서버의 같은 폴더로 가서 명령 실행
+#   예) ~/center/dev 에서  srun vcs -sverilog -full64 tb.sv   → 서버 ~/dev 에서 실행
+#       srun ./simv | tee sim.log   (파이프는 여기 PC 쪽에서 처리됨)
+#       srun verdi -ssf novas.fsdb &   (X11 로 창이 Windows 에 뜸)
+root="$HOME/center"
+cwd="$(pwd -P)"
+case "$cwd" in
+    "$root")   rel="" ;;
+    "$root"/*) rel="${cwd#"$root"/}" ;;
+    *) echo "srun: ~/center 안에서 실행하세요 (지금: $cwd)" >&2; exit 1 ;;
+esac
+if [ $# -eq 0 ]; then
+    echo "사용법: srun <서버에서 실행할 명령>" >&2; exit 1
+fi
+# 서버 로그인 셸이 csh 라서 그대로 넘김 (cd 후 명령 실행)
+tty_opt=""; [ -t 0 ] && [ -t 1 ] && tty_opt="-t"
+exec ssh $tty_opt center "cd ~/$rel && $*"

@@ -1,0 +1,139 @@
+# UVM 자동완성 사전 : 단어<Tab>설명  (# 줄은 주석)
+uvm_pkg	UVM 패키지 (import uvm_pkg::*;)
+uvm_macros	UVM 매크로 파일 (`include "uvm_macros.svh")
+uvm_component_utils	컴포넌트를 factory에 등록
+uvm_component_utils_begin	컴포넌트 등록 + 필드 등록 시작
+uvm_component_utils_end	컴포넌트 필드 등록 끝
+uvm_component_param_utils	파라미터 컴포넌트를 factory에 등록
+uvm_object_utils	object(item/seq)를 factory에 등록
+uvm_object_utils_begin	object 등록 + 필드 등록 시작
+uvm_object_utils_end	object 필드 등록 끝
+uvm_object_param_utils	파라미터 object를 factory에 등록
+uvm_field_int	정수 필드 등록 (print/copy/compare 자동)
+uvm_field_enum	enum 필드 등록 (타입, 변수, 플래그)
+uvm_field_object	object 핸들 필드 등록
+uvm_field_string	string 필드 등록
+uvm_field_array_int	동적 배열(int) 필드 등록
+uvm_field_queue_int	큐(int) 필드 등록
+uvm_info	정보 메시지 (ID, 메시지, verbosity)
+uvm_warning	경고 메시지 (ID, 메시지)
+uvm_error	에러 메시지, 에러 카운트 증가
+uvm_fatal	치명적 에러, 즉시 시뮬레이션 종료
+uvm_do	item 생성+랜덤+전송 한 번에
+uvm_do_with	uvm_do + 랜덤 제약 { }
+uvm_create	item만 생성 (전송 X)
+uvm_send	만든 item을 전송 (랜덤 X)
+uvm_rand_send	랜덤화 후 전송
+uvm_rand_send_with	제약 걸고 랜덤화 후 전송
+uvm_declare_p_sequencer	p_sequencer 핸들 선언 (시퀀서 타입 지정)
+uvm_analysis_imp_decl	write 함수 여러 개 쓸 때 imp 선언 (_suffix)
+UVM_ALL_ON	필드 플래그: copy/compare/print/pack 전부 켬
+UVM_DEFAULT	필드 플래그: 기본값 (ALL_ON과 거의 같음)
+UVM_NONE	verbosity 0: 항상 출력
+UVM_LOW	verbosity 100: 중요한 메시지
+UVM_MEDIUM	verbosity 200: 기본 출력 수준
+UVM_HIGH	verbosity 300: 자세한 디버그
+UVM_FULL	verbosity 400: 매우 자세히
+UVM_DEBUG	verbosity 500: 전부 출력
+UVM_ACTIVE	agent 모드: driver+sequencer 생성
+UVM_PASSIVE	agent 모드: monitor만 생성
+UVM_INFO	심각도: 정보
+UVM_WARNING	심각도: 경고
+UVM_ERROR	심각도: 에러
+UVM_FATAL	심각도: 치명적
+uvm_object	모든 UVM 클래스의 최상위 기본 클래스
+uvm_component	트리 구조 + phase를 가진 부품 기본 클래스
+uvm_test	테스트 최상위 (run_test로 실행)
+uvm_env	agent/scoreboard 묶는 환경
+uvm_agent	driver/monitor/sequencer 묶음
+uvm_driver	item 받아서 DUT 핀 구동 (#(item))
+uvm_monitor	DUT 핀 관찰 → item으로 변환
+uvm_sequencer	sequence와 driver 사이 중재 (#(item))
+uvm_scoreboard	기대값 vs 실제값 비교
+uvm_subscriber	analysis 1개 받는 컴포넌트 (write 구현)
+uvm_sequence_item	트랜잭션(데이터 한 묶음) 기본 클래스
+uvm_sequence	item들을 만들어 보내는 시나리오 (#(item))
+uvm_sequence_base	sequence의 비파라미터 기본 클래스
+uvm_transaction	sequence_item의 부모 클래스
+uvm_phase	phase 객체 (raise/drop_objection)
+uvm_root	컴포넌트 트리의 최상위 (uvm_root::get())
+uvm_top	uvm_root 전역 핸들
+uvm_factory	factory 본체 (override, 생성)
+uvm_config_db	설정값 전달 #(T)::set / ::get
+uvm_resource_db	config_db의 하위 저장소
+uvm_analysis_port	1:N 방송 포트 (write)
+uvm_analysis_export	analysis 연결 중간 지점
+uvm_analysis_imp	analysis 받는 끝점 (write 구현)
+uvm_seq_item_pull_port	driver의 item 요청 포트 타입
+uvm_blocking_put_port	TLM put 포트 (blocking)
+uvm_blocking_get_port	TLM get 포트 (blocking)
+uvm_tlm_fifo	TLM FIFO (put/get)
+uvm_tlm_analysis_fifo	analysis 받아서 쌓는 FIFO
+uvm_active_passive_enum	UVM_ACTIVE / UVM_PASSIVE 타입
+uvm_verbosity	verbosity enum 타입
+uvm_report_server	메시지 집계/요약 서버
+uvm_reg	레지스터 모델: 레지스터
+uvm_reg_block	레지스터 모델: 블록 (레지스터 묶음)
+uvm_reg_field	레지스터 모델: 필드
+uvm_reg_map	레지스터 모델: 주소 맵
+uvm_reg_adapter	reg 동작 ↔ bus item 변환
+uvm_reg_predictor	버스 관찰로 레지스터 미러값 갱신
+uvm_event	동기화 이벤트 (trigger/wait)
+uvm_barrier	여러 프로세스 동시 대기
+uvm_objection	objection 객체
+uvm_printer	print 형식 기본 클래스
+uvm_table_printer	표 형식으로 출력
+uvm_comparer	compare 동작 설정
+build_phase	[function] 하위 컴포넌트 생성 (위→아래)
+connect_phase	[function] 포트 연결 (아래→위)
+end_of_elaboration_phase	[function] 구조 완성 후 (토폴로지 출력)
+start_of_simulation_phase	[function] 시뮬레이션 시작 직전
+run_phase	[task] 시간 흐르는 실제 동작 (병렬)
+reset_phase	[task] run 하위: 리셋 구간
+configure_phase	[task] run 하위: 설정 구간
+main_phase	[task] run 하위: 메인 동작 구간
+shutdown_phase	[task] run 하위: 마무리 구간
+extract_phase	[function] 결과 데이터 추출
+check_phase	[function] 결과 검사
+report_phase	[function] 결과 출력
+final_phase	[function] 마지막 정리
+raise_objection	phase 끝내지 마 (시작 표시)
+drop_objection	이제 끝내도 됨 (끝 표시)
+set_drain_time	objection 다 내려간 뒤 대기 시간
+type_id	factory 등록 타입 (::type_id::create)
+create	factory로 객체 생성 ("이름", this)
+get_type_name	클래스 이름 문자열
+get_full_name	계층 전체 경로 (uvm_test_top.env...)
+get_name	인스턴스 이름
+get_parent	부모 컴포넌트 핸들
+print_topology	컴포넌트 트리 구조 출력
+run_test	테스트 실행 시작 ("테스트이름")
+set_type_override_by_type	타입 전체를 다른 타입으로 교체
+set_inst_override_by_type	특정 인스턴스만 교체
+seq_item_port	driver 포트 (get_next_item/item_done)
+seq_item_export	sequencer 쪽 연결 지점
+get_next_item	driver: 다음 item 받기 (blocking)
+try_next_item	driver: item 있으면 받기 (non-blocking)
+item_done	driver: item 처리 완료 알림
+start_item	sequence: 전송 시작 (driver 대기)
+finish_item	sequence: 전송 완료 (item_done까지 대기)
+analysis_export	subscriber의 analysis 입력
+is_active	agent 모드 변수 (UVM_ACTIVE/PASSIVE)
+p_sequencer	실제 타입의 sequencer 핸들
+m_sequencer	기본 타입의 sequencer 핸들
+starting_phase	sequence가 시작된 phase (objection용)
+body	[task] sequence 본문 (item 생성/전송)
+pre_body	[task] body 전에 실행
+post_body	[task] body 후에 실행
+write	analysis 수신 함수 (item 받음)
+connect	포트 연결 (port.connect(export))
+print	필드 값 표로 출력
+sprint	print 내용을 문자열로 반환
+copy	다른 object 값 복사해 오기
+clone	복제본 새로 생성 ($cast 필요)
+compare	두 object 값 비교 (1=같음)
+do_copy	copy 동작 직접 구현 (override)
+do_compare	compare 동작 직접 구현 (override)
+do_print	print 동작 직접 구현 (override)
+convert2string	한 줄 문자열로 변환 (직접 구현)
+set_report_verbosity_level	이 컴포넌트의 verbosity 변경

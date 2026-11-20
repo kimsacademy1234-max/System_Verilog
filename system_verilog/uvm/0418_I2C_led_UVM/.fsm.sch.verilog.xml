@@ -1,0 +1,29 @@
+<Command name="schRTLInfo"  delimiter="."  >
+<RTLBlock >
+<RTLInfo   name="state_0"  type="2"  fileName="./rtl/I2C_core_top.sv"  >
+    <Seg beginLine="72"  endLine="127"  />
+  </RTLInfo>
+ <Instance name="tb_top.dut"  />
+</RTLBlock>
+<RTLBlock >
+<RTLInfo   name="state_1"  type="2"  fileName="./rtl/I2C_master.sv"  >
+    <Seg beginLine="79"  endLine="159"  />
+  </RTLInfo>
+ <RTLInfo   name="step_2"  type="2"  fileName="./rtl/I2C_master.sv"  >
+    <Seg beginLine="82"  endLine="109"  />
+  </RTLInfo>
+ <Instance name="tb_top.dut.u_master"  />
+</RTLBlock>
+<RTLBlock >
+<RTLInfo   name="state_3"  type="2"  fileName="./rtl/I2C_slave.sv"  >
+    <Seg beginLine="55"  endLine="117"  />
+  </RTLInfo>
+ <Instance name="tb_top.dut.u_slave"  />
+</RTLBlock>
+<RTLBlock >
+<RTLInfo   name="user_verbosity_4"  type="2"  fileName="/tools/synopsys/vcs/W-2024.09-SP1/etc/uvm-1.2/verdi/uvm_custom_install_verdi_recorder.sv"  >
+    <Seg beginLine="47"  endLine="197"  />
+  </RTLInfo>
+ <Instance name="uvm_custom_install_verdi_recording"  />
+</RTLBlock>
+ </Command>

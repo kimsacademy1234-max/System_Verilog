@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# vcskill : center 서버에서 돌고 있는 VCS 시뮬레이션 / Verdi 종료 (파일은 절대 안 지움)
+#
+#   vcskill      실행 중인 프로세스 목록 보여주고 y/N 확인 후 종료
+#   vcskill -y   확인 없이 바로 종료
+#   vcskill -l   목록만 보기 (종료 안 함)
+
+HOST=center
+MODE=ask
+case "$1" in
+  -y) MODE=yes ;;
+  -l) MODE=list ;;
+  -h|--help) sed -n '2,6p' "$0"; exit 0 ;;
+esac
+
+# ---------- 서버에서 실행될 부분 ----------
+REMOTE=$(cat <<'EOF'
+PAT='(^|/)(simv|vcs|vcs1|vlogan|urg|dve)( |$)|verdi|Verdi|Novas'
+PIDS=$(pgrep -u "$USER" -f -- "$PAT" | grep -vx "$$")
+if [ -z "$PIDS" ]; then echo "[서버] 실행 중인 시뮬레이션/Verdi 없음"; exit 3; fi
+if [ "$1" = list ]; then
+  echo "[서버] 실행 중:"
+  ps -o pid,etime,stat,cmd -p "$(echo $PIDS | tr ' ' ',')"
+  exit 0
+fi
+kill -CONT $PIDS 2>/dev/null; kill -TERM $PIDS 2>/dev/null
+sleep 2
+kill -KILL $PIDS 2>/dev/null
+echo "[서버] 종료 완료: $(echo $PIDS)"
+EOF
+)
+run_remote() { ssh -o ConnectTimeout=10 "$HOST" "bash -s -- $1" <<<"$REMOTE"; }
+
+# 로컬(WSL)에 남아있는 ssh→center 시뮬/verdi 세션
+LP=$(pgrep -f "ssh .*${HOST} .*(simv|verdi|make)")
+if [ -n "$LP" ]; then
+  echo "[로컬] 남아있는 ssh 세션:"
+  ps -o pid,etime,stat,cmd -p "$(echo $LP | tr ' ' ',')"
+fi
+
+run_remote list; rc=$?
+[ $rc = 255 ] && { echo "서버 접속 실패"; exit 1; }
+[ "$MODE" = list ] && exit 0
+[ $rc = 3 ] && [ -z "$LP" ] && exit 0
+
+if [ "$MODE" = ask ]; then
+  read -r -p "위 프로세스를 종료할까요? [y/N] " ans
+  [[ "$ans" =~ ^[yY]$ ]] || { echo "취소"; exit 0; }
+fi
+
+[ $rc = 0 ] && run_remote kill
+[ -n "$LP" ] && { kill -9 $LP 2>/dev/null; echo "[로컬] ssh 세션 종료: $(echo $LP)"; }

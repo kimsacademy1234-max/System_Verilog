@@ -77,7 +77,26 @@ def page(title, text=None, base=None):
       if (m === 'v' || m === 'sv' || m === 'systemverilog') el.className = 'language-verilog';
       hljs.highlightElement(el);
     }});
+    // 제목에 id 붙이기 (GitHub 방식: 소문자, 기호 삭제, 공백 → -, 같은 제목은 -1, -2 …)
+    //   marked v12 는 제목 id 를 안 만들어서 [1118 (수)](#1118-...) 같은 목차 링크가 갈 곳이 없었음
+    var used = {{}};
+    c.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(function (h) {{
+      var s = h.textContent.trim().toLowerCase()
+        .replace(/[^\\p{{L}}\\p{{M}}\\p{{N}}\\p{{Pc}}\\- ]/gu, '').replace(/ /g, '-');
+      if (s in used) {{ used[s]++; h.id = s + '-' + used[s]; }} else {{ used[s] = 0; h.id = s; }}
+    }});
   }}
+  // 목차 링크(#...) 클릭 → 그 제목으로 이동
+  //   직접 처리 → HTML 파일 모드의 <base href="file:///..."> 때문에 다른 주소로 넘어가는 것도 막음
+  c.addEventListener('click', function (e) {{
+    var a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute('href').slice(1);
+    try {{ id = decodeURIComponent(id); }} catch (_) {{}}
+    var el = document.getElementById(id);
+    e.preventDefault();
+    if (el) el.scrollIntoView({{block: 'start'}});
+  }});
   // vim 커서 줄(0부터)이 화면 위쪽 1/3 쯤 오도록 스크롤 (블록 안에서는 줄 비율로 보간)
   function scrollToLine(n) {{
     var els = c.querySelectorAll('[data-line]'), cur = null, next = null;

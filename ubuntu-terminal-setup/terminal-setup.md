@@ -6,6 +6,20 @@
 
 ## 업데이트 이력
 
+### 2026-11-20 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| **삭제** | 4단계 | `Ctrl+w w`로 vim → tmux 창 순환하던 설정 삭제 (11-17): tmux `C-w` 바인딩·`ctrlw` 키 테이블, vim `s:CycleWindow()`/`s:CtrlW()`. vim·tmux 창 이동은 `Ctrl+h/j/k/l`만, 셸 `Ctrl+w`(단어 지우기)는 원래대로 | `~/.tmux.conf`, `~/.vimrc` |
+| 변경 | 9단계 | `v` / `h` alias → 함수: `3v`, `4h`(또는 `v 3`)처럼 **n칸 같은 크기**로 분할 (2~9), 커서는 원래 pane에 남음 | `~/.bashrc` |
+| 추가 | 17-1단계 | `md` 미리보기에서 **목차 링크(`#제목`) 클릭 시 그 제목으로 이동**: 제목에 GitHub 방식 id 부여 + `#` 링크 직접 처리 | `~/.mdview/mdview.py`(저장소 `ubuntu-terminal-setup/mdview.py`) |
+| 변경 | 23단계 | vim md 인라인 `` `코드` `` 색 초록 → 연분홍(`#f5e0dc`, 코드 블록 초록과 구분) | `~/.vimrc` |
+| 변경 | 24단계 | `:glow` 방식 변경: 새 탭 + less → **지금 창에서 렌더링** (`q`/`:glow`로 커서·스크롤 그대로 복귀, `j/k`·`gg/G`·`/` 등 vim 키로 읽기). 기본 테마 dracula → **vim**(지금 vim 색으로 glow 테마를 매번 생성, SV 코드 블록 색 포함) | `~/.vimrc` |
+| 추가 | 34단계 | vim: 검색어 전부 색칠(`hlsearch`/`incsearch`) + 노랑/주황 검색 색, 구버전 vim tmux 트루컬러(`t_8f`/`t_8b`), `:Explore` 파일 청록, swap 폴더 자동 생성, Caps Lock `U P W Y` → 소문자 동작 | `~/.vimrc` |
+| 추가 | 35단계 | vim UVM: `uvm_` 자동완성 목록에 **한글 설명** (`uvm.dict` 138개, `complete=FUvmComplete`), UVM 파일(`uvm_pkg`/`` `uvm_ ``)은 ALE(verilator) 가짜 오류 안 뜨게 그 버퍼만 검사 끔 | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`), `~/.vimrc` |
+| 추가 | 36단계 | tmux `Ctrl+Shift+화살표`: 그 방향 pane과 자리 바꾸기 (전부터 있던 설정, 문서에 누락) | `~/.tmux.conf` |
+| 추가 | 37단계 | center 서버 VCS: `~/center` sshfs 자동 재연결, `srun`(서버 같은 폴더에서 실행), `run`/`sim [-n -l -s]`/`verdi`/`clean`/`smake`, `vcskill`. `sim`은 실제 시간 1h(`timeout`) + `+UVM_TIMEOUT` 1h 제한 | `~/.bashrc`, `~/.local/bin/srun`·`vcskill`(저장소 `ubuntu-terminal-setup/`) |
+
 ### 2026-11-18 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -158,7 +172,7 @@
 | 1 | Windows Terminal 색 구성표를 **Gruvbox Dark**로, 글꼴을 **D2Coding**으로 변경 | Windows Terminal `settings.json`, Windows 글꼴 |
 | 2 | vim 테마를 **Gruvbox**로 변경 | `~/.vimrc`, `~/.vim/pack/` |
 | 3 | tmux 상태바/테두리를 **Gruvbox** 색으로, 트루컬러 활성화 | `~/.tmux.conf` |
-| 4 | **`Ctrl+w w`로 vim 창과 tmux 창(터미널)을 구분 없이 이동** (셸의 `Ctrl+w` 단어 지우기는 포기) | `~/.tmux.conf`, `~/.vimrc`, vim-tmux-navigator |
+| 4 | **`Ctrl+h/j/k/l`로 vim 창과 tmux 창(터미널)을 구분 없이 이동** (예전 `Ctrl+w w` 순환은 2026-11-17 삭제) | `~/.tmux.conf`, vim-tmux-navigator |
 | 5 | `ls`의 **폴더 색**을 짙은 파랑 → 연한 하늘색(#87cefa)으로 변경 | `~/.bashrc` |
 | 6 | **fzf**로 폴더 검색 이동 (`cd **<Tab>`) | `~/.fzf`, `~/.bashrc` |
 | 7 | 프롬프트를 짧게: `사용자@컴퓨터:` 제거, 경로는 **마지막 폴더 2개**만 | `~/.bashrc` |
@@ -178,7 +192,7 @@
 | 21 | tmux에서 Caps Lock이 켜진 채 `Ctrl+B P` / `Ctrl+B W`를 눌러도 `Ctrl+b p` / `Ctrl+b w`처럼 동작 | `~/.tmux.conf` |
 | 22 | vim 줄번호 색을 회보라(`#7f849c`), 커서 줄 번호는 주황(`#fab387`)으로. `theme`로 테마를 바꿔도 유지 | `~/.vimrc` |
 | 23 | vim에서 md를 열면 제목·굵게·코드·표가 색으로 구분되고 `**` 같은 기호는 숨겨져서 읽기 좋게 | `~/.vimrc`, `~/.vim/after/syntax/markdown.vim` |
-| 24 | vim에서 `:glow` → md를 렌더링한 화면을 vim 화면 전체로 보기 (`q`로 복귀) | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
+| 24 | vim에서 `:glow` → 지금 창이 md 렌더링 화면으로 바뀜 (`q`로 편집 화면 복귀, 기본 색 = vim 색) | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
 | 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 | `~/.vim/keystate.ps1`, `~/.vimrc` |
 | 26 | `xsv`로 터미널에서 Vivado xsim 시뮬 실행 (`-g` 파형 창, `rl` 다시 컴파일) + `simkill`로 안 끝나는 시뮬 강제 종료 | `~/.xsv.sh`, `~/.bashrc`, `~/.local/bin/simkill` |
 | 27 | vim에서 Verilog/SV 키워드를 역할별 색으로 (`module`/`class` 경계, `task`, `initial`, 타입, 포트 방향, 구분선 주석) | `~/.vim/after/syntax/`, `~/.vimrc` |
@@ -187,6 +201,11 @@
 | 30 | vim `:!`에서 셸 함수(`pdf`, `xsv` 등) 실행 + `Tab` 자동완성 | `~/.local/bin/.bashrc-fn` + 심볼릭 링크 |
 | 31 | `exl` (현재 폴더 전부) / `exl "파일명"` (확장자 생략 가능) / `exl "폴더명"`으로 엑셀 파일을 Windows Excel에서 열기 | `~/.bashrc`, `~/.local/bin/exl` |
 | 32 | vim ALE(verilator)에서 `covergroup` "Unsupported" 오류 표시 안 나게 | `~/.local/bin/verilator-cgstrip`, `~/.vimrc` |
+| 33 | 배경색 `#45475A` 통일 (터미널·vim·tmux 상태바) + vim 글자 선명하게 + tmux 상태바 위로·굵은 pane 테두리 | `~/.theme/theme.py`, `~/.vimrc`, `~/.tmux.conf` |
+| 34 | vim 검색어 색칠, 구버전 트루컬러, netrw 파일 색, swap 폴더 자동 생성, Caps Lock `U P W Y` 소문자처럼 | `~/.vimrc` |
+| 35 | vim UVM 자동완성(설명 표시) + UVM 파일은 ALE 검사 끄기 | `~/.vim/dict/uvm.dict`, `~/.vimrc` |
+| 36 | tmux `Ctrl+Shift+화살표`로 pane 자리 바꾸기 | `~/.tmux.conf` |
+| 37 | center 서버 VCS/Verdi: `~/center` sshfs 자동 연결, `srun` / `run` / `sim` / `verdi` / `clean` / `vcskill` | `~/.bashrc`, `~/.local/bin/srun`, `~/.local/bin/vcskill` |
 
 ## 전제 환경
 
@@ -198,9 +217,8 @@
 
 - **화면 분할은 반드시 tmux로 해야 한다.** Windows Terminal의 분할(`Alt+Shift+D` 등)로 나눈 창 사이는
   tmux/vim 단축키로 이동할 수 없다. 사용자에게 tmux 안에서 `Ctrl+b |` / `Ctrl+b -`로 분할하도록 안내한다.
-- `Ctrl+w w`는 원래 vim 전용 키다. tmux 창까지 이동하게 하려면 tmux와 vim **양쪽 모두** 설정해야 한다.
-- vim에서 `<C-w>w` 형태로 매핑하면 `timeoutlen`(1초) 안에 `w`를 안 누를 때 동작하지 않는다.
-  → `<C-w>` 하나만 매핑하고 `getcharstr()`로 다음 키를 **시간 제한 없이** 기다리는 방식으로 해결했다 (4단계 코드 참고).
+- vim ↔ tmux 창 이동은 tmux와 vim **양쪽 모두** 설정해야 한다 (vim-tmux-navigator: vim 플러그인 + `~/.tmux.conf`의 `is_vim` 바인딩).
+- (예전 기록) `Ctrl+w w`로 tmux 창까지 순환하던 설정은 2026-11-17에 삭제했다. 다시 만들 때 주의: vim에서 `<C-w>w` 형태로 매핑하면 `timeoutlen`(1초) 안에 `w`를 안 누를 때 동작하지 않으므로 `<C-w>` 하나만 매핑하고 `getcharstr()`로 다음 키를 기다려야 했다.
 
 ---
 
@@ -331,7 +349,11 @@ set -sg escape-time 10     # vim에서 Esc 지연 제거
 
 ---
 
-## 4단계. `Ctrl+w w`로 vim ↔ tmux 창 이동 (핵심)
+## 4단계. `Ctrl+h/j/k/l`로 vim ↔ tmux 창 이동 (핵심)
+
+> **2026-11-17 변경:** 예전에는 `Ctrl+w w`로도 vim 창 → tmux 창을 순환했지만 **삭제했다** (tmux `C-w` 바인딩 + `ctrlw` 키 테이블, `.vimrc`의 `s:CycleWindow()` / `s:CtrlW()`).
+> 지금은 `Ctrl+h/j/k/l`(vim-tmux-navigator)로만 vim·tmux 창을 넘나든다. vim 안의 `Ctrl+w w` / `Ctrl+w h` 등은 vim 기본 동작(vim 창끼리만 이동)이고, 셸의 `Ctrl+w`(단어 지우기)도 원래대로 동작한다.
+> 이미 예전 버전을 적용한 PC: `~/.tmux.conf`의 "Ctrl+w w 로 tmux 창 이동" 주석 ~ `bind-key -T ctrlw l ...` 블록, `~/.vimrc`의 "Ctrl+w w 로 tmux 창까지 이동" 섹션(`if exists('$TMUX')` ~ `endif`)을 지우고 `tmux unbind-key -n C-w`, vim 재시작.
 
 ### 4-1. vim-tmux-navigator 설치 (`Ctrl+h/j/k/l` 이동도 함께 제공)
 ```bash
@@ -354,73 +376,22 @@ bind-key -T copy-mode-vi 'C-k' select-pane -U
 bind-key -T copy-mode-vi 'C-l' select-pane -R
 bind-key C-l send-keys 'C-l'   # 화면 지우기는 Ctrl+b 다음 Ctrl+l
 
-# Ctrl+w w 로 tmux 창 이동 (셸의 Ctrl+w 단어 지우기는 사용 안 함)
-#  - vim 창이면 Ctrl+w 를 vim 에게 전달 (vim 쪽 .vimrc 가 처리)
-#  - 그 외 창이면 ctrlw 키 테이블로 전환 → w / h / j / k / l 로 이동
-bind-key -n C-w if-shell "$is_vim" 'send-keys C-w' 'switch-client -T ctrlw'
-bind-key -T ctrlw w   select-pane -t :.+
-bind-key -T ctrlw C-w select-pane -t :.+
-bind-key -T ctrlw h   select-pane -L
-bind-key -T ctrlw j   select-pane -D
-bind-key -T ctrlw k   select-pane -U
-bind-key -T ctrlw l   select-pane -R
 ```
-> `is_vim` 정의가 `C-w` 바인딩보다 **위에** 있어야 한다.
+> `is_vim` 정의가 `C-h/j/k/l` 바인딩보다 **위에** 있어야 한다.
 
 적용: `tmux source-file ~/.tmux.conf` (트루컬러 설정은 `tmux kill-server` 후 재시작해야 완전히 적용)
 
-### 4-3. `~/.vimrc` 맨 아래에 추가
-```vim
-" ==========================================
-"  Ctrl+w w 로 tmux 창까지 이동
-" ==========================================
-" vim 창을 한 바퀴 다 돌면 다음 tmux 창(터미널 등)으로 넘어감
-if exists('$TMUX')
-    function! s:CycleWindow()
-        if winnr() < winnr('$')
-            wincmd w
-        elseif str2nr(system("tmux display -p '#{window_panes}'")) > 1
-            " 나가기 전에 첫 번째 vim 창으로 돌려놓음 → 돌아왔을 때 처음 창부터 다시 순환
-            wincmd t
-            call system('tmux select-pane -t :.+')
-        else
-            wincmd w
-        endif
-    endfunction
+### 4-3. (삭제됨) `Ctrl+w w` 순환
+2026-11-17부터 쓰지 않는다 (위 4단계 머리말 참고). `~/.vimrc`에는 추가할 것이 없다 (vim-tmux-navigator 플러그인이 vim 쪽 `Ctrl+h/j/k/l`을 처리).
 
-    " Ctrl+w 다음 키를 시간 제한 없이 기다림 (vim 기본 동작과 동일)
-    function! s:CtrlW()
-        let l:key = getcharstr()
-        if l:key ==# 'w' || l:key ==# "\<C-w>"
-            call s:CycleWindow()
-        elseif l:key !=# "\<Esc>"
-            execute 'wincmd ' . l:key
-        endif
-    endfunction
-    nnoremap <silent> <C-w> :<C-u>call <SID>CtrlW()<CR>
-endif
-```
-> - `nnoremap <C-w>w ...` 방식은 쓰지 말 것 (1초 timeout 문제).
-> - `getcharstr()`는 vim 8.2.3xxx 이상 필요. 구버전이면 `nr2char(getchar())`로 대체.
-> - **이미 실행 중인 vim은 재시작해야 적용**된다.
-
-> - **`wincmd t`가 꼭 필요하다** (2026-10-03 수정). 없으면 vim을 `:vsplit`한 뒤 마지막 vim 창에서 tmux로 나갔다가 돌아왔을 때 커서가 그대로 마지막 창에 있어서, 다음 `Ctrl+w w`가 또 바로 tmux로 나가 버림 → 첫 번째 vim 창으로 다시는 못 감. 확인 순서: vim창 1 → 2 → tmux 터미널 → vim창 1 → 2 …
-
-### 4-4. 동작 검증 (자동 테스트)
-`tmux send-keys`는 tmux 키 바인딩을 **거치지 않으므로** tmux 쪽 테스트에는 쓸 수 없다.
-실제 클라이언트를 붙이고 fifo로 원시 키 바이트(`\027` = Ctrl+w)를 넣어야 정확히 테스트된다:
+### 4-4. 동작 검증
 ```bash
-SP=<스크래치패드>; rm -f $SP/kbd; mkfifo $SP/kbd
-tmux new-session -d -s cwtest -x 160 -y 40 "vim"; sleep 1; tmux split-window -h -t cwtest 'bash'; sleep 0.5
-(script -qfc "tmux attach -t cwtest" /dev/null < $SP/kbd >/dev/null 2>&1) &
-exec 7>$SP/kbd; sleep 1.5
-a(){ tmux display -p -t cwtest '#{pane_index}:#{pane_current_command}'; }
-echo "start -> $(a)"
-for g in 0.1 0.5 2; do for i in 1 2; do printf '\027' >&7; sleep $g; printf 'w' >&7; sleep 1.2; echo "C-w (gap $g) w -> $(a)"; done; done
-exec 7>&-; tmux kill-session -t cwtest; rm -f $SP/kbd
+tmux list-keys -T root | grep -E '^bind-key -T root +C-[hjklw] ' | awk '{print $4}'
+# → C-h C-j C-k C-l 4줄만 나오고 C-w 는 없어야 함
+tmux list-keys -T ctrlw 2>&1 | head -1
+# → "table ctrlw doesn't exist" (또는 빈 출력)
 ```
-기대 결과: `1:bash`와 `0:vim`이 번갈아 나와야 한다 (간격 2초에서도).
-> 주의: `script`의 stdin이 비어 있으면(EOF) tmux에 Ctrl+D가 전달되어 bash 창이 닫힌다. 반드시 fifo를 열어둔 채로 테스트할 것.
+실제 화면: tmux에서 `v`로 좌우 분할 → 왼쪽에서 vim 실행 → `Ctrl+l`로 오른쪽 셸, `Ctrl+h`로 다시 vim.
 
 ---
 
@@ -667,21 +638,46 @@ endif
 셸에서 짧은 명령으로 tmux 창을 나누기 위한 alias다.
 사전 확인: `type t4 v h` → 모두 `not found`여야 한다 (다른 명령과 이름이 겹치면 사용자에게 알린다). `which tmux`로 tmux 설치 여부도 확인.
 
-`~/.bashrc` 맨 아래에 없으면 추가:
+`~/.bashrc` 맨 아래에 없으면 추가 (예전 `alias v=...` / `alias h=...` 두 줄이 있으면 아래 `# v / h` 블록으로 교체, 2026-11-20 변경):
 ```bash
 # tmux 4-pane layout
 alias t4='tmux new-session \; split-window -h \; split-window -v \; select-pane -t 0 \; split-window -v \; select-layout tiled'
-alias v='tmux split-window -h -c "$PWD"'   # 좌우 분할
-alias h='tmux split-window -v -c "$PWD"'   # 상하 분할
+# v / h : 지금 pane 을 n칸으로 같은 크기로 나눔 (v 좌우, h 상하)
+#   v, h   → 2칸 (예전과 같음)
+#   3v, 4h → 3칸 좌우, 4칸 상하 (2~9)   v 3, h 4 처럼 써도 같음
+#   나눈 뒤 커서는 원래 pane 에 남음, 새 pane 은 지금 폴더에서 시작
+unalias v h 2>/dev/null
+_tsplit() {
+    local flag=$1 n=${2:-2} cur=$TMUX_PANE i
+    if [ -z "$TMUX" ]; then
+        echo "tmux 안에서만 사용 가능" >&2; return 1
+    fi
+    if ! [[ "$n" =~ ^[0-9]+$ ]] || [ "$n" -lt 2 ]; then
+        echo "칸 수는 2 이상 숫자 (입력: $n)" >&2; return 1
+    fi
+    # 오른쪽(아래)에 나머지 칸 크기만큼 떼어내는 걸 반복 → 모든 칸이 같은 크기
+    for ((i = n; i > 1; i--)); do
+        cur=$(tmux split-window "$flag" -t "$cur" -l "$((100 * (i - 1) / i))%" -c "$PWD" -P -F '#{pane_id}') || return 1
+    done
+    tmux select-pane -t "$TMUX_PANE"
+}
+v() { _tsplit -h "$@"; }
+h() { _tsplit -v "$@"; }
+for n in 2 3 4 5 6 7 8 9; do
+    eval "${n}v() { _tsplit -h $n; }; ${n}h() { _tsplit -v $n; }"
+done
+unset n
 ```
 > - `t4`: tmux 세션을 새로 만들면서 2×2로 4분할한다. **tmux 밖에서** 실행한다.
-> - `v` / `h`: 현재 창을 분할한다. 새 창은 현재 폴더에서 시작한다. **tmux 안에서만** 동작한다 (밖에서는 에러).
+> - `v` / `h`: 현재 pane을 분할한다. `3v`·`4h`(또는 `v 3`·`h 4`)처럼 숫자를 붙이면 그 칸 수로 **같은 크기**로 나눈다 (2~9). 새 pane은 현재 폴더에서 시작하고, 커서는 원래 pane에 남는다. **tmux 안에서만** 동작한다 (밖에서는 안내 메시지).
+> - 같은 크기 원리: n칸이면 지금 pane에서 `(n-1)/n` 크기를 떼어내고, 떼어낸 pane에서 다시 `(n-2)/(n-1)`… 를 반복한다.
 > - 이름 규칙은 vim의 `:vsplit`(좌우) / `:split`(상하)과 같다. tmux 옵션 이름(`-h`=좌우, `-v`=상하)과는 반대이니 헷갈리지 말 것.
+> - `unalias v h`가 꼭 필요하다: 예전 alias가 남은 셸에서 `source ~/.bashrc`하면 alias가 먼저 펼쳐져서 `v() {` 함수 정의가 깨진다.
 
 검증:
 ```bash
-bash -ic 'alias t4 v h'
-# → 세 alias가 모두 출력되면 성공
+bash -ic 'alias t4; type -t v h 3v 4h _tsplit'
+# → alias t4=... 와 function 5개가 나오면 성공
 ```
 적용: `source ~/.bashrc`
 > **alias 추가 전에 열려 있던 셸(tmux 창 포함)에는 적용되지 않는다.** 그 창에서 `v`/`h`가 `command not found`면
@@ -718,7 +714,8 @@ tsv() {
     tmux split-window -v -l 80% -t "$p2" -c "$D3"
     tmux select-pane -t "$p0"
     if [ -z "$TMUX" ]; then tmux attach -t sv; fi
-}```
+}
+```
 > - 사용: `tsv` (vivado/ 안에서 **가장 최근에 수정된 프로젝트 폴더**) 또는 `tsv project_1001` (폴더 지정).
 > - 가운데 창은 `<프로젝트>/*.srcs/sources_1/new`를 자동으로 찾는다 (`.srcs` 이름이 프로젝트 폴더명과 달라도 됨, 없으면 프로젝트 폴더).
 > - tmux 밖: `sv` 세션을 만들어 접속. 이미 `sv` 세션이 있으면 새로 만들지 않고 **그 세션에 다시 접속**(열어둔 vim 그대로).
@@ -1196,6 +1193,9 @@ curl -sfL -o hl-dark.css         $J/@highlightjs/cdn-assets@11.9.0/styles/github
 ls -l                            # 6개 파일, 크기 0 인 것 없어야 함
 cp <저장소>/ubuntu-terminal-setup/mdview.py ~/.mdview/mdview.py
 ```
+> **목차 링크 이동** (2026-11-18 추가, 저장소 `mdview.py`에 포함): marked v12는 제목에 id를 안 붙여서 `[1118 (수)](#1118-수)` 같은 목차 링크를 눌러도 아무 데도 안 갔다.
+> 렌더링 후 모든 제목(`h1`~`h6`)에 GitHub 방식 id(소문자, 기호 삭제, 공백 → `-`, 같은 제목은 `-1`, `-2` …)를 붙이고, `#...` 링크 클릭은 직접 처리해서 그 제목으로 스크롤한다 (HTML 파일 모드의 `<base href="file:///...">` 때문에 다른 주소로 넘어가는 것도 막음).
+> 이미 17단계를 적용한 PC는 `cp ~/.mdview/mdview.py ~/.mdview/mdview.py.bak_anchor` 후 위 `cp`만 다시 하면 된다 (`md`로 이미 열린 탭은 닫았다가 다시 열기).
 
 ### 17-2. `~/.bashrc`의 `pdf()` 아래에 추가
 ```bash
@@ -1454,7 +1454,7 @@ $T kill-server
 화살표만 눌렀는데 tmux 창이 바뀌는 문제 (2026-10-13).
 - 원인: tmux 기본 키 `Ctrl+b` + `←↑↓→`는 `-r`(반복) 옵션이 붙어 있다. `Ctrl+b ←`를 누르고 나서 `repeat-time`(0.5초) 동안은 `Ctrl+b` 없이 **화살표만 눌러도** 창이 계속 바뀐다. 그래서 창을 옮긴 직후 셸 기록(↑)이나 vim 커서를 움직이면 창이 다시 바뀐다.
 - 해결: 같은 키를 `-r` 없이 다시 지정한다. `Ctrl+b` + 화살표는 **한 번 누르면 한 번만** 이동하고, 그다음 화살표는 창 안의 프로그램(셸, vim)으로 간다.
-- 그대로인 것: `Ctrl+h/j/k/l`, `Ctrl+w w`, 마우스 클릭, 창 크기 조절(`Ctrl+b` 다음 `Ctrl+화살표`/`Alt+화살표`), 복사 모드 안의 화살표.
+- 그대로인 것: `Ctrl+h/j/k/l`, 마우스 클릭, 창 크기 조절(`Ctrl+b` 다음 `Ctrl+화살표`/`Alt+화살표`), 복사 모드 안의 화살표.
 
 사전 확인: `tmux list-keys -T prefix | grep -E ' (Up|Down|Left|Right) '` → 줄 앞에 `-r`이 있으면 적용 전이다.
 
@@ -1578,7 +1578,7 @@ function! s:MdColors()
     highlight markdownHeadingDelimiter guifg=#6c7086 ctermfg=242
     highlight markdownBold       guifg=#f5c2e7 gui=bold ctermfg=218 cterm=bold
     highlight markdownItalic     guifg=#94e2d5 gui=italic ctermfg=116 cterm=italic
-    highlight markdownCode       guifg=#a6e3a1 guibg=#313244 ctermfg=150 ctermbg=236
+    highlight markdownCode       guifg=#f5e0dc guibg=#313244 ctermfg=224 ctermbg=236
     highlight markdownCodeBlock  guifg=#a6e3a1 ctermfg=150
     highlight markdownListMarker guifg=#fab387 gui=bold ctermfg=216 cterm=bold
     highlight markdownOrderedListMarker guifg=#fab387 gui=bold ctermfg=216 cterm=bold
@@ -1620,11 +1620,12 @@ vim -Nu ~/.vimrc -es +'e /tmp/t.md' +'redir! > /dev/stdout | echo &conceallevel 
 
 ## 24단계. glow: vim `:glow`로 md 렌더링 화면 보기
 
-[glow](https://github.com/charmbracelet/glow)는 md를 터미널에서 렌더링하는 뷰어다 (표 정렬, 제목·코드 색). vim 안에서 `:glow`를 치면 편집 중인 md를 **vim 화면 전체**에 렌더링해서 보여주고, `q`를 누르면 원래 편집 화면(커서 위치 그대로)으로 돌아온다 (2026-10-22).
-- 분할 창이 아니라 새 탭에 띄우고 탭 줄(`showtabline`)을 잠깐 숨김 → 화면엔 렌더링만 보인다. 닫을 때 탭 줄 설정과 원래 창을 되돌린다.
-- 저장 안 한 버퍼 내용을 임시 파일에 써서 렌더링한다 (원본 md 안 건드림). `glow -p`가 `less -R`로 띄워서 `j`/`k`, `Space`/`b`, `/검색`이 된다.
-- 색 테마: 기본 **dracula**. `:glow 이름`으로 바꿔볼 수 있다 (`Tab` 자동완성: catppuccin, dracula, tokyo-night, pink, dark, light). 고른 테마는 vim이 켜져 있는 동안 유지된다.
-- `catppuccin`은 vim 테마와 같은 색으로 만든 사용자 테마 파일(`~/.config/glow/catppuccin.json`).
+[glow](https://github.com/charmbracelet/glow)는 md를 터미널에서 렌더링하는 뷰어다 (표 정렬, 제목·코드 색). vim 안에서 `:glow`를 치면 **지금 창이 그 자리에서** 렌더링 화면으로 바뀌고, `q`(또는 `:glow` 한 번 더)를 누르면 원래 편집 화면(커서·스크롤 위치 그대로)으로 돌아온다 (2026-10-22 추가, 2026-11-20 방식 변경).
+- 창 분할·새 탭 없이 지금 창의 버퍼만 렌더링 결과로 바꾼다 (`hide buffer` → 저장 안 한 md도 그대로 유지). 편집 커서가 있던 위치 근처부터 보여준다.
+- 저장 안 한 버퍼 내용을 임시 파일에 써서 화면 밖(hidden) 터미널에서 glow를 돌린 뒤 결과를 띄운다 (원본 md 안 건드림). 읽기는 vim 키 그대로: `j`/`k`, `Ctrl-d`/`Ctrl-u`, `gg`/`G`, `/검색`.
+- 색 테마: 기본 **vim** = 지금 vim 화면 색(제목 H1~H6·굵게·기울임·코드·인용·링크 + ```` ``` ```` SV 코드 블록 색)을 렌더링할 때마다 읽어서 glow 테마 json을 새로 만든다 → `theme`로 vim 테마를 바꾸면 따라 바뀐다.
+- `:glow 이름`으로 바꿔볼 수 있다 (`Tab` 자동완성: vim, catppuccin, dracula, tokyo-night, pink, dark, light). 고른 테마는 vim이 켜져 있는 동안 유지된다. `catppuccin`은 고정 색 사용자 테마 파일(`~/.config/glow/catppuccin.json`).
+- 바뀐 과정: 10-22 새 탭 + `glow -p`(less) → 11-19 오른쪽 창 실시간 미리보기(0.4초마다 다시 렌더링, 커서 따라 스크롤) → **11-20 지금 창에서 렌더링** (현재 방식). 예전 방식의 코드는 쓰지 않는다.
 
 ### 24-1. glow 설치 (sudo 없이 `~/.local/bin`에)
 `apt install glow`도 되지만 sudo가 필요해서, GitHub 릴리스 바이너리를 받는다:
@@ -1645,48 +1646,141 @@ mkdir -p ~/.config/glow && cp <이 문서 폴더>/glow-catppuccin.json ~/.config
 ```
 
 ### 24-3. `~/.vimrc` 맨 아래에 추가
-백업(`cp ~/.vimrc ~/.vimrc.bak_glow`) 후 23단계 아래에 추가:
+백업(`cp ~/.vimrc ~/.vimrc.bak_glow`) 후 23단계 아래에 추가 (예전 `:Glow` 섹션이 이미 있으면 `"  :Glow :` 주석 ~ `command! ... Glow` 줄까지 통째로 이 코드로 교체):
 ```vim
 " ==========================================
-"  :Glow : 편집 중인 md 를 vim 화면 전체에 렌더링해서 보기 (터미널용 md 뷰어 glow)
+"  :Glow : 편집 중인 md 를 지금 창에서 렌더링해서 읽기 (터미널용 md 뷰어 glow)
 " ==========================================
-" 저장 안 한 내용도 보임. j/k·Space/b 로 스크롤, q 로 닫으면 원래 편집 화면으로 돌아옴
-" 렌더링 화면은 새 탭에 띄우고 탭 줄은 숨김 → 화면에는 렌더링만 보임
-function! s:GlowClose(tmp, win, stal)
-    call delete(a:tmp)
-    let &showtabline = a:stal
-    call win_gotoid(a:win)
-endfunction
-" 색 테마: 기본 dracula, :Glow <이름> 으로 바꿔보기 (Tab 자동완성, vim 켜져 있는 동안 유지)
-"   catppuccin = vim 테마(catppuccin mocha)와 같은 색 (~/.config/glow/catppuccin.json)
-let s:glow_styles = {'catppuccin': expand('~/.config/glow/catppuccin.json'),
+" 창 분할 없이 지금 창이 렌더링 화면으로 바뀜. 저장 안 한 내용도 보이고, 편집 커서 위치 근처부터 보여줌
+" 읽기: j/k · Ctrl-d/u · gg/G · / 검색
+" 돌아가기: q 또는 :Glow 한 번 더 → 원래 편집 화면 (커서·스크롤 위치 그대로)
+" 색 테마: 기본 vim, :Glow <이름> 으로 바꾸기 (Tab 자동완성, vim 켜져 있는 동안 유지)
+"   vim        = 지금 vim 화면 색 그대로 (제목 H1~H6·굵게·기울임·코드·인용·링크 색 + SV 코드 블록 색)
+"                렌더링할 때마다 vim 의 highlight 를 읽어서 glow 테마(json)를 새로 만듦 → vim 테마를 바꾸면 따라 바뀜
+"   catppuccin = catppuccin mocha 고정 색 (~/.config/glow/catppuccin.json)
+let s:glow_styles = {'vim': '', 'catppuccin': expand('~/.config/glow/catppuccin.json'),
     \ 'dracula': 'dracula', 'tokyo-night': 'tokyo-night', 'pink': 'pink', 'dark': 'dark', 'light': 'light'}
-let g:glow_style = get(g:, 'glow_style', 'dracula')
+let g:glow_style = get(g:, 'glow_style', 'vim')
+let s:glow_vim_json = tempname() . '-glow-vim.json'
+" vim highlight 그룹의 실제 색 (#rrggbb). 없으면 기본값
+function! s:GlowHl(group, attr, default)
+    let l:c = synIDattr(synIDtrans(hlID(a:group)), a:attr . '#')
+    return l:c =~# '^#\x\{6}$' ? l:c : a:default
+endfunction
+" 지금 vim 색으로 glow 테마 json 만들기
+function! s:GlowVimStyle()
+    let l:fg  = s:GlowHl('Normal', 'fg', '#cdd6f4')
+    let l:dim = s:GlowHl('markdownRule', 'fg', '#6c7086')
+    let l:st = {
+        \ 'document':    {'block_prefix': "\n", 'block_suffix': "\n", 'color': l:fg, 'margin': 2},
+        \ 'paragraph': {}, 'text': {}, 'list': {'level_indent': 2},
+        \ 'heading':     {'block_suffix': "\n", 'bold': v:true},
+        \ 'block_quote': {'indent': 1, 'indent_token': '▎ ', 'italic': v:true,
+        \                 'color': s:GlowHl('markdownBlockquote', 'fg', l:dim)},
+        \ 'strong':      {'bold': v:true, 'color': s:GlowHl('markdownBold', 'fg', l:fg)},
+        \ 'emph':        {'italic': v:true, 'color': s:GlowHl('markdownItalic', 'fg', l:fg)},
+        \ 'strikethrough': {'crossed_out': v:true, 'color': l:dim},
+        \ 'hr':          {'color': l:dim, 'format': "\n────────────────────────────────────────\n"},
+        \ 'item':        {'block_prefix': '• '},
+        \ 'enumeration': {'block_prefix': '. ', 'color': s:GlowHl('markdownListMarker', 'fg', l:fg)},
+        \ 'task':        {'ticked': '[✓] ', 'unticked': '[ ] '},
+        \ 'link':        {'color': s:GlowHl('markdownLinkText', 'fg', l:fg), 'underline': v:true},
+        \ 'link_text':   {'color': s:GlowHl('markdownLinkText', 'fg', l:fg), 'bold': v:true},
+        \ 'image':       {'color': s:GlowHl('markdownLinkText', 'fg', l:fg), 'underline': v:true},
+        \ 'image_text':  {'color': l:dim, 'format': 'Image: {{.text}} →'},
+        \ 'code':        {'prefix': ' ', 'suffix': ' ', 'color': s:GlowHl('markdownCode', 'fg', l:fg),
+        \                 'background_color': s:GlowHl('markdownCode', 'bg', '#313244')},
+        \ 'table':       {'color': l:fg},
+        \ 'definition_list': {}, 'definition_term': {}, 'definition_description': {'block_prefix': "\n🠶 "},
+        \ 'html_block': {}, 'html_span': {}}
+    " 제목: vim 처럼 # 개수 + 단계별 색
+    for l:i in range(1, 6)
+        let l:st['h' . l:i] = {'prefix': repeat('#', l:i) . ' ', 'bold': v:true,
+            \ 'color': s:GlowHl('markdownH' . l:i, 'fg', l:fg)}
+    endfor
+    " ``` 코드 블록: vim 의 SV 역할별 색에 최대한 맞춤 (glow 는 키워드를 역할별로 못 나눠서 대표 색만)
+    let l:C = {g -> {'color': s:GlowHl(g, 'fg', l:fg)}}
+    let l:st.code_block = {'color': l:fg, 'margin': 2, 'chroma': {
+        \ 'text': {'color': l:fg}, 'name': {'color': l:fg}, 'punctuation': {'color': l:fg},
+        \ 'operator': l:C('Operator'),
+        \ 'comment': l:C('Comment'), 'comment_preproc': l:C('PreProc'),
+        \ 'keyword': l:C('vlogBlock'), 'keyword_reserved': l:C('vlogBlock'),
+        \ 'keyword_namespace': l:C('vlogBlock'), 'keyword_type': l:C('vlogType'),
+        \ 'name_function': l:C('vlogMethod'), 'name_class': l:C('vlogClassName'),
+        \ 'name_builtin': l:C('Special'), 'name_constant': l:C('Constant'),
+        \ 'literal_number': l:C('Number'), 'literal_string': l:C('String'),
+        \ 'literal_string_escape': l:C('Special')}}
+    call writefile([json_encode(l:st)], s:glow_vim_json)
+    return s:glow_vim_json
+endfunction
+" glow -s 에 넘길 값 (vim 이면 그때그때 json 생성)
+function! s:GlowStyleArg()
+    return g:glow_style ==# 'vim' ? s:GlowVimStyle() : s:glow_styles[g:glow_style]
+endfunction
+" 렌더링 중일 때: src 편집 버퍼, win 창, view 편집 화면 위치, tmp 임시 파일, buf 렌더링 터미널 버퍼
+let s:glow = {}
 function! s:GlowComplete(lead, line, pos)
     return filter(sort(keys(s:glow_styles)), 'v:val =~# "^" . a:lead')
 endfunction
 function! s:Glow(...)
-    if a:0 && !empty(a:1)
+    let l:theme = a:0 && !empty(a:1)
+    if l:theme
         if !has_key(s:glow_styles, a:1)
             echo 'Glow: 없는 테마 ' . a:1 . ' (' . join(sort(keys(s:glow_styles)), ', ') . ')' | return
         endif
         let g:glow_style = a:1
     endif
+    " 렌더링 화면에서 :Glow → 편집 화면으로 (테마를 주면 그 테마로 다시 렌더링)
+    if exists('b:glow_src')
+        call s:GlowBack()
+        if !l:theme | return | endif
+    endif
     if !executable('glow')
         echo 'Glow: glow 가 없음 (~/.local/bin/glow)' | return
     endif
-    let l:tmp = tempname() . '.md'
-    call writefile(getline(1, '$'), l:tmp)
-    let l:win = win_getid()
-    let l:stal = &showtabline
-    tabnew
-    setlocal bufhidden=wipe
-    set showtabline=0
-    " 창이 닫힌 뒤에 원래 창으로 가야 해서 timer 로 한 박자 늦춤
-    call term_start(['glow', '-p', '-s', s:glow_styles[g:glow_style], '-w', string(winwidth(0) - 4), l:tmp],
-        \ {'curwin': 1, 'term_name': 'Glow', 'term_finish': 'close',
-        \  'env': {'PAGER': 'less -R'},
-        \  'exit_cb': {j, s -> timer_start(10, {-> s:GlowClose(l:tmp, l:win, l:stal)})}})
+    if !empty(s:glow) | return | endif
+    let l:w = winwidth(0)
+    let s:glow = {'src': bufnr(), 'win': win_getid(), 'view': winsaveview(),
+        \ 'tmp': tempname() . '.md', 'ratio': line('.') * 1.0 / line('$')}
+    call writefile(getline(1, '$'), s:glow.tmp)
+    " 화면 밖(hidden) 터미널에서 glow 실행 → 끝나면 s:GlowShow 가 지금 창에 띄움
+    let s:glow.buf = term_start(['glow', '-s', s:GlowStyleArg(), '-w', string(l:w - 2), s:glow.tmp],
+        \ {'hidden': 1, 'norestore': 1, 'term_name': 'Glow',
+        \  'term_cols': l:w, 'term_rows': max([winheight(0), 5]),
+        \  'exit_cb': {j, st -> timer_start(30, {-> s:GlowShow()})}})
+endfunction
+function! s:GlowShow()
+    if empty(s:glow) | return | endif
+    let l:g = s:glow
+    let s:glow = {}
+    call delete(l:g.tmp)
+    if !bufexists(l:g.buf) | return | endif
+    call setbufvar(l:g.buf, '&bufhidden', 'wipe')
+    " 렌더링하는 사이에 창을 닫았거나 다른 파일로 옮겼으면 취소
+    if win_id2win(l:g.win) == 0 || winbufnr(l:g.win) != l:g.src
+        execute 'silent! bwipeout!' l:g.buf | return
+    endif
+    call setbufvar(l:g.buf, 'glow_src', l:g.src)
+    call setbufvar(l:g.buf, 'glow_view', l:g.view)
+    let l:n = getbufinfo(l:g.buf)[0].linecount
+    let l:top = min([max([float2nr(l:g.ratio * l:n) - 3, 1]), l:n])
+    call win_gotoid(l:g.win)
+    " hide : 저장 안 한 md 도 버퍼를 숨긴 채로 화면만 바꿈
+    execute 'hide buffer' l:g.buf
+    setlocal nonumber norelativenumber signcolumn=no nolist
+    nnoremap <buffer><silent><nowait> q <Cmd>call <SID>GlowBack()<CR>
+    call winrestview({'lnum': l:top, 'topline': l:top})
+    echo 'Glow · ' . g:glow_style . '  (q 또는 :Glow 로 돌아가기)'
+endfunction
+" 렌더링 화면 → 원래 편집 화면 (렌더링 버퍼는 자동으로 지워짐)
+function! s:GlowBack()
+    if !exists('b:glow_src') | return | endif
+    let [l:src, l:view] = [b:glow_src, b:glow_view]
+    if !bufexists(l:src)
+        echo 'Glow: 원래 버퍼가 없음' | return
+    endif
+    execute 'buffer' l:src
+    call winrestview(l:view)
 endfunction
 command! -nargs=? -complete=customlist,s:GlowComplete Glow call s:Glow(<q-args>)
 ```
@@ -1701,8 +1795,8 @@ T="tmux -L gt"
 $T new-session -d -x 120 -y 20 "vim -n $SP/t.md"; sleep 2
 $T send-keys ':glow' Enter; sleep 3; $T capture-pane -p | head -8      # → 줄번호 없이 렌더링된 제목·표만 보임
 $T send-keys q; sleep 1
-$T send-keys ':echo tabpagenr("$") winnr("$") &stal g:glow_style' Enter; sleep 1
-$T capture-pane -p | tail -1                                            # → 1 1 1 dracula (원래 화면 복귀)
+$T send-keys ':echo tabpagenr("$") winnr("$") &ft g:glow_style' Enter; sleep 1
+$T capture-pane -p | tail -1                                            # → 1 1 markdown vim (창 분할 없이 원래 편집 화면 복귀)
 $T send-keys ':qa!' Enter; sleep 1; $T kill-server 2>/dev/null
 ```
 
@@ -2270,20 +2364,316 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 
 ---
 
+## 34단계. vim 기본 보강: 검색어 색칠 · 구버전 트루컬러 · netrw 파일 색 · swap 폴더 자동 생성 · Caps Lock `U P W Y`
+
+2026-11-17 ~ 11-19에 `~/.vimrc` 여기저기에 조금씩 추가한 것들. 백업(`cp ~/.vimrc ~/.vimrc.bak_misc`) 후 아래 위치에 넣는다.
+사전 확인: `grep -n "hlsearch\|netrw_color\|empty(&t_8f)\|mkdir(expand('~/.vim/swap')\|toupper(s:k)" ~/.vimrc` → 5개 다 나오면 적용된 것.
+
+### 34-1. 검색어 전부 색칠 (`hlsearch` / `incsearch`) + 잘 보이는 검색 색
+`set background=dark` **바로 아래**:
+```vim
+set hlsearch incsearch     " 검색어 전부 색칠 + 입력 중 미리 색칠 (색칠 지우기 :noh)
+```
+33-2단계 `augroup my_bg`의 `highlight Visual ...` 줄 **아래**에 3줄 추가, `augroup END` 아래에 주석 1줄:
+```vim
+                      \ | highlight Search      guifg=#1e1e2e guibg=#f9e2af
+                      \ | highlight CurSearch   guifg=#1e1e2e guibg=#fab387
+                      \ | highlight IncSearch   guifg=#1e1e2e guibg=#fab387 gui=NONE
+augroup END
+" 검색 색 : 배경(#45475a)과 테마 기본 Search(#3e5767)가 거의 같아 안 보여서 위에서 노랑/주황으로 다시 칠함
+```
+> 검색어 전체는 노랑, 지금 커서가 있는 검색어(`CurSearch`)와 입력 중 미리보기(`IncSearch`)는 주황. 색칠 지우기는 `:noh`.
+
+### 34-2. 구버전 vim(8.2 등)에서도 tmux 안 트루컬러
+`set termguicolors` **바로 아래**:
+```vim
+" vim 8.2 등 구버전은 TERM 이 xterm* 일 때만 트루컬러 코드를 채움 → tmux(tmux-256color)에선 비어서 색이 다 사라짐
+if empty(&t_8f)
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+endif
+```
+> vim 9.x에서는 이미 채워져 있어서 아무 일도 안 한다. 같은 `.vimrc`를 서버(구버전 vim)에 복사했을 때 대비.
+
+### 34-3. `:Explore`(netrw) 일반 파일 색
+22단계 `augroup linenr_color … augroup END` **바로 아래**:
+```vim
+" Explore(netrw) 일반 파일 색: 기본은 Normal(흰색)이라 청록 #94e2d5 로 칠함 (폴더는 Directory 색 그대로)
+augroup netrw_color
+    autocmd!
+    autocmd ColorScheme * highlight netrwPlain guifg=#94e2d5 ctermfg=116 guibg=NONE ctermbg=NONE
+augroup END
+```
+
+### 34-4. swap 폴더 자동 생성
+8단계 `set directory=~/.vim/swap//` **바로 위**:
+```vim
+call mkdir(expand('~/.vim/swap'), 'p')   " swap 폴더 없으면 생성 (새 서버에 복사했을 때 대비)
+```
+
+### 34-5. Caps Lock 켜진 채 `U` `P` `W` `Y` → 소문자처럼
+19단계 `cnoremap <CR> <Cmd>call <SID>CmdLower()<CR><CR>` **바로 아래**:
+```vim
+
+" ==========================================
+"  Caps Lock 대비: U P W Y → u p w y (normal / visual / operator-pending)
+" ==========================================
+" 대문자 U(줄 undo), P(앞에 붙여넣기), W(WORD 이동), Y(줄 복사)는 소문자 동작으로 덮어씀
+" (diW → diw 처럼 텍스트 오브젝트도 소문자로 동작)
+for s:k in ['u', 'p', 'w', 'y']
+    execute 'nnoremap ' . toupper(s:k) . ' ' . s:k
+    execute 'xnoremap ' . toupper(s:k) . ' ' . s:k
+    execute 'onoremap ' . toupper(s:k) . ' ' . s:k
+endfor
+unlet s:k
+```
+> 대문자 `U`/`P`/`W`/`Y` 원래 기능은 못 쓰게 된다 (`A` `O` `G` 등 다른 대문자는 그대로).
+
+검증:
+```bash
+vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | echo &hlsearch &incsearch synIDattr(hlID("Search"),"bg#") synIDattr(hlID("CurSearch"),"bg#") synIDattr(hlID("netrwPlain"),"fg#") maparg("U","n") maparg("Y","n") | redir END | q'
+# → 1 1 #f9e2af #fab387 #bffbf1 u y   (netrwPlain 은 33단계 Brighten 으로 #94e2d5 보다 밝아진 값)
+```
+
+---
+
+## 35단계. vim UVM 편집: 설명 붙은 UVM 자동완성 + UVM 파일은 ALE 검사 끄기
+
+UVM TB를 쓰기 시작하면서 추가 (2026-11-18 ~ 11-20).
+- **자동완성**: `uvm_`을 치면 11단계 목록에 UVM 클래스·매크로·phase·함수가 **오른쪽에 한글 설명**과 함께 뜬다 (예: `uvm_component_utils  컴포넌트를 factory에 등록`). 사전은 `~/.vim/dict/uvm.dict` (`단어<Tab>설명`, 138개).
+- **ALE**: 로컬 verilator는 UVM 라이브러리를 몰라서 `import uvm_pkg::*;`, `` `uvm_component_utils `` 등마다 가짜 빨간 오류가 뜬다 → 저장할 때 파일에 `uvm_pkg`나 `` `uvm_ ``가 있으면 **그 버퍼만** 검사를 끄고 기존 표시도 지운다. UVM 문법 오류는 서버 VCS의 `comp.log`로 확인 (37단계).
+
+사전 확인: `grep -n "UvmComplete\|ale_uvm" ~/.vimrc` → 나오면 적용된 것. 11단계가 먼저 적용돼 있어야 한다.
+
+### 35-1. 사전 파일 복사
+```bash
+cp <저장소>/ubuntu-terminal-setup/uvm.dict ~/.vim/dict/uvm.dict
+```
+> 단어를 더 넣을 때는 `uvm.dict`에 `단어<Tab>설명` 한 줄 추가 (`#` 줄은 주석). 다음 vim 실행부터 반영.
+
+### 35-2. `~/.vimrc`: UVM 자동완성
+백업(`cp ~/.vimrc ~/.vimrc.bak_uvmdict`) 후, 11-3단계 `augroup verilog_edit` **바로 위**에 추가:
+```vim
+" UVM 단어 : ~/.vim/dict/uvm.dict (단어<Tab>설명) 를 읽어 목록 옆에 설명 표시
+"  'complete' 맨 앞 F 소스로 넣어서, 파일 안에 이미 있는 UVM 단어도 설명 붙은 쪽이 먼저 잡힘
+"  (uvm.dict 를 고치면 다음 vim 실행부터 반영)
+function! UvmComplete(findstart, base) abort
+    if a:findstart
+        return match(getline('.')[: col('.') - 2], '\k*$')
+    endif
+    if !exists('s:uvm_words')
+        let s:uvm_words = []
+        for l:line in readfile(expand('~/.vim/dict/uvm.dict'))
+            if l:line =~# '^#' || l:line !~# '\t' | continue | endif
+            let [l:w, l:d] = split(l:line, '\t', 1)[0:1]
+            call add(s:uvm_words, {'word': l:w, 'menu': l:d})
+        endfor
+    endif
+    if empty(a:base) | return [] | endif
+    return filter(copy(s:uvm_words), 'stridx(v:val.word, a:base) == 0')
+endfunction
+```
+그리고 `augroup verilog_edit` 안의 `setlocal dictionary=...` 줄을 아래로 교체 (`complete` 맨 앞에 `FUvmComplete,` 추가):
+```vim
+    autocmd FileType verilog,systemverilog setlocal dictionary=~/.vim/dict/verilog.dict complete=FUvmComplete,.,w,b,k iskeyword+=$
+```
+> - `complete`의 `F{함수}` 소스는 vim 9.1 후반 패치에 생긴 기능이다 (이 PC의 vim 9.1, 패치 1-2141에서 확인). 확인법: `grep -c 'F{func}' /usr/share/vim/vim91/doc/options.txt` → 1 이상이면 지원. 지원 안 하는 vim이면 `.sv`를 열 때 `complete` 오류가 나므로 이 단계를 건너뛴다.
+
+### 35-3. `~/.vimrc`: UVM 파일은 ALE 검사 끄기
+32단계 `augroup ale_covergroup … augroup END` **바로 아래**에 추가:
+```vim
+" UVM 파일 : 로컬 verilator 는 UVM 라이브러리를 몰라서 uvm_pkg / `uvm_ 매크로마다 가짜 오류가 뜸
+"  → 저장 직전에 파일 안에 uvm_pkg 나 `uvm_ 가 있으면 그 버퍼만 ALE 검사 끄고 기존 표시도 지움
+"    (UVM 코드를 지우면 다음 저장부터 다시 검사, UVM 문법 오류는 VCS comp.log 로 확인)
+function! s:AleUvmCheck() abort
+    if search('\<uvm_pkg\>\|`uvm_', 'nw')
+        let b:ale_enabled = 0
+        call ale#toggle#ResetBuffer(bufnr(''))
+    else
+        let b:ale_enabled = 1
+    endif
+endfunction
+augroup ale_uvm
+    autocmd!
+    autocmd BufWritePre *.v,*.sv,*.svh call s:AleUvmCheck()
+augroup END
+```
+
+검증:
+```bash
+vim -Nu ~/.vimrc -es -c 'set ft=systemverilog' -c 'redir! > /dev/stdout | echo &l:complete len(UvmComplete(0,"uvm_comp")) UvmComplete(0,"uvm_component_utils")[0].menu | redir END | q'
+# → FUvmComplete,.,w,b,k 6 컴포넌트를 factory에 등록
+vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | autocmd ale_uvm | redir END | q' | grep -c AleUvmCheck
+# → 3   (*.v / *.sv / *.svh)
+```
+실제 화면: `.sv` 파일에서 `uvm_comp` 입력 → 목록 오른쪽에 설명이 보이면 성공. `import uvm_pkg::*;`가 있는 파일을 `:w` 해도 `>>` 표시가 안 뜸.
+
+---
+
+## 36단계. tmux: `Ctrl+Shift+화살표`로 pane 자리 바꾸기
+
+지금 pane을 화살표 방향의 pane과 **맞바꾼다** (커서도 같이 이동해서 계속 같은 내용의 pane에 있음). 28단계에서 끈 `Ctrl+b Ctrl+o`(돌리기)와 달리 원하는 방향으로 한 칸씩만 옮긴다.
+사전 확인: `grep -n "C-S-Left" ~/.tmux.conf` → 나오면 적용된 것.
+
+`~/.tmux.conf` 맨 아래에 추가:
+```bash
+# pane 자리 바꾸기: Ctrl+Shift+← ↓ ↑ → (현재 pane을 그 방향 pane과 교환, 커서도 같이 이동)
+bind-key -n C-S-Left  swap-pane -d -t '{left-of}'
+bind-key -n C-S-Right swap-pane -d -t '{right-of}'
+bind-key -n C-S-Up    swap-pane -d -t '{up-of}'
+bind-key -n C-S-Down  swap-pane -d -t '{down-of}'
+```
+적용: `tmux source-file ~/.tmux.conf`
+> - `-n`이라 `Ctrl+b` 없이 바로 동작한다. 그 방향에 pane이 없으면 아무 일도 안 한다.
+> - `{left-of}` 같은 대상은 tmux 3.1 이상. Windows Terminal에서 `Ctrl+Shift+화살표`를 다른 동작에 쓰고 있으면 (기본값은 없음) tmux까지 안 온다.
+
+검증:
+```bash
+tmux list-keys -T root | grep -c 'swap-pane -d -t "{'
+# → 4
+```
+
+---
+
+## 37단계. center 서버 VCS/Verdi: `~/center` 자동 연결 + `srun` / `run` / `sim` / `verdi` / `clean` / `vcskill`
+
+VCS·Verdi는 학원 서버(ssh 별칭 `center`)에만 있다. 서버 홈을 WSL의 `~/center`에 **sshfs로 연결**해서 파일은 로컬 vim으로 고치고, 컴파일·시뮬은 `srun`이 **서버의 같은 폴더**에서 실행한다 (2026-11-16 ~ 11-20).
+
+| 명령 | 하는 일 |
+|---|---|
+| `srun <명령>` | `~/center/<경로>`에서 치면 서버 `~/<경로>`로 가서 명령 실행 (파이프 `\| tee`는 PC 쪽에서 처리) |
+| `run` | `srun vcs $VCS_OPTS -f filelist.f -o simv` (UVM 1.2, `comp.log`, 커버리지 옵션 포함) |
+| `sim [-n 테스트] [-l n\|l\|m\|h\|f\|d] [-s 시드] [추가 옵션]` | `./simv` 실행 + `sim.log` 저장. 안 주면 `TC`(비어 있음) / `VERB=UVM_HIGH` / `SEED=1234` |
+| `verdi` | `srun verdi $VERDI_OPTS` (창은 X11로 Windows에 뜸) |
+| `clean` | 시뮬 결과물 삭제. **`filelist.f`가 있는 폴더에서만** 동작 (다른 폴더 실수 삭제 방지) |
+| `smake` | `srun make` |
+| `vcskill` / `-y` / `-l` | 서버에서 도는 simv·vcs·verdi 목록 → 확인 후 종료 / 바로 종료 / 목록만 (파일은 안 지움) |
+
+사전 확인:
+- `ssh center true && echo ok` → `ok` (`~/.ssh/config`에 `Host center` 별칭과 키 로그인이 되어 있어야 함. 서버 주소·계정은 학원 안내대로, 이 문서에는 적지 않는다)
+- `which sshfs` → 없으면 사용자에게 `! sudo apt install sshfs` 안내
+- `grep -n "srun\|sshfs center" ~/.bashrc` → 나오면 적용된 것
+
+### 37-1. 실행 파일 복사
+```bash
+cp <저장소>/ubuntu-terminal-setup/srun    ~/.local/bin/srun
+cp <저장소>/ubuntu-terminal-setup/vcskill ~/.local/bin/vcskill
+chmod +x ~/.local/bin/srun ~/.local/bin/vcskill
+mkdir -p ~/center
+```
+
+### 37-2. `~/.bashrc` 맨 아래에 추가
+백업(`cp ~/.bashrc ~/.bashrc.bak_vcs`) 후. **예전에 `run(){ python3 "$@"; }` 함수나 `alias sim=` / `alias clean=`이 있으면 먼저 지운다** (같은 이름이라 충돌).
+```bash
+# smake : srun make 줄임 (~/center 안에서 서버의 같은 폴더에서 make 실행)
+alias smake='srun make'
+
+# sim 기본값 : sim 옵션(-n / -l / -s)을 안 주면 이 값으로 실행
+TC=
+SEED=1234
+VERB=UVM_HIGH
+# 시뮬이 안 끝나고 계속 도는 것 방지 (둘 다 1시간)
+#   SIM_WALL : 실제 시간 제한 → 넘으면 simv 강제 종료 (0시간 무한루프, UVM 없는 TB 도 막음)
+#   TIMEOUT  : UVM 시뮬레이션 시간 제한 (+UVM_TIMEOUT, 단위 ps → 1h = 3600 * 10^12 ps)
+SIM_WALL=1h
+TIMEOUT=3600000000000000
+
+VCS_OPTS="-full64 -sverilog"
+VCS_OPTS+=" -ntb_opts uvm-1.2"
+VCS_OPTS+=" -timescale=1ns/1ps"
+VCS_OPTS+=" -debug_access+all -kdb -lca -l comp.log"
+VCS_OPTS+=" +incdir+tb"
+VCS_OPTS+=" -cm line+cond+fsm+tgl+branch+assert"
+
+VERDI_OPTS="-dbdir simv.daidir -ssf novas.fsdb -sswr signal.rc"
+
+alias run='srun vcs $VCS_OPTS -f filelist.f -o simv'
+alias verdi='srun verdi $VERDI_OPTS'
+
+# 예전 alias 가 남아 있으면 source ~/.bashrc 때 함수 정의가 깨지므로 먼저 제거
+unalias sim clean 2>/dev/null
+
+# sim [-n 테스트이름] [-l 레벨] [-s 시드] [추가 옵션...]
+#   예) sim -n my_test -lh      → my_test, UVM_HIGH
+#       sim -n my_test -ll -s 7 → my_test, UVM_LOW, seed 7
+#   레벨 : n=NONE  l=LOW  m=MEDIUM  h=HIGH  f=FULL  d=DEBUG  (안 주면 VERB 기본값)
+#   옵션 뒤에 남은 것(+my_arg 등)은 simv 에 그대로 넘어감
+sim() {
+    local tc="$TC" seed="$SEED" verb="$VERB" opt OPTIND=1
+    while getopts ":n:l:s:" opt; do
+        case "$opt" in
+            n) tc="$OPTARG" ;;
+            s) seed="$OPTARG" ;;
+            l) case "$OPTARG" in
+                   n) verb=UVM_NONE ;;   l) verb=UVM_LOW ;;   m) verb=UVM_MEDIUM ;;
+                   h) verb=UVM_HIGH ;;   f) verb=UVM_FULL ;;  d) verb=UVM_DEBUG ;;
+                   *) echo "sim: -l 레벨은 n/l/m/h/f/d 중 하나 (입력: $OPTARG)" >&2; return 1 ;;
+               esac ;;
+            :) echo "sim: -$OPTARG 뒤에 값이 필요함" >&2; return 1 ;;
+            *) echo "사용법: sim [-n 테스트이름] [-l n|l|m|h|f|d] [-s 시드] [추가 옵션...]" >&2; return 1 ;;
+        esac
+    done
+    shift $((OPTIND - 1))
+    local SIM_OPTS="+UVM_VERBOSITY=$verb"
+    SIM_OPTS+=" +ntb_random_seed=$seed"
+    SIM_OPTS+=" +UVM_TIMEOUT=$TIMEOUT,NO"
+    [ -n "$tc" ] && SIM_OPTS+=" +UVM_TESTNAME=$tc"
+    SIM_OPTS+=" -cm line+cond+fsm+tgl+branch+assert"
+    SIM_OPTS+=" -cm_dir coverage.vdb"
+    SIM_OPTS+=" -cm_name sim1"
+    srun timeout $SIM_WALL ./simv $SIM_OPTS "$@" | tee sim.log
+    # timeout 이 끊으면 종료 코드 124
+    [ "${PIPESTATUS[0]}" = 124 ] && echo "sim: 실제 시간 $SIM_WALL 초과로 강제 종료됨" | tee -a sim.log
+}
+
+# clean : 시뮬 결과물 삭제. filelist.f 가 있는 폴더(시뮬 폴더)에서만 동작 → 다른 폴더 실수 삭제 방지
+clean() {
+    if [ ! -f filelist.f ]; then
+        echo "clean: filelist.f 가 없는 폴더라 삭제 안 함 (지금: $PWD)" >&2
+        return 1
+    fi
+    rm -rf simv* csrc *.key *.h *.log *.fsdb novas* *.conf *.LOG coverage.* vdCovLog verdiLog *.xml
+}
+
+# ~/center : 서버(center) 홈을 sshfs 로 연결. WSL 재시작 등으로 끊겨 있으면 터미널 열 때 자동 재연결
+if ! mountpoint -q ~/center; then
+    sshfs center: ~/center -o reconnect,ServerAliveInterval=15,ConnectTimeout=5 2>/dev/null \
+        || echo "~/center 서버 연결 실패 (수동: sshfs center: ~/center -o reconnect,ServerAliveInterval=15)"
+fi
+```
+> - `sim`의 `+UVM_TESTNAME`은 `TC`나 `-n`이 있을 때만 붙는다 (없으면 TB의 `run_test("...")` 기본값).
+> - `sim` 시간 제한 두 가지: `SIM_WALL`(실제 시간, `timeout`이 simv를 끊음 → 종료 코드 124면 `sim.log`에도 안내 기록), `TIMEOUT`(UVM 시뮬레이션 시간, `+UVM_TIMEOUT=…,NO`).
+> - `run`/`sim`/`verdi`는 `~/center` 밖에서 치면 `srun`이 "~/center 안에서 실행하세요"로 막는다. `clean`은 로컬에서 바로 지운다 (sshfs라 서버 파일이 지워짐).
+> - `vcskill`은 로컬 WSL에 남은 `ssh center … simv/verdi/make` 세션도 같이 끈다.
+
+적용: `source ~/.bashrc`
+
+검증:
+```bash
+bash -ic 'type -t srun vcskill sim clean; alias run verdi smake' 2>&1 | head -7
+# → file / file / function / function / alias run=... / alias verdi=... / alias smake=...
+mountpoint ~/center                       # → /home/<사용자>/center is a mountpoint
+cd ~/center && srun pwd                   # → 서버 홈 경로
+cd /tmp && srun pwd                       # → srun: ~/center 안에서 실행하세요 (지금: /tmp)
+cd /tmp && clean                          # → clean: filelist.f 가 없는 폴더라 삭제 안 함 (지금: /tmp)
+vcskill -l                                # → [서버] 실행 중인 시뮬레이션/Verdi 없음
+```
+
+---
+
 ## 최종 검증 체크리스트
 
 - [ ] Windows Terminal 재시작 후 배경이 Gruvbox 갈색(#282828), 글꼴이 D2Coding
 - [ ] `vim` 실행 시 Gruvbox 테마 (`:echo g:colors_name` → `gruvbox`)
 - [ ] vim에서 `:vert term` 연 터미널도 Gruvbox 색 (짙은 파란색 없음), 프롬프트/`ls` 색이 바깥 터미널과 동일
 - [ ] tmux 하단 상태바가 갈색 바탕 + 노란 세션명 + 주황 현재 창
-- [ ] tmux 안에서 `Ctrl+b |`로 분할 → `Ctrl+w w`로 vim ↔ 터미널 이동 (4-4 테스트 통과)
-- [ ] `Ctrl+h/j/k/l`로도 이동 가능
+- [ ] tmux 안에서 `Ctrl+b |`로 분할 → `Ctrl+h/j/k/l`로 vim ↔ 터미널 이동 (4-4 확인: tmux에 `C-w` 바인딩 없음)
 - [ ] `ls` 시 폴더가 연한 하늘색
 - [ ] `cd **` + `Tab` 으로 Gruvbox 색의 폴더 검색 목록이 뜸
 - [ ] `Ctrl+q` 로 폴더 검색 목록이 뜨고, 선택하면 바로 그 폴더로 이동
 - [ ] 새 창의 프롬프트가 `.../상위폴더/현재폴더$` 형태 (사용자@컴퓨터 없음)
 - [ ] vim으로 파일을 연 상태에서 그 폴더에 `.swp`가 안 생기고 `~/.vim/swap/`에 생김
-- [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할됨
+- [ ] `t4` 입력 시 4분할 tmux 세션이 열리고, 그 안에서 `v` / `h`로 좌우 / 상하 분할, `3v` → 같은 크기 3칸
 - [ ] 하위 폴더에서 `git status` 시 추적 안 된 폴더가 `./`가 아니라 폴더명으로 보임
 - [ ] `watch_html 파일.html` 로 Windows 브라우저에 HTML이 열림
 - [ ] `viva` 입력 시 `/mnt/c/26_AI_CAMP/System_Verilog`로 이동
@@ -2298,7 +2688,7 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 - [ ] Caps Lock 켜고 tmux에서 `Ctrl+B P` → 이전 window, `Ctrl+B W` → window 목록 (소문자와 같음)
 - [ ] vim 줄번호가 회보라, 커서가 있는 줄 번호만 주황색 (`theme next`로 테마를 바꿔도 같음)
 - [ ] vim으로 md를 열면 제목이 단계별 색, `**`·`` ` ``·링크 url이 숨겨지고 커서 줄에서만 보임, 표의 `|`가 흐림
-- [ ] vim에서 md 열고 `:glow` → 화면 전체에 dracula 색으로 렌더링, `q` → 원래 편집 화면으로 복귀
+- [ ] vim에서 md 열고 `:glow` → 창 분할 없이 지금 창이 vim 색으로 렌더링, `q` → 원래 편집 화면(커서 위치 그대로)으로 복귀
 - [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
 - [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 - [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (DUT 인스턴스 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
@@ -2312,16 +2702,21 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 - [ ] vim으로 `.sv`를 열면 `module`/`class` 빨강, `task`/`function` 파랑, `initial` 주황, `logic` 노랑, `input` 청록, `//////` 구분선 연보라, `transaction tr;` 같은 class 핸들 타입 초록
 - [ ] 터미널·vim·tmux 상태바 배경이 모두 `#45475A`(회남색)로 같고, vim 글자가 흐리지 않음
 - [ ] tmux 상태바가 화면 맨 위, 왼쪽 위에 `날짜 시각`, pane 테두리가 굵은 선(`┃━`)이고 지금 pane 쪽만 파랑
+- [ ] `md` 미리보기에서 목차 링크를 누르면 그 제목으로 스크롤됨
+- [ ] vim에서 `/단어` 검색 시 모든 일치가 노랑, 커서 위치는 주황, `:noh`로 지워짐. Caps Lock 켜고 `Y` → 줄 복사 아닌 `y`처럼 동작
+- [ ] `.sv`에서 `uvm_comp` 입력 → 목록 오른쪽에 한글 설명, `import uvm_pkg::*;` 있는 파일은 `:w` 해도 `>>` 표시 없음
+- [ ] tmux `Ctrl+Shift+→` → 지금 pane이 오른쪽 pane과 자리를 바꿈
+- [ ] 새 터미널에서 `mountpoint ~/center` 성공, `~/center/<폴더>`에서 `run` → `sim -n 테스트 -ll` → `verdi` 동작, `vcskill -l`로 서버 프로세스 확인
 
 ## 사용자에게 전달할 사용법 요약
 
 | 동작 | 키 |
 |---|---|
 | 좌우 분할 / 위아래 분할 | `Ctrl+b` 다음 `\|` / `Ctrl+b` 다음 `-` |
-| 셸 명령으로 좌우 / 위아래 분할 (tmux 안에서) | `v` / `h` |
+| 셸 명령으로 좌우 / 위아래 분할 (tmux 안에서) | `v` / `h` (같은 크기 n칸: `3v` / `4h`, 2~9) |
 | tmux 4분할 세션 한 번에 열기 | `t4` |
-| 창 순서대로 이동 (vim 창 → tmux 창) | `Ctrl+w w` |
-| 방향으로 이동 | `Ctrl+h/j/k/l` 또는 `Ctrl+w` 다음 `h/j/k/l` |
+| 방향으로 이동 (vim 창 ↔ tmux 창 구분 없이) | `Ctrl+h/j/k/l` (`Ctrl+w w` / `Ctrl+w h` 등은 vim 창끼리만) |
+| pane 자리 바꾸기 (그 방향 pane과 교환) | `Ctrl+Shift+←↓↑→` |
 | 화살표 방향으로 이동 (한 번 누르면 한 번만) | `Ctrl+b` 다음 `←↑↓→` (화살표만으로는 이동 안 함) |
 | 이전 window / window 목록 (Caps Lock 켜져 있어도 됨) | `Ctrl+b` 다음 `p` / `w` (`Ctrl+B`, `P` / `W`) |
 | 창 확대/복원 | `Ctrl+b` 다음 `z` |
@@ -2337,7 +2732,7 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 | 엑셀 파일(또는 폴더 안 엑셀 전부) 열기 | `exl` / `exl "파일명"` / `exl "폴더명"` (`.xlsx` `.xlsm` `.xls` `.csv`) |
 | Markdown을 VS Code 미리보기처럼 실시간으로 보기 (탭 닫으면 자동 종료) | `md` / `md "파일명"` / `md "폴더명"` |
 | vim에서 md 편집하면서 실시간 미리보기 | `:md` (끄기 `:mdstop`) |
-| vim에서 md 렌더링 화면 보기 (화면 전체) | `:glow` (닫기 `q`, 테마 바꾸기 `:glow 이름` + `Tab`) |
+| vim에서 md 렌더링 화면 보기 (지금 창에서) | `:glow` (돌아가기 `q` 또는 `:glow`, 테마 바꾸기 `:glow 이름` + `Tab`) |
 | vim에서 md 기호(`**` 등) 전부 보이기 / 다시 숨기기 | `:set conceallevel=0` / `:set conceallevel=2` |
 | Caps Lock 켜진 채 `:` 명령 | `:W` `:WQ` `:Q!` `:SET NU` 등 그대로 쳐도 소문자 명령처럼 실행 |
 | 면접 포트폴리오 토론 세션 열기 (이어서) | `iv` |
@@ -2349,6 +2744,11 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 | 백그라운드 Vivado 시뮬 전부 종료 (빌드 실패 `43-3345` 때) / 빌드 폴더까지 삭제 | `xsv-kill` / `xsv-clean` |
 | RTL 회로도 보기 / 수정 후 다시 그리기 | `xsv -s <top> <RTL 파일들>` / Vivado Tcl 콘솔 `rs` |
 | 안 끝나는 시뮬 강제 종료 (`xsim_build` 안 지워질 때) / Vivado까지 | `simkill` / `simkill -a` |
+| vim 검색 색칠 지우기 | `:noh` |
+| UVM 단어 자동완성 (설명 보기) | `.sv`에서 `uvm_` 입력 → `↑`/`↓` + `Tab` |
+| 서버(center) 같은 폴더에서 명령 실행 (`~/center` 안에서) | `srun <명령>` (`smake` = `srun make`) |
+| VCS 컴파일 / 시뮬 / Verdi / 결과물 삭제 | `run` / `sim [-n 테스트] [-l n\|l\|m\|h\|f\|d] [-s 시드]` / `verdi` / `clean` |
+| 서버 시뮬·Verdi 확인 / 종료 | `vcskill -l` / `vcskill` (`-y` 확인 없이) |
 
 - vim 이동 키는 **일반(Normal) 모드**에서만 동작 → 입력 모드면 `Esc` 먼저
 - Claude Code도 tmux 창 안에서 실행해야 같은 키로 이동 가능
@@ -2375,7 +2775,7 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 - 줄번호 색: `~/.vimrc`의 "줄번호 색" 7줄(`set cursorline` ~ `augroup END`) 삭제 (또는 `~/.vimrc.bak_linenr` 복원)
 - 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
 - md 보기 좋게: `~/.vimrc`의 "md 파일을 vim 안에서 보기 좋게" 섹션 삭제, `rm ~/.vim/after/syntax/markdown.vim` (또는 `~/.vimrc.bak_mdview` 복원)
-- glow: `~/.vimrc`의 ":Glow" 섹션 삭제, 19단계 `l:alias`에서 `'glow': 'Glow'` 삭제, `rm ~/.local/bin/glow`, `rm -rf ~/.config/glow` (또는 `~/.vimrc.bak_glow` 복원)
+- glow: `~/.vimrc`의 ":Glow" 섹션 삭제, 19단계 `l:alias`에서 `'glow': 'Glow'` 삭제, `rm ~/.local/bin/glow`, `rm -rf ~/.config/glow` (`~/.vimrc.bak_glow`는 11-20 변경 직전 = 오른쪽 창 실시간 미리보기 버전)
 - Caps Lock / 한글 표시: `~/.vimrc`의 "Caps Lock / 한글 표시" 섹션 삭제, `rm ~/.vim/keystate.ps1` (또는 `~/.vimrc.bak_capsind` 복원)
 - xsv: `~/.bashrc`의 `[ -f ~/.xsv.sh ] && source ~/.xsv.sh` 줄 삭제, `rm ~/.xsv.sh` (또는 `~/.bashrc.bak_xsv` 복원)
 - simkill: `rm ~/.local/bin/simkill`
@@ -2389,3 +2789,9 @@ python3 -c "import json,glob;d=json.load(open(glob.glob('/mnt/c/Users/*/AppData/
 - TB `VARHIDDEN` 경고 다시 켜기: `~/.vimrc` `ale_tb`의 `-Wno-VARHIDDEN` 삭제
 - 배경색 `#45475A` / 글자 선명하게: `~/.vimrc`의 "배경색: 어떤 테마든 #45475a" 주석 ~ `augroup my_bg … augroup END` 블록 삭제 (또는 `~/.vimrc.bak_bg` 복원), `~/.theme/theme.py.bak_bg` 복원 후 `theme catppuccin`
 - tmux 상태바 위로 / 굵은 테두리: `~/.tmux.conf`의 `pane-border-lines heavy`, `status-position top` 2줄 삭제 후 `tmux set -gu pane-border-lines \; set -gu status-position`
+- `v` / `h` n칸 분할: `~/.bashrc`의 "v / h : 지금 pane 을 n칸으로" 블록(`unalias v h` ~ `unset n`)을 예전 alias 2줄로 교체 (또는 `~/.bashrc.bak4` 복원)
+- md 목차 링크: `~/.mdview/mdview.py.bak_anchor` 복원
+- 34단계 vim 보강: `~/.vimrc`에서 `set hlsearch incsearch`, `augroup my_bg`의 Search/CurSearch/IncSearch 3줄, `if empty(&t_8f)` 블록, `augroup netrw_color`, `call mkdir(... swap ...)`, "Caps Lock 대비: U P W Y" 섹션 삭제 (검색 색만: `~/.vimrc.bak_hls` 복원)
+- 35단계 UVM: `~/.vimrc`의 `UvmComplete` 함수·`augroup ale_uvm` 블록 삭제, `complete=`에서 `FUvmComplete,` 삭제, `rm ~/.vim/dict/uvm.dict` (또는 `~/.vimrc.bak_uvmdict` 복원)
+- `Ctrl+Shift+화살표`: `~/.tmux.conf`의 "pane 자리 바꾸기" 5줄 삭제 후 `tmux unbind -n C-S-Left \; unbind -n C-S-Right \; unbind -n C-S-Up \; unbind -n C-S-Down`
+- center VCS: `~/.bashrc`의 `alias smake` ~ `~/center` sshfs 블록 삭제, `fusermount -u ~/center`, `rm ~/.local/bin/srun ~/.local/bin/vcskill`
