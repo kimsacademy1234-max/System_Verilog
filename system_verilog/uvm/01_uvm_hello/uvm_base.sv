@@ -35,7 +35,7 @@ class base_item extends uvm_sequence_item;
 	rand bit [7:0] t_addr;
 	rand kind_e kind;
 
-
+    
 	constraint c_addr { 
 			t_addr inside{[0:255]};
 	}
