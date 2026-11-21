@@ -1,0 +1,16 @@
+
+function! UvmComplete(findstart, base) abort
+    if a:findstart
+        return match(getline('.')[: col('.') - 2], '\k*$')
+    endif
+    if !exists('s:uvm_words')
+        let s:uvm_words = []
+        for l:line in readfile(expand('~/.vim/dict/uvm.dict'))
+            if l:line =~# '^#' || l:line !~# '\t' | continue | endif
+            let [l:w, l:d] = split(l:line, '\t', 1)[0:1]
+            call add(s:uvm_words, {'word': l:w, 'menu': l:d})
+        endfor
+    endif
+    if empty(a:base) | return [] | endif
+    return filter(copy(s:uvm_words), 'stridx(v:val.word, a:base) == 0')
+endfunction
