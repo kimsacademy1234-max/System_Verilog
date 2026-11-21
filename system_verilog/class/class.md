@@ -2438,6 +2438,14 @@ u.f.opcode = 8'hFF;              // 필드 하나만 바꾸면
 | `u.f.opcode = 8'hFF` 후 `u.word` | `ff34abcd` |
 | 쓰는 곳 | 명령어 디코드, 버스로 받은 32비트를 필드별로 해석, 레지스터 맵 |
 
+> **Q. struct packed에서 opcode가 제일 상위 비트?**
+> **A. 맞음.** packed struct는 **먼저 선언한 필드가 MSB 쪽**, 마지막 필드가 LSB 쪽
+> - `instr_s` 비트 배치: `opcode = [31:24]`, `rd = [23:16]`, `imm = [15:0]`
+> - 근거: `u.word = 32'h1234_ABCD` → `f.opcode = 12` (맨 위 바이트), `f.imm = abcd` (맨 아래 16비트)
+> - `bytes[3:0]`도 같은 원리: 왼쪽 인덱스 `[3]`이 MSB → `bytes[3] = 12` = `opcode`와 같은 비트
+> - 그래서 `{opcode, rd, imm}` 연결(concatenation)과 같은 순서로 생각하면 됨
+> - unpacked struct는 비트 순서 개념 없음 (필드가 따로 저장, 시뮬레이터마다 배치 다름) → 통째 대입·union 겹쳐 보기는 packed일 때만
+
 ---
 
 ## 3. tagged union
@@ -2496,6 +2504,16 @@ y = x.Imm;               // ❌ 실행 중 에러 (tag 가 Reg 인데 Imm 으로
 > 메모: "일반적으로 unpacked array를 많이 사용한다"
 > → **정리** : **메모리처럼 원소를 하나씩 다루는 곳**은 unpacked가 일반적. 하지만 **비트를 통째로 다뤄야 하는 버스·데이터**는 packed를 쓴다. 둘을 섞은 `logic [3:0][7:0] regs [16]`(32비트 레지스터 16개, 각각 바이트로도 접근) 형태도 많이 쓴다.
 
+> **Q. packed array는 MAC 연산 저장 용도로 많이 쓸 수 있겠네?**
+> **A. 반은 맞음.** "여러 값을 **한 줄 버스로 묶어서 한 번에 넘기는**" 용도로는 많이 쓰고, "결과를 **여러 개 쌓아 두는**" 저장은 unpacked가 맞음
+> - ✅ 잘 맞는 곳: MAC 유닛 여러 개(PE 배열)에 들어가는 **입력·가중치 묶음**
+>   - `logic [3:0][7:0] a, b;` → 8비트 4개를 32비트 포트 하나로 전달, 안에서는 `a[i]`, `b[i]`로 레인별 접근
+>   - 메모리에서 32비트로 읽은 값을 바이트 4개로 바로 나눠 쓰기 (SIMD 느낌)
+> - ❌ 안 맞는 곳: MAC 결과를 **여러 개 저장**하는 버퍼 → 원소를 하나씩 읽고 쓰므로 **unpacked**(RAM 추론) `logic [19:0] acc_buf [0:255]`
+> - ⚠️ 주의 1 — **통째 연산은 레인이 안 나뉨**: `a + b`는 32비트 숫자 하나로 더해져서 아래 바이트 carry가 위 바이트로 넘어감 → MAC은 반드시 **원소별로** `for (i=0;i<4;i++) acc[i] += a[i] * b[i];`
+> - ⚠️ 주의 2 — **부호**: `logic signed [3:0][7:0] a;`는 32비트 전체만 signed, `a[i]` 원소는 **unsigned** → 원소를 signed로 쓰려면 타입을 먼저 만듦: `typedef logic signed [7:0] s8_t;` `s8_t [3:0] a;`
+> - ⚠️ 주의 3 — **비트 폭**: 8×8 곱 = 16비트, N개 누적이면 `16 + ⌈log2 N⌉`비트 필요 (예: 16개 누적 → 20비트) → `acc`는 입력보다 넓게
+
 ---
 
 ## 5. array 합성 가이드
@@ -2536,6 +2554,61 @@ y = x.Imm;               // ❌ 실행 중 에러 (tag 가 Reg 인데 Imm 으로
 ```systemverilog
 for (int i = $low(mem); i <= $high(mem); i++) mem[i] = '0;   // 크기가 바뀌어도 그대로 동작
 ```
+
+### 6-1. 예제 (Verilator 5.051로 실행 확인)
+
+**예1. `[0:3]` vs `[3:0]` — `$low/$high`는 같고 `$left/$right`·순서만 다름**
+```systemverilog
+parameter int N = 4;
+logic [7:0] mem   [0:N-1];    // 오름차순 선언
+logic [7:0] mem_r [N-1:0];    // 내림차순 선언
+
+foreach (mem[i]) begin mem[i] = 8'h10 + i; mem_r[i] = 8'h10 + i; end
+
+// 1) 범위 무관하게 전부 돌기 : $low ~ $high (작은 번호 → 큰 번호)
+for (int i = $low(mem_r); i <= $high(mem_r); i++) ...        // 0 1 2 3
+
+// 2) 선언한 순서대로 돌기 : $left 에서 시작, $increment 만큼 빼면서 $size 번
+for (int i = $left(mem_r), k = 0; k < $size(mem_r); i -= $increment(mem_r), k++) ...   // 3 2 1 0
+```
+
+| 결과 | `mem [0:3]` | `mem_r [3:0]` |
+|---|---|---|
+| `$left` / `$right` | `0` / `3` | `3` / `0` |
+| `$low` / `$high` | `0` / `3` | `0` / `3` (같음) |
+| `$increment` | `-1` | `1` |
+| 선언 순서 루프 (2번) | `[0]=10 [1]=11 [2]=12 [3]=13` | `[3]=13 [2]=12 [1]=11 [0]=10` |
+| `foreach` 순서 | `0 1 2 3` | `3 2 1 0` (**`foreach`도 left → right**) |
+
+- `$increment`는 "왼쪽에서 오른쪽으로 갈 때 **빼야 하는** 값"이라 `i -= $increment`
+- 순서가 상관없으면 그냥 `foreach`가 제일 간단 (순서는 선언 방향을 따름)
+
+**예2. 다차원 (packed + unpacked 섞은 레지스터 파일)**
+```systemverilog
+logic [3:0][7:0] regs [16];   // 32비트 레지스터 16개, 각각 바이트 4개
+// 차원 번호 : 1 = [16] (unpacked)  →  2 = [3:0]  →  3 = [7:0]
+
+for (int r = $low(regs,1); r <= $high(regs,1); r++)       // 레지스터 16개
+    for (int b = $low(regs,2); b <= $high(regs,2); b++)   // 바이트 4개
+        regs[r][b] = r*16 + b;
+```
+
+| 식 | 결과 |
+|---|---|
+| `$dimensions(regs)` / `$unpacked_dimensions(regs)` | `3` / `1` |
+| `$size(regs,1)` / `$size(regs,2)` / `$size(regs,3)` | `16` / `4` / `8` |
+| `$bits(regs)` (전체 비트 수, 비교용) | `512` (= 16 × 32) |
+| `regs[1]` / `regs[15]` | `13121110` / `f3f2f1f0` |
+
+- `regs`를 `[32]`나 `[7:0][7:0]`으로 바꿔도 루프 코드는 그대로 동작 → **숫자 박지 말 것**의 이유
+
+**예3. 동적 배열에도 사용 가능 (실행 중 크기가 바뀌는 배열)**
+```systemverilog
+int dyn [];
+dyn = new[5];         // $size(dyn) = 5, dyn.size() = 5, $high(dyn) = 4
+dyn = new[8](dyn);    // 크기 늘리고 기존 값 유지 → $size(dyn) = 8, $high(dyn) = 7
+```
+- 동적 배열·queue는 보통 `.size()` 메서드를 쓰지만 `$size`도 같은 값 → 고정 배열과 동적 배열을 **같은 코드로** 다룰 때 `$size` / `$high` 사용
 
 ---
 

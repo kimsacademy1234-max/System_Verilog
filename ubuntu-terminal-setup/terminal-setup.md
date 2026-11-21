@@ -19,6 +19,7 @@
 | 추가 | 35단계 | vim UVM: `uvm_` 자동완성 목록에 **한글 설명** (`uvm.dict` 138개, `complete=FUvmComplete`), UVM 파일(`uvm_pkg`/`` `uvm_ ``)은 ALE(verilator) 가짜 오류 안 뜨게 그 버퍼만 검사 끔 | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`), `~/.vimrc` |
 | 추가 | 36단계 | tmux `Ctrl+Shift+화살표`: 그 방향 pane과 자리 바꾸기 (전부터 있던 설정, 문서에 누락) | `~/.tmux.conf` |
 | 추가 | 37단계 | center 서버 VCS: `~/center` sshfs 자동 재연결, `srun`(서버 같은 폴더에서 실행), `run`/`sim [-n -l -s]`/`verdi`/`clean`/`smake`, `vcskill`. `sim`은 실제 시간 1h(`timeout`) + `+UVM_TIMEOUT` 1h 제한 | `~/.bashrc`, `~/.local/bin/srun`·`vcskill`(저장소 `ubuntu-terminal-setup/`) |
+| 변경 | 33-2단계 | `s:Brighten()`의 `max()`/`min()`을 비교식으로 교체: 구버전 vim(9.1 패치 1-16)에서 `E805`로 배경색·글자 밝기가 적용 안 되던 것 | `~/.vimrc` |
 
 ### 2026-11-18 업데이트
 
@@ -2276,6 +2277,8 @@ Catppuccin Mocha 기본 배경(`#1E1E2E`)이 너무 어두워서, vim 선택 영
 
 사전 확인: `grep -n "my_bg" ~/.vimrc` 와 `grep -n "status-position top" ~/.tmux.conf` → 둘 다 나오면 적용된 것.
 
+> **집 PC는 배경만 예전 색** (2026-11-20, 밝은 배경이 집에서 별로라서): `~/.theme/theme.py`의 catppuccin `bg='#1E1E2E'`, ansi black `'#45475A'`, tmux `bar='#181825'`로 되돌리고, `~/.vimrc` `augroup my_bg`에서 `Normal guibg` / `EndOfBuffer` 2줄을 뺀다. 글자 밝기·상태바 위치·굵은 테두리·검색 색은 그대로.
+
 ### 33-1. `theme.py` 교체 (터미널 배경 + tmux 색·배치)
 저장소의 `ubuntu-terminal-setup/theme.py`를 다시 복사한다 (백업 먼저).
 ```bash
@@ -2296,7 +2299,9 @@ cp <저장소>/ubuntu-terminal-setup/theme.py ~/.theme/theme.py
 "   밝기 L += (1-L)*0.5 , 채도 S += (1-S)*0.7  (숫자 키우면 더 진해짐)
 function! s:Brighten(hex) abort
     let [r, g, b] = map([1, 3, 5], {_, i -> str2nr(a:hex[i : i+1], 16) / 255.0})
-    let mx = max([r, g, b]) | let mn = min([r, g, b])
+    " max()/min() 은 구버전 vim(9.1 패치 16 등)에서 Float 를 못 받음(E805) → 비교로 계산
+    let mx = r > g ? (r > b ? r : b) : (g > b ? g : b)
+    let mn = r < g ? (r < b ? r : b) : (g < b ? g : b)
     let l = (mx + mn) / 2 | let d = mx - mn
     let [h, s] = [0.0, 0.0]
     if d > 0
@@ -2333,6 +2338,7 @@ if filereadable(expand('~/.vim/theme.vim'))
 > - `ColorScheme` 때마다 실행되므로 `theme next`로 테마를 바꿔도 배경 `#45475a` + 선명한 글자색이 유지된다 (colorscheme이 매번 원래 색으로 다시 칠하므로 밝기가 누적되지 않음).
 > - 진하기 조절: `let l += (1 - l) * 0.5 | let s += (1 - s) * 0.7` 의 숫자 (앞 = 밝기, 뒤 = 채도, `0`이면 원래 색).
 > - 22단계 줄번호 색도 이 블록보다 먼저 칠해지므로 같이 밝아진다.
+> - `max()`/`min()` 대신 비교식을 쓴다: Ubuntu 24.04 기본 vim(9.1 패치 1-16)은 `max([0.1, 0.2])`처럼 Float 목록을 주면 `E805: Using a Float as a Number`로 이 블록 전체가 실패해서 배경이 원래 색(`#1e1e2e`)으로 남는다 (2026-11-20 다른 PC에서 확인).
 > - tmux 안에서도 정확한 색이 나오려면 `termguicolors` + `t_8f`/`t_8b`(15단계 이전부터 있음)와 tmux `terminal-overrides ",*:RGB"`가 필요.
 
 ### 33-3. `~/.tmux.conf`: 상태바 위로 + 굵은 pane 테두리
