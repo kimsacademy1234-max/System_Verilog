@@ -1341,6 +1341,134 @@ UART는 **LSB부터** 보낸다. start bit = 0, stop bit = 1.
 
 ---
 
+> **Q. clocking block으로 보낼 때 skew를 주는 건 알겠는데, DUT는 clock edge에서 바뀌니까 interface가 일부러 지연해서 출력을 받겠다는 거지?**
+> **A. 반은 맞음.** 지연(뒤로 미루기)은 **TB가 보내는 쪽(output skew)**이고, **받는 쪽(input skew)은 반대로 edge 직전(앞)으로 당겨서** 샘플함. 두 방향 모두 목적은 하나 → **TB를 진짜 플립플롭처럼 동작시켜 같은 edge에서 race가 안 나게**
+> - **output skew (TB → DUT)** : `cb.d <= 1` 하면 핀은 **edge + skew 후**에 바뀜 → DUT는 **이번 edge에서는 옛 값**, **다음 edge에서 새 값**을 잡음 (실제 FF의 clock-to-Q 지연과 같은 역할)
+> - **input skew (DUT → TB)** : `#1step` = **edge 바로 직전 값**(Preponed)을 샘플 → DUT가 이번 edge에서 바꾼 출력은 **이번 샘플에 안 들어가고 다음 edge 샘플**에 보임 (다음 단 FF가 edge 직전 값을 잡는 것과 같음)
+> - 즉 interface가 DUT 출력을 "늦게 받는" 게 아니라 **edge 직전에 확정된 값만 받는** 것 → 결과적으로 TB 입장에선 한 사이클 뒤에 보임
+> - skew가 없으면 : 같은 edge에서 DUT의 `q <= d`와 TB의 샘플·drive가 섞여서 **실행 순서에 따라 결과가 달라짐** (1110 race 내용)
+>
+> **확인 예제** (D 플립플롭, clk 주기 10ns, posedge = 5·15·25ns, Verilator 5.051 실행)
+> ```systemverilog
+> clocking cb @(posedge clk);
+>     default input #1step output #2;   // 입력: edge 직전 값, 출력: edge 후 2ns
+>     output d;
+>     input  q;
+> endclocking
+> // DUT : always_ff @(posedge clk) q <= d;
+> // TB  : @(vif.cb); vif.cb.d <= 1;  이후 매 edge 마다 vif.cb.q 출력
+> ```
+> | 시각 | 일어난 일 |
+> |---|---|
+> | 5ns (edge) | TB `cb.d <= 1` |
+> | 7ns | 핀 `d` → 1 (**output skew #2** 만큼 뒤) |
+> | 15ns (edge) | DUT가 `d=1`을 잡아서 핀 `q` → 1 / 그런데 TB `cb.q` 샘플 = **0** (핀은 이미 1) |
+> | 25ns (edge) | TB `cb.q` 샘플 = **1** (한 edge 뒤에 보임) |
+
+---
+
+> **Q. 왜 edge 이후의 값을 안 받음? edge 이후에는 값이 불안정할 수도 있어서?**
+> **A. 실제 하드웨어 기준으로는 맞음, 시뮬레이션에서는 "불안정"보다 "아직 안 정해짐(순서 문제)"이 이유**
+> - **하드웨어** : edge 직후는 FF 출력이 바뀌는 중(clock-to-Q 지연, 조합 논리 glitch) → 값이 흔들리는 구간. 그래서 FF는 **edge 직전에 안정된 값**을 잡음 (= **setup time**을 지켜야 하는 이유)
+> - **시뮬레이션(RTL)** : 지연 0이라 물리적으로 흔들리지는 않음. 대신 **같은 시각(edge) 안에서 실행 순서**가 문제
+>   - LRM은 **영역(region) 사이 순서만** 정하고, **같은 영역 안 process(always / initial) 순서는 안 정함** → 시뮬레이터마다(파일·모듈 순서, 최적화에 따라) 다름
+>   - 예) DUT `always_ff @(posedge clk) q <= d;` + TB `@(posedge clk); d = 1;`(blocking) → 둘 다 edge의 Active 영역에서 깨어남 → DUT가 먼저면 `q=0`, TB가 먼저면 `q=1` (**race**)
+>   - 읽는 쪽도 같음 : TB가 Active에서 읽으면 옛 값, `program`(Reactive)·`@(q)` 등 NBA 뒤에서 읽으면 새 값 → 읽는 위치에 따라 결과가 달라짐
+>   - edge 직전(Preponed) 값은 **이전 시각에 이미 끝난 값**이라 순서와 상관없이 항상 같음 → 결과가 하나로 정해짐
+> - **의미상으로도 맞음** : edge 직후 값은 "이번 edge의 **결과**" = 다음 사이클 값. DUT 안의 다음 단 FF도 edge 직전 값을 잡으므로, TB(monitor)도 똑같이 잡아야 **실제 회로가 보는 값과 같은 시점**으로 검증됨
+> - 참고 : `input #0`으로 바꾸면 edge 시각의 Observed 영역(NBA 후)에서 샘플 → 새 값을 받음. 가능은 하지만 기본(`#1step`)을 바꿀 이유가 있을 때만 씀
+
+---
+
+> **Q. edge 이후에는 NBA가 이미 끝났을 텐데, DUT 출력을 edge 이후로 지연해서 받으면 문제가 됨?**
+> **A. 문제 없음.** NBA가 끝난 뒤 읽으면 값이 하나로 정해져서 **race 없음** → 실제로 많이 쓰는 방식. `#1step`(edge 직전)이 **기본값인 이유**가 따로 있을 뿐
+> - edge 이후 샘플 방법 : monitor를 `@(negedge clk)`에서 샘플 / `@(posedge clk); #1;` 후 샘플 / clocking block `input #0`(Observed 영역 = NBA 후)
+> - `#1step`을 기본으로 쓰는 이유
+>
+> | 이유 | edge 이후 샘플 | edge 직전 샘플 (`#1step`) |
+> |---|---|---|
+> | 지연 값 고르기 | RTL(지연 0)은 `+1ns`면 충분, **게이트 레벨**(clock-to-Q + 조합 지연)은 `+1ns`에 아직 바뀌는 중일 수 있음 → 회로마다 안전한 지연을 따로 정해야 함 | 타이밍 맞는 회로(setup 만족)면 **항상 안정된 값** → 회로 무관하게 그대로 사용 |
+> | TB drive와 겹침 | TB도 edge 이후에 다음 입력을 drive → 샘플이 drive보다 앞/뒤인지 신경 써야 함 (조합 출력이면 방금 넣은 **다음 사이클 입력이 섞인 값**을 읽을 수 있음) | 샘플 = edge **직전**, drive = edge **이후** → 둘이 절대 안 겹침 |
+> | 다른 것과 시점 맞추기 | DUT·SVA와 보는 시점이 다름 | DUT 안 FF, **SVA(assertion, Preponed 샘플)**와 같은 시점 → monitor와 assertion이 같은 사이클에 같은 값을 봄 |
+>
+> - **정리** : RTL 검증만 하면 edge 이후 샘플도 OK. 단 **사이클 해석이 다름** → edge 직전 = 이번 edge **이전** 값, edge 이후 = 이번 edge의 **결과** 값 → **한 TB 안에서는 한 가지로 통일**
+
+---
+
+> **Q. clocking block은 edge에서 동작하는 것?**
+> **A. 맞음.** 모든 동작이 **선언한 clock edge 하나**(`clocking cb @(posedge clk)`)가 기준점. skew는 따로 기다리는 지연(`#2` 문장)이 아니라 **edge에서 앞/뒤로 떨어진 거리(오프셋)**
+>
+> | 동작 | 일어나는 시점 |
+> |---|---|
+> | `@(vif.cb)` | posedge clk 올 때까지 대기 |
+> | `vif.cb.q` 읽기 | edge **− input skew**에 샘플해 둔 값 (`#1step` = edge 바로 직전) |
+> | `vif.cb.d <= 1` | edge **+ output skew**에 핀에 반영 |
+> | 사이클 중간에 `cb.d <= 1` 실행 | 바로 안 바뀌고 **다음 edge + skew**에 반영 |
+>
+> - TB 코드가 언제 실행되든 DUT와 주고받는 시점은 **항상 edge 주변의 정해진 지점** → driver·monitor가 `@(vif.cb)` 기준으로만 움직이면 race 없음
+
+---
+
+> **Q. output skew를 `#0`으로 하기도 함?**
+> **A. 많이 씀. 오히려 기본값**: skew를 안 쓰면 `default input #1step output #0`
+> - `#0`이면 `cb.d <= 1`이 **edge와 같은 시각**의 **Re-NBA 영역**(DUT NBA보다 뒤)에서 핀에 반영 → DUT는 이번 edge에선 옛 값, 다음 edge에 새 값 → `#2`와 결과 같고 race 없음
+> - 그래도 양수 skew(`#1`, `#2`)를 주는 경우
+>   - **파형 보기** : `#0`이면 입력이 clk edge와 정확히 같은 시각에 바뀌어 "이번 edge에 잡혔나?" 헷갈림
+>   - **게이트 레벨 / 타이밍 시뮬** : 실제 FF는 **hold time**(edge 후 입력 유지 시간)이 있어서, edge에 딱 맞춰 바뀌면 hold 위반 → hold보다 큰 skew
+>   - **실제 회로 흉내** : 앞단 FF의 clock-to-Q 지연
+> - **정리** : RTL 검증은 `#0`(기본)으로 충분, 게이트 레벨·파형 가독성이 필요하면 작은 양수 skew
+
+---
+
+> **Q. `output #0` 이면 DUT NBA가 끝난 뒤에 출력(TB → DUT) 값이 전달되는 것?**
+> **A. 맞음.** 같은 edge 시각 안 순서
+>
+> | 순서 | 영역 | 일어나는 일 |
+> |---|---|---|
+> | 1 | Preponed | TB가 `cb.q` 샘플 (edge 직전 값, `#1step`) |
+> | 2 | Active | DUT `always_ff`가 **옛 `d`**를 읽고 `q <= d` 계산 |
+> | 3 | NBA | DUT `q`가 새 값으로 (**DUT 출력 갱신**) |
+> | 4 | Reactive | TB 코드 실행 (`program` 블록 등) |
+> | 5 | **Re-NBA** | TB `cb.d <= 1`이 핀에 반영 (**clocking block output 전달**) |
+>
+> - 5번에서 `d`가 바뀌면 같은 시각 안에서 **다시 Active로 돌아가** 그 값에 영향받는 것들을 계산 → DUT **조합 논리**(`assign c = d;`)는 바로 새 값, **FF**는 edge가 다시 안 오니 그대로
+> - `output #2`처럼 양수 skew면 edge 시각이 아니라 **edge + 2ns라는 별도 시각**에 일어남 → DUT NBA와 순서를 따질 필요조차 없음
+
+---
+
+> **Q. `output #0` + `input #1step`이면 한 사이클 안에 결과를 다 볼 수 있는 것?**
+> **A. DUT 출력이 조합일 때만.** FF 출력은 `#0`이어도 **2 edge 뒤**에 보임 → output skew는 "사이클 안에서 언제 바뀌냐"만 바꾸고, **몇 번째 edge에 잡히는지는 안 바꿈**
+>
+> 확인 (Verilator 5.051, clk 주기 10ns, posedge = 5·15·25ns, 5ns edge에서 `cb.d <= 1`, DUT 출력 FF `q <= d` / 조합 `c = d`)
+>
+> | 시각 | 일어난 일 | `cb.q` (FF) | `cb.c` (조합) |
+> |---|---|---|---|
+> | 5ns (edge) | 핀 `d` → 1 (**5ns에 바로**, `#0`) | | |
+> | 15ns (edge) | DUT FF가 `d=1`을 잡아 핀 `q` → 1 | **0** | **1** |
+> | 25ns (edge) | | **1** | 1 |
+>
+> - 조합 : 5ns에 넣고 15ns(다음 edge) 샘플에서 바로 보임 → 1사이클
+> - FF : DUT가 15ns에 잡음 → TB는 15ns에 edge 직전 값(0) 샘플 → **25ns에 보임** (`output #2` 실험과 같은 결과)
+> - 실제 회로의 "입력 FF → DUT FF → 다음 단 FF" 지연과 같은 정상 동작 → scoreboard 기대값 비교 시 **DUT 레지스터 단수만큼 지연을 맞춰야 함**
+
+---
+
+> **Q. DUT의 NBA가 TB의 Re-NBA보다 왜 먼저임? (왜 우선순위가 있음?)**
+> **A. "DUT라서" 우선이 아니라, SV가 스케줄러를 일부러 설계 쪽 / TB 쪽 두 묶음으로 나눠서 순서를 정해 둔 것** → TB ↔ DUT race를 **문법 구조로** 없애려고 (Verilog에는 없던 영역, SV에서 추가)
+>
+> | 묶음 | 영역 | 여기서 실행되는 코드 |
+> |---|---|---|
+> | **Active 묶음 (설계)** | Active → Inactive → **NBA** | `module` 안 코드 (`always`, `assign`, `<=` 갱신) = DUT |
+> | **Reactive 묶음 (TB)** | Reactive → Re-Inactive → **Re-NBA** | `program` 블록 코드, clocking block drive(`cb.d <=`) = TB |
+>
+> - 규칙 : **Active 묶음이 더 할 일이 없을 때까지 다 끝나야** Reactive 묶음으로 넘어감 → DUT가 이번 edge의 새 상태를 **먼저 다 계산해서 확정**
+> - 그다음 TB가 **확정된 DUT 값을 보고** 반응(Reactive) → TB가 바꾼 값을 반영(Re-NBA)
+> - Re-NBA에서 바뀐 값 때문에 DUT 쪽에 할 일이 생기면 → **같은 시각 안에서 다시 Active로** (조합 논리가 바로 새 값이 되는 이유) → 더 할 일이 없으면 다음 시각으로
+> - 같은 원리의 작은 버전 = **NBA가 Active 뒤에 있는 이유** : 모든 FF가 Active에서 **옛 값을 먼저 다 읽고**, NBA에서 **한꺼번에 갱신** → 실제 회로에서 FF들이 같은 edge에 동시에 바뀌는 것을 흉내. Re-NBA는 이걸 TB ↔ DUT 사이로 한 번 더 적용한 것
+> - ⚠️ TB를 `module`로 짜고 clocking block 없이 `d <= 1` 하면 → TB도 **Active 묶음**(같은 NBA 영역)이라 DUT와 우선순위 차이 없음. 이때는 "Active에서 다 읽고 NBA에서 갱신" 규칙 덕분에만 안전 (blocking `d = 1`이면 race)
+
+---
+
 ## 5. package 예시 & 해석
 
 **package = 여러 파일이 같이 쓰는 정의(typedef, parameter, function, class)를 한 곳에 모아두는 이름 공간**
@@ -1403,6 +1531,117 @@ endmodule
 | **컴파일 순서** | package 파일을 **사용하는 파일보다 먼저** 컴파일해야 함 (VCS 파일 목록에서 앞에 둘 것) |
 | **`include` vs `import`** | `include` = 파일 내용을 그대로 **복사 붙여넣기**, `import` = 이미 컴파일된 package에서 이름을 **가져다 씀** |
 | **이름 충돌** | `*`로 import한 이름과 현재 scope 이름이 같으면 **현재 scope 쪽이 우선** → 헷갈리면 `pkg::이름`으로 명시 |
+
+---
+
+> **Q. package 파일을 따로 저장해서 sv 파일에서 불러올 때 `include` 방식을 쓰는 것 같은데, 예시는?**
+> **A. 조금 다름.** package 파일 자체는 `include`로 불러오지 않고 **따로 컴파일 + `import`**. `include`는 **package 안에서** class 파일들을 끌어 모을 때 씀 (UVM TB의 표준 구조)
+>
+> **방식 ① 기본 : package 파일 따로 컴파일 → `import`** (위 예시와 같은 구조)
+> ```text
+> filelist.f              ← 순서 중요 : package 가 먼저
+>   uart_pkg.sv
+>   uart_tx.sv            (DUT)
+>   tb_uart_tx.sv         (import uart_pkg::*;)
+> ```
+> - 실행 : `vcs -sverilog -f filelist.f` (Vivado는 `xvlog`에 같은 순서로)
+> - 순서를 거꾸로(`tb_uart_tx.sv` 먼저) 하면 → `Reference to 'transaction' before declaration` 오류 (Verilator 5.051 확인)
+>
+> **방식 ② UVM식 : package 파일 하나가 class 파일들을 `include`** ★ 실무에서 제일 많이 봄
+> ```text
+> tb/
+>   uart_pkg.sv        ← package 껍데기 (컴파일 목록에는 이것만)
+>   transaction.sv     ← class 하나씩 파일로
+>   driver.sv
+> ```
+> ```systemverilog
+> // tb/uart_pkg.sv
+> package uart_pkg;
+>     parameter int BAUD_RATE = 9600;
+>     function automatic logic parity(logic [7:0] d); return ^d; endfunction
+>
+>     `include "transaction.sv"    // 파일 내용이 이 자리에 그대로 복사됨
+>     `include "driver.sv"         // driver 가 transaction 을 쓰므로 순서도 transaction 먼저
+> endpackage
+>
+> // tb/transaction.sv
+> `ifndef TRANSACTION_SV            // include guard : 두 번 include 돼도 한 번만 들어가게
+> `define TRANSACTION_SV
+> class transaction;
+>     rand logic [7:0] tx_data;
+> endclass
+> `endif
+>
+> // tb/driver.sv
+> `ifndef DRIVER_SV
+> `define DRIVER_SV
+> class driver;
+>     function void drive(transaction tr);           // 같은 package 안이라 import 없이 바로 사용
+>         $display("drive %h parity=%b", tr.tx_data, parity(tr.tx_data));
+>     endfunction
+> endclass
+> `endif
+>
+> // tb/tb_uart_tx.sv
+> module tb_uart_tx;
+>     import uart_pkg::*;          // 사용하는 쪽은 방식 ①과 똑같이 import
+>     transaction tr;  driver drv;
+>     initial begin
+>         tr = new();  drv = new();
+>         tr.tx_data = 8'h5A;
+>         drv.drive(tr);           // → drive 5a parity=0
+>         $display("baud=%0d", BAUD_RATE);   // → baud=9600
+>     end
+> endmodule
+> ```
+> ```text
+> filelist.f
+>   +incdir+tb           ← `include "transaction.sv" 를 tb/ 폴더에서 찾으라는 뜻
+>   tb/uart_pkg.sv       ← class 파일(transaction.sv, driver.sv)은 목록에 넣지 않음
+>   tb/tb_uart_tx.sv
+> ```
+> - 장점 : class마다 파일을 나눠서 관리 + 쓰는 쪽은 `import` 한 줄. UVM의 `uvm_pkg`도 이 구조 (`uvm_pkg.sv` 안에서 수백 개 파일을 `include`)
+> - ⚠️ class 파일을 filelist에 **또 넣으면** 안 됨 → package 밖에 같은 이름 class가 하나 더 생겨서 **다른 타입**이 됨 (핸들 대입 시 타입 불일치 오류)
+>
+> **방식 ③ (비추천) : 쓰는 파일마다 package 파일을 `include`**
+> ```systemverilog
+> `include "uart_pkg.sv"           // tb 파일 맨 위
+> module tb; import uart_pkg::*; ... endmodule
+> ```
+> - 파일 하나만 그렇게 하면 동작은 함. 하지만 **두 파일 이상**이 각각 `include` 하면 package가 **두 번 정의**됨 → `Duplicate declaration of package: 'uart_pkg'` (Verilator 5.051 확인)
+> - package는 "한 번 컴파일해서 여러 곳에서 `import`" 하라고 만든 것 → 방식 ①·②로
+>
+> | | `include` | `import` |
+> |---|---|---|
+> | 동작 | 전처리 단계에서 **파일 내용 복사** | 컴파일된 package에서 **이름만 가져옴** |
+> | 대상 | 아무 파일 (class, 매크로 `.svh` 등) | **package**만 |
+> | 주로 쓰는 곳 | **package 안**에서 class 파일 모으기, 매크로 파일(`uvm_macros.svh`) | **모듈·class** 안에서 package 사용 |
+
+---
+
+> **Q. class 파일 맨 위 `` `ifndef `` 하는 이유는?**
+> **A. include guard = 같은 파일이 두 번 `include` 돼도 내용은 한 번만 들어가게 막는 장치.** `include`는 무조건 복사라서, 두 번 들어가면 같은 class가 두 번 정의됨 → 오류
+> ```systemverilog
+> `ifndef TRANSACTION_SV      // 1) TRANSACTION_SV 라는 매크로가 아직 없으면 (= 처음 include)
+> `define TRANSACTION_SV      // 2) 매크로를 만들어 "이미 들어왔음" 표시
+> class transaction; ... endclass
+> `endif                      // 3) 두 번째 include 때는 매크로가 있으니 ifndef ~ endif 사이를 통째로 건너뜀
+> ```
+> - 확인 (Verilator 5.051, package 안에서 같은 파일을 2번 `include`)
+>
+> | | 결과 |
+> |---|---|
+> | guard 없음 | `Duplicate declaration of CLASS 'transaction'` 오류 |
+> | guard 있음 | 정상 컴파일 (두 번째는 빈 내용) |
+>
+> - 언제 두 번 들어감? : 파일이 많아지면 실수로 겹침
+>   - `driver.sv` 안에서도 `` `include "transaction.sv" `` 하고, package에서도 `include` 하는 경우
+>   - 여러 파일이 공통 매크로 파일(`defines.svh`)을 각자 `include` 하는 경우
+> - 위 ② 예시처럼 package에서 한 번씩만 `include` 하면 guard 없어도 동작함 → **안전장치로 습관처럼 붙이는 것** (UVM 라이브러리 파일도 전부 `` `ifndef UVM_..._SVH `` 로 시작)
+> - 규칙
+>   - 매크로 이름은 **파일마다 겹치지 않게** → 보통 파일 이름을 대문자로 (`transaction.sv` → `TRANSACTION_SV`)
+>   - `` `define`` 은 컴파일 전체에 남음 → 한 번 들어간 class 파일은 **다른 package에 또 `include` 해도 안 들어감** (어차피 다른 package에 넣으면 이름만 같은 **다른 타입**이 되므로 하면 안 되는 구조)
+> - C 언어 헤더의 `#ifndef` / `#define` / `#endif` 와 같은 원리
 
 ---
 
@@ -1542,6 +1781,126 @@ endmodule
 
 ---
 
+> **Q. 매크로는 자주 쓰이는 건가?**
+> **A. 검증(TB·UVM)에서는 매우 자주, RTL에서는 제한적으로.** 직접 만들기보다 **라이브러리가 만든 매크로를 가져다 쓰는** 경우가 대부분
+>
+> | 분야 | 사용 빈도 | 대표 예 |
+> |---|---|---|
+> | **UVM** | ★★★ 매일 씀 | `` `uvm_component_utils(driver) `` (factory 등록), `` `uvm_info / `uvm_error `` (로그 출력), `` `uvm_field_int(addr, UVM_ALL_ON) `` |
+> | **TB 공통** | ★★ | include guard (`` `ifndef ``), 로그·비교 매크로 (`` `CHECK(a, b) `` 같이 팀에서 만들어 씀), `` `ifdef `` 로 디버그 출력 켜고 끄기 |
+> | **RTL** | ★ 제한적 | `` `ifdef SIM `` / `` `ifdef FPGA `` 조건부 컴파일, assertion 매크로, 회사 공통 FF 매크로 |
+>
+> - 이 데모의 기법이 실제로 쓰이는 곳
+>   - **`` `" `` (stringify)** : UVM 매크로 내부. `` `uvm_field_int(addr, …) `` 가 출력할 때 `"addr"` 라는 **이름 문자열**을 만드는 데 사용 → 우리가 직접 쓸 일은 적고 **라이브러리 안**에 있음
+>   - **` `` ` (이어 붙이기)** : 신호/타입 이름 자동 생성. 일부 회사·오픈소스 RTL이 `` `FF(q, d, rst) `` 같은 FF 매크로로 `always_ff` 반복을 줄임
+>   - **`` `\`" ``** : 드묾
+> - RTL에서 덜 쓰는 이유 : 매크로는 **전역**(파일·모듈 구분 없음)이라 이름이 겹치면 다른 파일 동작까지 바뀜, 에러 위치가 펼쳐진 코드 기준이라 디버깅이 어려움
+> - 그래서 역할을 나눔
+>
+> | 하고 싶은 것 | 쓰는 것 |
+> |---|---|
+> | 상수 (폭, 깊이) | `parameter` / `localparam` (모듈마다 따로, override 가능) → `` `define `` 보다 우선 |
+> | 반복 계산 | `function` |
+> | 이름 자체를 만들거나 문자열로 찍기, 조건부 컴파일, include guard | **매크로만 가능** |
+>
+> - 정리 : UVM 수업부터는 `` `uvm_... `` 매크로를 계속 보게 됨 → **"코드가 펼쳐지는 것"** 이라는 이 데모 개념을 알면 UVM 매크로가 하는 일을 이해하기 쉬움
+
+---
+
+> **Q. `` `uvm_component_utils `` 매크로는 실제로 어떻게 선언되어 있나?**
+> **A. 매크로 2개를 부르는 껍데기 매크로.** factory 등록용 `type_id` + 이름을 돌려주는 함수를 class 안에 **찍어 넣음**
+> - 출처 : Accellera UVM 원본 `src/macros/uvm_object_defines.svh` (IEEE 1800.2 버전, GitHub `accellera-official/uvm-core`)
+>
+> **① 껍데기**
+> ```systemverilog
+> `define uvm_component_utils(T) \
+>    `m_uvm_component_registry_internal(T,T) \
+>    `uvm_type_name_decl(`"T`")
+> ```
+> - `` `"T`" `` = 위 10번 표의 **stringify** → `T`가 `base_driver`면 문자열 `"base_driver"`
+> - 줄 끝 `\` = 매크로를 다음 줄까지 이어서 정의
+>
+> **② factory 등록 부분**
+> ```systemverilog
+> `define m_uvm_component_registry_internal(T,S) \
+>    typedef uvm_component_registry #(T,`"S`") type_id; \
+>    static function type_id get_type(); \
+>      return type_id::get(); \
+>    endfunction \
+>    virtual function uvm_object_wrapper get_object_type(); \
+>      return type_id::get(); \
+>    endfunction
+> ```
+>
+> **③ 이름 함수 부분**
+> ```systemverilog
+> `define uvm_type_name_decl(TNAME_STRING) \
+>      static function string type_name(); \
+>        return TNAME_STRING; \
+>      endfunction : type_name \
+>      virtual function string get_type_name(); \
+>        return TNAME_STRING; \
+>      endfunction : get_type_name
+> ```
+>
+> **실제로 펼쳐진 모양** (`uvm/01_uvm_hello/uvm_base.sv` 의 `` `uvm_component_utils(base_driver) ``)
+> ```systemverilog
+> class base_driver extends uvm_driver #(base_item);
+>   // ↓ `uvm_component_utils(base_driver) 한 줄이 아래로 바뀜
+>   typedef uvm_component_registry #(base_driver, "base_driver") type_id;
+>   static function type_id get_type();                 return type_id::get(); endfunction
+>   virtual function uvm_object_wrapper get_object_type(); return type_id::get(); endfunction
+>   static function string type_name();                 return "base_driver";  endfunction
+>   virtual function string get_type_name();            return "base_driver";  endfunction
+>   ...
+> endclass
+> ```
+>
+> | 생기는 것 | 역할 |
+> |---|---|
+> | `typedef ... type_id` | factory에 이 class를 **`"base_driver"` 이름으로 등록**하는 대리인. 그래서 `base_driver::type_id::create("drv", this)` 가 가능 |
+> | `get_type()` (static) | 객체 없이 class 자체의 factory 정보 얻기 → override 할 때 사용 (`set_type_override_by_type(base_driver::get_type(), my_driver::get_type())`) |
+> | `get_object_type()` (virtual) | 객체 핸들에서 "실제 타입"의 factory 정보 얻기 |
+> | `type_name()` / `get_type_name()` | `"base_driver"` 문자열 반환 → 로그·`print()` 에 class 이름이 찍히는 이유 |
+>
+> - 매크로 없이 이 5줄을 직접 써도 동작은 같음 → 매크로는 **class마다 반복되는 등록 코드를 한 줄로 줄인 것**
+> - `uvm_object_utils` 도 같은 구조 (`uvm_component_registry` → `uvm_object_registry` 로만 바뀜)
+> - 파라미터화 class 용 `uvm_component_param_utils(T)` 는 ③(이름 문자열)이 없음 → `#(T)` 마다 이름이 달라져서 **이름으로 factory 조회 불가**, 타입으로만 가능
+
+---
+
+> **Q. `` `" `` 가 도대체 뭐야?**
+> **A. "매크로 안에서 쓰는 큰따옴표".** 일반 `"` 대신 `` `" `` 로 문자열을 감싸면, 그 문자열 **안에 있는 인자 이름도 치환**됨
+> - 배경 : 매크로는 인자를 글자 그대로 바꿔치기하지만, **`"..."` 문자열 안은 건드리지 않음** (문자열은 한 덩어리로 취급)
+> - 그래서 문자열 안의 인자까지 바꾸고 싶을 때 쓰는 **특수 따옴표**가 `` `" ``
+>
+> ```systemverilog
+> `define PLAIN(v)  $display("v = %0d", v)       // 일반 따옴표
+> `define STR(v)    $display(`"v = %0d`", v)     // 매크로용 따옴표
+> `define NAME(T)   `"T`"                        // 인자를 그대로 문자열로
+> ```
+>
+> | 호출 | 펼쳐진 코드 (`verilator -E` 로 확인) | 출력 |
+> |---|---|---|
+> | `` `PLAIN(count); `` | `$display("v = %0d", count);` → 문자열 안 `v` **안 바뀜** | `v = 7` |
+> | `` `STR(count); `` | `$display("count = %0d", count);` → 문자열 안 `v` 도 **`count`로 바뀜** | `count = 7` |
+> | `` s = `NAME(base_driver); `` | `s = "base_driver";` | `s = base_driver` |
+>
+> - 펼친 뒤에는 `` `" `` 가 **평범한 `"` 로 바뀜** → 최종 코드에는 `` ` `` 가 남지 않음
+> - 짝 : 여는 것도 `` `" ``, 닫는 것도 `` `" ``
+> - 쓰는 이유 = **변수/class "이름"을 문자열로 만들기** (매크로가 아니면 불가능)
+>   - `` `SHOW(count) `` → `"count = 7"` 처럼 변수 이름을 같이 출력
+>   - `` `uvm_component_utils(base_driver) `` → 안에서 `` `"T`" `` 로 `"base_driver"` 를 만들어 factory 등록·`get_type_name()` 에 사용
+> - 비슷한 기호 정리
+>
+> | 기호 | 뜻 | 예 (`T` = `state`) |
+> |---|---|---|
+> | `` `" `` | 문자열 시작/끝 + 안의 인자 치환 | `` `"T`" `` → `"state"` |
+> | `` `\`" `` | 문자열 안에 `"` 글자 자체 넣기 | `` `"`\`"T`\`"`" `` → `"\"state\""` (출력: `"state"`) |
+> | ` `` ` | 토큰 이어 붙이기 | ``T``_q`` → `state_q` |
+
+---
+
 ## 11. 데이터 은닉화 — `local`
 
 | 항목 | 내용 |
@@ -1640,6 +1999,84 @@ endmodule
 | `virtual function … print()` | 자식이 **재정의(override)** 할 수 있는 method. 부모 핸들로 불러도 자식 버전이 실행됨 |
 | `super.print();` | 재정의한 method 안에서 **부모 버전**도 같이 실행 |
 | `// ep.len = 0;` (class 밖) | `protected` 라서 class 밖에서는 **에러** → `'len' is hidden as 'protected'` |
+
+---
+
+> **Q. 자식 class 생성자는 부모 생성자와 인자가 같아야 하나?**
+> **A. 아니다. 자식 `new` 인자는 자유.** 단, **`super.new(...)` 를 부모가 요구하는 인자에 맞춰 첫 줄에서 불러야** 함
+> - 위 예시는 자식도 `new(int id, int len)` 로 같게 썼지만, 그건 **편해서** 그런 것이지 규칙이 아님
+> - 생성자는 `virtual` 이 아님 → override 규칙(인자 똑같이)이 적용되지 않음. 반대로 **`virtual` method(`print`)는 부모와 인자·리턴 타입이 같아야** 함
+>
+> | 경우 (부모 = `new(int id, int len)`) | 코드 | 결과 (Verilator 5.051) |
+> |---|---|---|
+> | 자식 인자 **줄이기** | `new(int id); super.new(id, 10);` | ✅ `id=7 len=10` |
+> | 자식 인자 **늘리기** | `new(int id, int len, bit e); super.new(id, len); this.e = e;` | ✅ `id=7 len=4` |
+> | `super.new` **안 부름** | `new(int id); this.id = id;` | ❌ `Missing argument on non-defaulted argument 'id' in function call to FUNC 'new'` |
+> | 자식에 `new` **아예 없음** | `class c4 extends packet; endclass` | ❌ 같은 에러 |
+> | `super.new` 를 **둘째 줄 이후**에 | `$display("before"); super.new(id, 10);` | ❌ `'super.new' not first statement in new function` |
+>
+> - 왜 안 부르면 에러? : 자식 `new` 에 `super.new` 가 없거나, 자식에 `new` 가 아예 없으면 컴파일러가 **`super.new()` (인자 없이)를 자동으로 넣음** → 부모는 인자 2개를 요구하니 에러
+> - 왜 첫 줄? : 부모 쪽 멤버가 먼저 만들어져야 자식이 그걸 쓸 수 있음 (집 기초 → 그 위에 층)
+> - 자동 호출이 통하는 경우 : **부모 인자에 기본값**이 있으면 `super.new()` 로도 OK
+>
+> ```systemverilog
+> class packet;
+>     function new(int id = 1, int len = 2); ... endfunction   // 기본값
+> endclass
+> class c5 extends packet; endclass      // new 없음 → super.new() 자동 → id=1 len=2 ✅
+> class c6 extends packet(3, 5); endclass // extends 에 인자 직접 → id=3 len=5 ✅ (잘 안 쓰는 문법)
+> ```
+>
+> - **UVM에서는 사실상 같게 씀** : factory가 `type_id::create("drv", this)` → 내부에서 **`new(name, parent)` 로 호출**하기 때문
+>
+> ```systemverilog
+> class base_driver extends uvm_driver #(base_item);
+>     function new(string name, uvm_component parent);   // 부모(uvm_component)와 같은 모양 고정
+>         super.new(name, parent);
+>     endfunction
+> endclass
+> ```
+>   - component = `new(string name, uvm_component parent)`, object(seq_item) = `new(string name = "...")` 가 정해진 모양 → 인자를 바꾸면 factory 생성이 깨짐
+
+---
+
+> **Q. UVM 생성자에서 `uvm_component parent = null` 처럼 null을 주는 이유는?**
+> **A. `= null` 은 "parent를 안 넘기면 null로 하겠다"는 **기본값**. UVM은 parent가 null이면 **맨 꼭대기(`uvm_top`, root)** 에 붙임**
+> ```systemverilog
+> function new(string name = "my_agent", uvm_component parent = null);
+>     super.new(name, parent);
+> endfunction
+> ```
+> - 기본값(`= 값`) 자체는 SV 함수 문법 : 인자를 생략하고 `new("a2")` 처럼 불러도 되게 해 줌 (위 Q의 `c5` 예시와 같은 원리)
+>
+> **UVM 원본** (`uvm_component::new`, Accellera `src/base/uvm_component.svh`)
+> ```systemverilog
+> if (parent == null) begin
+>     parent = top;          // top = uvm_root (트리의 맨 꼭대기)
+> end
+> ```
+>
+> **null 이 실제로 쓰이는 곳 = test**
+> - `run_test("my_test")` 가 test를 만들 때 **parent 자리에 null** 을 넘김 → test는 root 바로 아래 `uvm_test_top` 이 됨
+> ```systemverilog
+> // uvm_root.svh 의 run_test 안
+> $cast(uvm_test_top, factory.create_component_by_name(test_name, "", "uvm_test_top", null));
+> ```
+> - 즉 test = **부모가 없는 유일한 컴포넌트** → 그래서 test 템플릿에 `parent = null` 이 자주 보임
+>
+> **확인** (Verilator 5.051 + Accellera UVM 원본, test 에서 `config_db::set(this, "*", "cfg", 7)` 후 agent 2개 생성)
+>
+> | 생성 방법 | `get_full_name()` | 부모 | config_db `cfg` |
+> |---|---|---|---|
+> | test (`run_test` 가 null 로 생성) | `uvm_test_top` | root | — |
+> | `a1 = my_agent::type_id::create("a1", this);` | `uvm_test_top.a1` | `uvm_test_top` | **7** ✅ |
+> | `a2 = new("a2");` (parent 생략 → null) | **`a2`** | **root** | **-1** ❌ (못 받음) |
+>
+> - a2는 test 아래가 아니라 **root 바로 아래**로 떨어짐 → 경로가 `uvm_test_top.*` 이 아니라서 test가 내려준 설정을 **못 받음**
+> - 정리
+>   - `= null` 은 **"생략 가능하게" 하는 관례**일 뿐. factory(`type_id::create`)는 항상 name·parent를 **둘 다** 넘기므로 기본값이 없어도 동작함 (기본값 없는 test로도 `run_test` 정상 동작 확인)
+>   - null 을 진짜로 쓰는 건 **test(최상위)** 뿐
+>   - env·agent·driver 등은 반드시 **`create("이름", this)`** → 부모를 안 넘기면 트리가 깨짐
 
 ---
 
@@ -1775,6 +2212,47 @@ class Stack #(type T = int, int DEPTH = 4);   // T : 타입 파라미터, DEPTH 
 
 ---
 
+> **Q. TLM이랑 mailbox, 둘 다 핸들(주소)을 넘기는 거면 방식은 똑같은 것 아닌가?**
+> **A. "무엇을" 넘기는지(핸들)는 같음. "어떻게" 넘기는지가 다름.** mailbox = **중간에 상자**를 두고 넣어 놓고 감, TLM = 상자 없이 **받는 쪽 함수를 직접 호출**
+>
+> | 비유 | mailbox | TLM (analysis port) |
+> |---|---|---|
+> | 전달 방식 | **택배함** : 넣어 두면 받는 사람이 **나중에 와서** 꺼냄 | **직접 건네줌** : 보내는 쪽이 받는 쪽의 `write()` 를 **그 자리에서 호출** |
+> | 중간 저장 | 있음 (내부 queue) | 없음 (그냥 함수 호출) |
+> | 받는 쪽 코드 실행 시점 | 받는 쪽이 `get` 할 때 (보낸 뒤 언제든) | 보낸 **순간 바로** (보내는 쪽 호출 안에서) |
+> | 받는 쪽 준비 | `forever mb.get(t)` 도는 **스레드(task)** 가 있어야 함 | `function void write(T t)` **함수 하나**만 만들면 됨 |
+>
+> **확인** (Verilator 5.051, mailbox와 analysis port 축소판을 나란히 실행)
+> ```
+> == mailbox
+>   [0] sender   : put 끝 (상자에 넣고 바로 다음 줄)
+>   [3] receiver : 이제야 get 하러 옴
+>   [3] receiver : data=7 꺼냄               ← 보낸 지 3ns 뒤에 받음
+> == TLM analysis port
+>   [5] scb.write : data=7                   ← 보내는 순간 받는 쪽 코드가 실행
+>   [5] cov.write : data=7                   ← 연결된 곳 전부 차례로
+>   [5] sender   : write 끝                  ← 받는 쪽이 다 끝나야 돌아옴
+> ```
+>
+> **UVM 원본 `uvm_analysis_port::write`** (Accellera `src/tlm1/uvm_analysis_port.svh`, 에러 처리 생략)
+> ```systemverilog
+> function void write (input T t);
+>     for (int i = 0; i < this.size(); i++) begin
+>         tif = this.get_if(i);     // connect 된 상대(scoreboard, coverage …)
+>         tif.write(t);             // ← 상대의 write() 를 직접 호출. 중간 상자 없음
+>     end
+> endfunction
+> ```
+>
+> - 그래서 같은 "핸들 전달" 이어도 차이가 생김
+>   - mailbox : 보내는 쪽 · 받는 쪽이 **같은 mailbox 핸들**을 알아야 함, 한 번 `get` 하면 사라져서 **1곳만** 받음
+>   - TLM : 서로를 몰라도 됨 (`connect` 는 env가 해 줌), `write` 한 번에 연결된 **여러 곳이 전부** 받음
+> - 상자가 필요할 때는? → **`uvm_tlm_fifo`** 를 중간에 끼움. 원본을 보면 내부에 `local mailbox #(T) m;` → **TLM 안에 mailbox가 들어간 것** (`src/tlm1/uvm_tlm_fifos.svh`)
+>   - 예 : scoreboard가 expected / actual 을 각각 받아 두었다가 순서대로 비교할 때 `uvm_tlm_analysis_fifo` 사용
+> - 정리 : mailbox = **"저장소"**, TLM = **"연결 규격(함수 호출 약속)"**. TLM은 필요하면 mailbox를 품을 수도 있는 더 큰 개념
+
+---
+
 # 1119 (목) — 2-state vs 4-state · casting · typedef · enum · 다형성 · 추상 class · UVM 개요
 
 > **핵심 한 줄** : 설계(RTL)는 **4-state(`logic`)**로 써서 X/Z를 보이게 하고, 2-state로 옮기기 전엔 **`$isunknown()`**으로 X를 검사한다. casting은 **값은 그대로 두고 해석(타입·폭·부호)만 바꾸는 static cast**와 **실행 중에 검사하는 `$cast`**로 나뉜다. 상태값은 **`typedef enum`**으로 만들어 파형·출력에서 **이름**으로 보이게 한다. (5장) **다형성** = 상속 + virtual + 부모 핸들 → 부모 핸들로 불러도 **실제 객체**의 method가 실행되고, 부모 → 자식 핸들은 **`$cast`로만**(실제 객체가 맞을 때만) 바꿀 수 있다. **추상 class**는 규격(약속)만 정하고 자식이 구현한다. **UVM**은 이 구조를 표준 라이브러리로 만든 것 — **컴포넌트(구조)**와 **시퀀스(자극)**가 분리되어 있다.
@@ -1869,6 +2347,9 @@ else
 ## 4. 부호 casting — `signed'(a)` vs `-a` (질문 답변)
 
 > 메모: "data를 보낼 때 unsigned라서 `signed'(a)`로 바꿔줘야 함"
+
+---
+
 > **Q. `-` 연산을 쓰면 되는데 왜 굳이 casting? ALU에서 `-` 말고 이렇게 가공해야 하나?**
 
 **A. 둘은 하는 일이 다르다.** `-a`는 **값을 바꾸는 연산**(음수 만들기), `signed'(a)`는 **비트는 그대로 두고 "부호 있는 수로 읽어라"**라고 해석만 바꾸는 것.
@@ -1943,6 +2424,63 @@ addr = 16'(af);           // 묶기   : 필드 → 16비트 (a3c5)
 | `ok = $cast(st, 2);` | `ok = 1`, `st = WRITE` |
 | `ok = $cast(st, 3);` (3은 없는 값) | `ok = 0`, `st`는 **WRITE 그대로** |
 | `st = state_e'(3);` (static cast) | 검사 없이 `st = 3` 들어감 → `st.name()`이 **빈 문자열** ⚠️ |
+
+---
+
+> **UVM에서 `$cast` 쓰는 예제** (추가)
+> - 공통 이유 : UVM 함수는 **어떤 class가 올지 모르니** 부모 타입(`uvm_object`, `uvm_component`)으로 **돌려줌** → 내 class 멤버를 쓰려면 **downcasting**
+> - `do_compare` 예제는 15번에 있음. 여기서는 그 외 자주 나오는 4곳
+>
+> ```systemverilog
+> class bus_item extends uvm_sequence_item;
+>     rand bit [7:0] addr, data;
+>     `uvm_object_utils(bus_item)
+>     function new(string name = "bus_item"); super.new(name); endfunction
+>
+>     // ① do_copy : copy()/clone() 이 부르는 함수. 인자가 uvm_object 로 들어옴
+>     virtual function void do_copy(uvm_object rhs);
+>         bus_item rhs_;
+>         if (!$cast(rhs_, rhs)) `uvm_fatal("COPY", "rhs is not a bus_item")
+>         super.do_copy(rhs);
+>         addr = rhs_.addr;  data = rhs_.data;
+>     endfunction
+> endclass
+>
+> class my_test extends uvm_test;
+>     ...
+>     task run_phase(uvm_phase phase);
+>         bus_item tr, tr_copy;  my_agent ag;  uvm_object obj;
+>         tr = bus_item::type_id::create("tr");
+>         tr.addr = 8'h10;  tr.data = 8'hAA;
+>
+>         // ② clone : 리턴 타입이 uvm_object
+>         if (!$cast(tr_copy, tr.clone())) `uvm_fatal("CAST", "clone cast fail")
+>         tr.data = 8'h55;                               // 원본만 바꿈 → 복사본은 그대로 AA
+>
+>         // ③ 트리에서 컴포넌트 찾기 : lookup / get_parent / get_child 는 uvm_component 리턴
+>         if ($cast(ag, lookup("a"))) `uvm_info("FIND", $sformatf("id=%0d", ag.id), UVM_LOW)
+>
+>         // ④ factory 이름으로 생성 : create_object_by_name 은 uvm_object 리턴
+>         obj = uvm_factory::get().create_object_by_name("bus_item", "", "made_by_name");
+>         if ($cast(tr, obj)) `uvm_info("BYNAME", tr.get_type_name(), UVM_LOW)
+>     endtask
+> endclass
+> ```
+>
+> **확인** (Verilator 5.051 + Accellera UVM 원본 `uvm-core`, `+define+UVM_NO_DPI`)
+>
+> | 곳 | UVM이 돌려주는 타입 | 결과 |
+> |---|---|---|
+> | ② `$cast(tr_copy, tr.clone())` | `uvm_object` | `tr.data=55  tr_copy.data=aa` → **별개 객체**로 복사됨 (① `do_copy` 가 불려서 필드 복사) |
+> | ③ `$cast(ag, lookup("a"))` | `uvm_component` | `found uvm_test_top.a, id=3` → 내 agent 멤버 `id` 접근 |
+> | ④ `$cast(tr, obj)` | `uvm_object` | `type=bus_item name=made_by_name` |
+> | `$cast` 없이 `tr_copy = tr.clone();` | — | ❌ 컴파일 에러 `Assign RHS expects a CLASSREFDTYPE 'bus_item', got CLASSREFDTYPE 'uvm_object'` |
+> | `$cast` 없이 `ag = lookup("a");` | — | ❌ `… expects 'my_agent', got 'uvm_component'` |
+>
+> - 실무에서 제일 자주 보는 곳 = **② clone (monitor)**
+>   - monitor가 같은 `tr` 객체를 계속 재사용하면서 `ap.write(tr)` 하면, scoreboard가 받은 핸들도 **같은 객체** → 다음 샘플에서 값이 바뀌어 버림 (1110 transaction 공유 Q&A)
+>   - 그래서 `$cast(tr_copy, tr.clone()); ap.write(tr_copy);` 로 **복사본**을 보냄
+> - `$cast` 는 **함수 모양 + 결과 확인** (`if (!$cast(...)) uvm_fatal/uvm_error`) 으로 쓰는 게 규칙 (14번)
 
 ---
 
@@ -2090,6 +2628,8 @@ addr = 16'(af);           // 묶기   : 필드 → 16비트 (a3c5)
 | **upcasting** | 자식 객체 → **부모** 핸들 | `s = rr;` (그냥 대입) | ✅ 항상 됨 (자식은 부모의 모든 걸 갖고 있음) |
 | **downcasting** | 부모 핸들 → **자식** 핸들 | **`$cast(rr, s)`** 만 가능 | ⚠️ **실제 객체가 그 자식 타입일 때만** 성공 |
 
+---
+
 > **Q. downcasting은 항상 안 되는 건가?** → **아니다.**
 > - `rr = s;`처럼 **직접 대입**하는 건 항상 **컴파일 에러** (VCS `Error-[SV-ICA] Illegal class assignment`, 직접 확인)
 > - `$cast(rr, s)`는 **실행 중에 실제 객체를 검사** → 부모 핸들이 진짜 `rect` 객체를 가리키고 있으면 **성공(1)**, `circle` 객체면 **실패(0)**
@@ -2175,6 +2715,44 @@ endmodule
 
 ---
 
+> **Q. 부모 함수를 오버라이딩하면서 부모 기능을 그대로 쓰려면 `virtual` 로 선언해야 하는 것 아닌가?**
+> **A. 아니다. 부모 기능을 같이 쓰는 건 `super.함수()` 의 일이고, `virtual` 과는 무관.** `virtual` 은 **부모 핸들로 불렀을 때** 자식 버전이 실행되느냐만 정함
+>
+> | 하고 싶은 것 | 필요한 것 | virtual 필요? |
+> |---|---|---|
+> | 부모 함수를 **그대로** 쓰기 | 자식에서 **재정의 안 하면 됨** (자동 상속) | ❌ |
+> | 재정의하면서 부모 기능도 **같이** 실행 | 자식 함수 안에서 **`super.함수()`** | ❌ |
+> | **부모 핸들**로 불러도 **자식 버전** 실행 (다형성) | 부모 함수에 **`virtual`** | ✅ |
+>
+> **확인** (Verilator 5.051 — `hi()` 는 non-virtual, `vhi()` 는 virtual, 자식은 둘 다 `super` 호출 후 한 줄 추가)
+> ```systemverilog
+> class parent;
+>     function void hi();          $display("parent.hi");  endfunction   // virtual 아님
+>     virtual function void vhi(); $display("parent.vhi"); endfunction   // virtual
+>     function void keep();        $display("parent.keep"); endfunction  // 자식이 재정의 안 함
+> endclass
+> class child extends parent;
+>     function void hi();  super.hi();  $display("child.hi  (추가)"); endfunction
+>     function void vhi(); super.vhi(); $display("child.vhi (추가)"); endfunction
+> endclass
+> // child c = new;  parent p = c;   (같은 객체를 자식 핸들 c, 부모 핸들 p 로)
+> ```
+>
+> | 호출 | 출력 | 해석 |
+> |---|---|---|
+> | `c.keep()` | `parent.keep` | 재정의 안 함 → 부모 것 그대로 (virtual 무관) |
+> | `c.hi()` (non-virtual, 자식 핸들) | `parent.hi` → `child.hi (추가)` | **virtual 없이도** `super` 로 부모 기능 + 추가 ✅ |
+> | `p.hi()` (non-virtual, **부모 핸들**) | `parent.hi` 만 | ⚠️ 자식 재정의가 **무시됨** → 핸들 타입(parent) 것 실행 |
+> | `c.vhi()` (virtual, 자식 핸들) | `parent.vhi` → `child.vhi (추가)` | 자식 핸들이면 non-virtual과 결과 같음 |
+> | `p.vhi()` (virtual, **부모 핸들**) | `parent.vhi` → `child.vhi (추가)` | **virtual 이라서** 부모 핸들로도 자식 버전 실행 |
+>
+> - 차이는 **부모 핸들로 부를 때(`p.hi()` vs `p.vhi()`)만** 나타남
+> - 그런데도 재정의할 method는 **습관적으로 virtual** 로 둠 : UVM처럼 라이브러리가 **부모 핸들**로 내 코드를 부르는 구조에서는 virtual이 아니면 내 재정의가 **아예 실행 안 됨**
+>   - 예 : UVM이 `comp.build_phase(phase)` 를 `uvm_component` 핸들로 부름 → `build_phase` 가 virtual 이라서 내 driver 의 `build_phase` 가 실행됨 (1120 8번 Q)
+> - 정리 : **`super` = "부모 것도 같이"**, **`virtual` = "부모 핸들로 불러도 내 것이"** → 서로 다른 일
+
+---
+
 ## 15. UVM에서 다형성 + casting이 쓰이는 곳
 
 > 메모: "각각의 시퀀스 아이템별로 캐스팅을 이용해서 pass/fail 판독" → 정리 요청
@@ -2214,6 +2792,85 @@ endclass
 | `exp.compare(act)` — addr·data 같음 | `1` (pass) |
 | `act.data`만 다르게 | `0` (fail) |
 | 다른 타입 item(`other_item`)과 compare | `UVM_ERROR … [CMP] rhs is not a bus_item` → `0` |
+
+---
+
+> **Q. `$cast(rhs_, rhs)` 는 class 타입을 비교하는 건가? 뭘 비교하는 건지 모르겠다**
+> **A. 비교가 아니라 "검사 + 대입".** "`rhs` 가 가리키는 **실제 객체**가 `bus_item` 인가?" 를 검사해서, 맞으면 **같은 객체**를 `bus_item` 타입 핸들 `rhs_` 에 담아 줌. **값 비교는 그 다음 줄**(`addr == rhs_.addr …`)에서 함
+>
+> **등장인물** (`exp.compare(act)` 를 불렀을 때)
+>
+> | 이름 | 정체 | 타입 |
+> |---|---|---|
+> | `this` | `exp` (compare를 부른 쪽) | `bus_item` |
+> | `rhs` | `act` (괄호 안에 넣은 쪽, right-hand side) | **`uvm_object`** 핸들 ← UVM이 아무 타입이나 받으려고 부모 타입으로 받음 |
+> | `rhs_` | 내가 만든 빈 핸들 | `bus_item` 핸들 (처음엔 null) |
+>
+> - 문제 : `rhs` 는 `uvm_object` 타입 핸들이라 `rhs.addr` 이라고 쓰면 **컴파일 에러** (uvm_object에는 addr이 없음). 실제 객체는 bus_item인데 핸들 타입 때문에 못 봄
+> - 해결 : `$cast(rhs_, rhs)` → 같은 객체를 **bus_item 핸들로 다시 잡음** → `rhs_.addr` 사용 가능
+>
+> ```
+>   rhs  (uvm_object 핸들) ──┐
+>                            ├──▶ [ act 객체 : bus_item, addr=10, data=AA ]
+>   rhs_ (bus_item 핸들)   ──┘      ← $cast 성공 후 같은 객체를 가리킴
+> ```
+>
+> **확인** (Verilator 5.051 + Accellera UVM 원본, `do_compare` 안에 출력 추가)
+> ```
+> == exp.compare(act)
+>   this=exp  rhs=act (실제 class: bus_item)
+>   $cast 전 rhs_ = null
+>   $cast 결과=1, rhs_ = act, 같은 객체? 1          ← 검사 통과, rhs_ == rhs (복사 아님, 같은 객체)
+>   비교: this.addr=10 rhs_.addr=10 / this.data=aa rhs_.data=aa
+>   => 1
+> == exp.compare(act) data 다름
+>   $cast 결과=1, rhs_ = act, 같은 객체? 1          ← 타입은 맞으니 cast 는 성공
+>   비교: … this.data=aa rhs_.data=55               ← 여기서 값이 달라 fail
+>   => 0
+> == exp.compare(oth)
+>   this=exp  rhs=oth (실제 class: other_item)
+>   $cast 결과=0, rhs_ = null, 같은 객체? 0          ← 실제 객체가 bus_item 아님 → 실패, rhs_ 그대로 null
+>   => 0
+> ```
+>
+> | 단계 | 코드 | 확인하는 것 |
+> |---|---|---|
+> | ① 타입 검사 + 핸들 바꿔 잡기 | `$cast(rhs_, rhs)` | `rhs` 의 **실제 객체 class** 가 `bus_item`(또는 그 자식)인가 → 맞으면 `rhs_ = rhs` |
+> | ② 값 비교 | `addr == rhs_.addr && data == rhs_.data` | 두 객체의 **필드 값**이 같은가 |
+>
+> - ① 이 실패하면 `rhs_` 가 null 이라 ② 에서 `rhs_.addr` 를 읽는 순간 **null 접근 에러** → 그래서 `if (!$cast(...)) return 0;` 로 먼저 빠져나감
+> - 정리 : `$cast` = "이 핸들, 사실 bus_item 맞지? 그럼 bus_item 핸들로 다시 잡을게" (13-1 downcasting). **같은 객체를 다른 타입 안경으로 보는 것**
+
+---
+
+> **Q. `uvm_object` 핸들(`rhs`)이 bus_item을 가리키게 되는 시점이 `` `uvm_object_utils(bus_item) `` 으로 등록한 순간인가?**
+> **A. 아니다. 등록은 "설계도(타입)"를 factory 명단에 올리는 것뿐, 객체는 안 생김.** `rhs` 가 bus_item 객체를 가리키는 건 **`exp.compare(act)` 를 호출해서 `act` 가 인자로 넘어가는 순간**
+>
+> | 시점 | 일어나는 일 | bus_item 객체 | `rhs` |
+> |---|---|---|---|
+> | ① 컴파일 / 시뮬 시작 | `` `uvm_object_utils(bus_item) `` → factory 명단에 `"bus_item"` **타입 이름** 등록 (10번 Q의 `type_id` 등) | **없음** | 없음 |
+> | ② `act = bus_item::type_id::create("act");` (또는 `new`) | **객체 생성** → `act` 핸들이 가리킴 | `act` 생김 | 없음 |
+> | ③ `exp.compare(act);` | `compare(uvm_object rhs, …)` 의 인자 `rhs` 에 `act` 가 **대입** (upcasting, 자동) | — | **이때 act 를 가리킴** |
+> | ④ UVM 내부 → `do_compare(rhs, comparer)` | 같은 핸들을 그대로 넘김 | — | 계속 act |
+> | ⑤ `$cast(rhs_, rhs)` | 같은 객체를 bus_item 핸들로 다시 잡음 | — | `rhs_` 도 act |
+>
+> - ③ 의 원리 : UVM 원본 선언이 `function bit compare (uvm_object rhs, uvm_comparer comparer=null);` (`uvm_object.svh`) → 인자 타입이 **부모(`uvm_object`)** 라서 `act`(bus_item 핸들)를 넣으면 **upcasting** 으로 자동 대입. 함수 인자 넘기기 = `rhs = act;` 대입과 같음
+>
+> **확인** (Verilator 5.051 + Accellera UVM 원본, `new` 와 `do_compare` 안에 출력 추가)
+> ```
+> == 1) 시뮬 시작 : 등록은 됐지만 객체는 아직 없음
+>   factory 에 "bus_item" 등록? 1        ← 등록은 이미 되어 있음
+>   h = null                             ← uvm_object 핸들은 아직 아무것도 안 가리킴
+>                                        ← bus_item::new 출력 없음 = 객체 0개
+> == 2) 객체 생성
+>   [5] bus_item::new("act") 객체 생성    ← create / new 를 불러야 비로소 생김
+>   [5] bus_item::new("exp") 객체 생성
+> == 3) compare 호출 : 이때 rhs = act
+>   do_compare : rhs 가 가리키는 객체 = act
+> ```
+>
+> - 등록이 하는 일 = **"bus_item 이라는 이름의 class가 있다"** 를 factory에 알려 두는 것 → 나중에 `type_id::create` · 이름으로 생성(`create_object_by_name("bus_item", …)`) · override 가 가능해짐
+> - 비유 : 등록 = **메뉴판에 요리 이름 올리기**, `create` = **실제로 요리 만들기**, `compare(act)` = **그 요리를 접시(`rhs`)에 담아 건네기**
 
 ---
 
@@ -2438,6 +3095,8 @@ u.f.opcode = 8'hFF;              // 필드 하나만 바꾸면
 | `u.f.opcode = 8'hFF` 후 `u.word` | `ff34abcd` |
 | 쓰는 곳 | 명령어 디코드, 버스로 받은 32비트를 필드별로 해석, 레지스터 맵 |
 
+---
+
 > **Q. struct packed에서 opcode가 제일 상위 비트?**
 > **A. 맞음.** packed struct는 **먼저 선언한 필드가 MSB 쪽**, 마지막 필드가 LSB 쪽
 > - `instr_s` 비트 배치: `opcode = [31:24]`, `rd = [23:16]`, `imm = [15:0]`
@@ -2503,6 +3162,8 @@ y = x.Imm;               // ❌ 실행 중 에러 (tag 가 Reg 인데 Imm 으로
 
 > 메모: "일반적으로 unpacked array를 많이 사용한다"
 > → **정리** : **메모리처럼 원소를 하나씩 다루는 곳**은 unpacked가 일반적. 하지만 **비트를 통째로 다뤄야 하는 버스·데이터**는 packed를 쓴다. 둘을 섞은 `logic [3:0][7:0] regs [16]`(32비트 레지스터 16개, 각각 바이트로도 접근) 형태도 많이 쓴다.
+
+---
 
 > **Q. packed array는 MAC 연산 저장 용도로 많이 쓸 수 있겠네?**
 > **A. 반은 맞음.** "여러 값을 **한 줄 버스로 묶어서 한 번에 넘기는**" 용도로는 많이 쓰고, "결과를 **여러 개 쌓아 두는**" 저장은 unpacked가 맞음
@@ -2656,6 +3317,47 @@ dyn = new[8](dyn);    // 크기 늘리고 기존 값 유지 → $size(dyn) = 8, 
 
 ---
 
+> **Q. `build_phase(uvm_phase phase)` 에서 `uvm_phase` 는 어떤 타입?**
+> **A. UVM 라이브러리에 있는 class.** `phase` = **"지금 실행 중인 phase" 객체를 가리키는 핸들**. UVM이 각 컴포넌트의 `build_phase` 를 부를 때 이 핸들을 넘겨줌
+> - `int a` 처럼 `uvm_phase phase` = **타입 + 변수 이름**. 타입이 class라서 `phase` 는 객체 핸들
+> - 출처 : Accellera UVM 원본 `src/base/uvm_phase.svh`, `uvm_common_phases.svh`, `uvm_component.svh`
+>
+> **상속 구조**
+> ```
+> uvm_object
+>   └─ uvm_phase                         ← 모든 phase의 공통 부모 (raise/drop_objection 등)
+>        ├─ uvm_topdown_phase            ← 위 → 아래 실행
+>        │    └─ uvm_build_phase         ← 이름 "build"
+>        ├─ uvm_bottomup_phase           ← 아래 → 위 실행 (connect, report …)
+>        └─ uvm_task_phase               ← 시간이 흐르는 phase (run …)
+> ```
+>
+> **누가 `phase` 를 넘겨주나** (UVM 원본 코드)
+> ```systemverilog
+> // uvm_component.svh : 부모 class에 virtual 로 미리 선언되어 있음
+> virtual function void build_phase(uvm_phase phase);
+> virtual task          run_phase  (uvm_phase phase);
+>
+> // uvm_common_phases.svh : build 차례가 오면 UVM이 컴포넌트마다 호출
+> class uvm_build_phase extends uvm_topdown_phase;
+>    virtual function void exec_func(uvm_component comp, uvm_phase phase);
+>       comp.build_phase(phase);      // ← 여기서 내 build_phase 가 불림
+>    endfunction
+> endclass
+> ```
+> - 우리가 쓰는 `function void build_phase(uvm_phase phase);` = 부모(`uvm_component`)의 **virtual method 재정의** → 1118 12번 Q처럼 **인자 모양을 부모와 똑같이** 써야 함 (`phase` 안 써도 지우면 안 됨)
+> - 그래서 첫 줄 `super.build_phase(phase);` 도 받은 핸들을 그대로 부모에 넘기는 것
+>
+> | `phase` 로 하는 일 | 어디서 | 예 |
+> |---|---|---|
+> | **objection 걸기/풀기** | `run_phase` (가장 많이 씀) | `phase.raise_objection(this);` / `phase.drop_objection(this);` (9번) |
+> | phase 이름 확인 | 디버그 출력 | `phase.get_name()` → `"build"` |
+> | 아무것도 안 함 | `build_phase` · `connect_phase` 대부분 | 받기만 하고 `super.build_phase(phase)` 에 넘김 |
+>
+> - 정리 : `build_phase` 에서는 형식상 받는 인자, **`run_phase` 에서는 objection 때문에 꼭 쓰는 인자**
+
+---
+
 ## 9. objection — run_phase는 언제 끝나나
 
 > 메모: "sv generator는 run task 횟수로 끝냄 → uvm에서는 `phase.raise_object` → drop → 이걸 env에서 하면 됨"
@@ -2702,6 +3404,38 @@ endtask
 
 ---
 
+> **Q. `uvm_component` 에는 어떤 기능이 있나?**
+> **A. "TB 부품이 되는 데 필요한 공통 기능 묶음".** driver·monitor·env·test가 전부 이걸 상속받아서, 아래 기능을 **직접 안 짜고 그냥 씀**
+> - 출처 : Accellera UVM 원본 `src/base/uvm_component.svh` (method 선언 목록에서 정리)
+>
+> **상속 구조**
+> ```
+> uvm_object                 ← 이름, print / copy / compare, factory create
+>   └─ uvm_report_object     ← 로그 출력 (`uvm_info / `uvm_error), verbosity 조절
+>        └─ uvm_component    ← 여기서 추가 : 트리 · phase · config · factory override · objection 콜백
+>             ├─ uvm_driver #(REQ)   ← + seq_item_port (sequencer에서 item 받는 포트)
+>             ├─ uvm_monitor / uvm_scoreboard / uvm_agent / uvm_env / uvm_test
+>             └─ uvm_sequencer #(REQ)
+> ```
+> - `virtual class uvm_component` = **추상 class** (1119 추상 class 참고) → `new` 로 직접 못 만들고 **상속해서만** 씀
+>
+> | 기능 | 대표 method | 하는 일 | 자주 씀? |
+> |---|---|---|---|
+> | **① 트리(계층)** | `new(name, parent)`, `get_parent()`, `get_full_name()`, `get_children()`, `get_child("d")`, `lookup("e.a.d")` | 부모를 받아 **트리에 붙음** → `uvm_test_top.e.a.d` 같은 경로가 생김 | ★★★ (`new`, `get_full_name`) |
+> | **② phase** | `build_phase`, `connect_phase`, `end_of_elaboration_phase`, `start_of_simulation_phase`, `run_phase`, `extract/check/report/final_phase` | 전부 **빈 virtual method** 로 준비돼 있음 → 필요한 것만 재정의하면 UVM이 순서대로 불러줌 | ★★★ |
+> | ②-1 세부 run phase | `reset_phase`, `configure_phase`, `main_phase`, `shutdown_phase` (+ `pre_`/`post_`) | `run_phase` 와 **동시에** 도는 세분화 phase | ★ (보통 `run_phase` 하나로) |
+> | **③ 로그(report)** | `` `uvm_info(ID, MSG, UVM_LOW) `` → 내부 `uvm_report_info()`, `set_report_verbosity_level()`, `set_report_verbosity_level_hier()` | 메시지에 **시간·컴포넌트 경로**가 자동으로 붙음, verbosity로 출력량 조절, `_hier` = 내 아래 트리 전체에 적용 | ★★★ |
+> | **④ factory** | `set_type_override_by_type()`, `set_inst_override_by_type()`, `create_component()`, `print_override_info()` | "driver 자리에 my_driver를 대신 만들어라" 교체 | ★★ (test에서) |
+> | **⑤ config** | `apply_config_settings()`, `print_config()` (+ 옛날 `set_config_int` 등) | 설정값 받기. 요즘은 **`uvm_config_db#(T)::get(this, …)`** 로 직접 받음 (13번) | ★★ (`config_db`) |
+> | **⑥ objection 관련** | `raised()`, `dropped()`, `all_dropped()`, `phase_ready_to_end()` | objection 올라가고 내려갈 때 불리는 **콜백** (실제 raise/drop은 `phase.raise_objection(this)`) | ★ |
+> | ⑦ 트랜잭션 기록 | `begin_tr()`, `end_tr()`, `accept_tr()` | 파형 툴(Verdi)에 transaction 기록 | ★ |
+>
+> - 우리 코드(`uvm/01_uvm_hello/uvm_base.sv`)에서 쓰는 것 : `new(name, parent)` + `super.new` (①), `build_phase` 안 `type_id::create("drv", this)` (①②), `run_phase` (②), `` `uvm_info `` (③) → **4가지가 핵심**
+> - `this` 를 `create` 의 parent로 넘기는 이유 = ① 트리 기능 → "내가 부모" 로 등록
+> - 정리 : SV TB에서는 driver·monitor를 **맨 class로 처음부터** 짰다면, UVM은 **트리·phase·로그·교체 기능이 이미 들어 있는 부모를 상속**해서 내 동작만 채움
+
+---
+
 ## 11. sequence ↔ driver — handshake 방식 전달
 
 ```
@@ -2743,6 +3477,39 @@ endtask
 |---|---|
 | "test에서도, env에서도 시퀀스를 만들 수 있다" | 맞음. 보통은 **test**의 run_phase에서 만들고 `start` (어떤 시나리오를 돌릴지가 test의 역할이라서) |
 | driver / monitor → scb / cov | ⚠️ 정정 : scoreboard·coverage로 보내는 건 **monitor** (analysis port). driver는 DUT 구동만 함 (1119 18-5) |
+
+---
+
+> **Q. `uvm_driver #(base_item)` 처럼 item 타입을 파라미터로 주는 이유는? 어차피 안에서 `base_item seq_item;` 핸들로 선언하는데**
+> **A. 내 핸들이 아니라, 부모가 만들어 둔 `seq_item_port` 의 타입을 정하려고.** 파라미터가 없으면 port는 `uvm_sequence_item` 타입으로 꺼내 줌 → 내 `base_item` 핸들에 바로 못 받음
+> - `base_item seq_item;` = item을 **담을 그릇**. 파라미터 `#(base_item)` = 그 그릇에 넣어 줄 **배달 통로(port)의 규격**
+>
+> **`uvm_driver` 원본** (Accellera `src/comps/uvm_driver.svh`, 주석 제거)
+> ```systemverilog
+> class uvm_driver #(type REQ = uvm_sequence_item, type RSP = REQ) extends uvm_component;
+>   uvm_seq_item_pull_port #(REQ, RSP) seq_item_port;   // ← REQ 타입으로 item을 꺼내 주는 port
+>   uvm_analysis_port #(RSP)           rsp_port;
+>   REQ req;                                            // ← 미리 만들어 둔 핸들도 REQ 타입
+>   RSP rsp;
+>   ...
+> endclass
+> ```
+> - `#(base_item)` 을 주면 `REQ` = `base_item` → `seq_item_port.get_next_item(output REQ t)` 가 **`base_item` 으로 꺼내 줌**
+> - 안 주면 `REQ` = 기본값 `uvm_sequence_item` (부모 타입) → 꺼낸 것을 자식 핸들(`base_item`)에 넣으려면 **downcasting** 필요 (1119 casting 참고)
+>
+> **확인** (Verilator 5.051, `uvm_driver` / `seq_item_port` 를 같은 구조로 축소한 모델)
+>
+> | 경우 | 코드 | 결과 |
+> |---|---|---|
+> | 파라미터 줌 | `class my_drv extends drv #(base_item);` → `get_next_item(seq_item)` | ✅ `addr=5` |
+> | 파라미터 없음 | `class my_drv extends drv;` → `get_next_item(seq_item)` | ❌ `Function Argument expects a CLASSREFDTYPE 'seq_item_base', got CLASSREFDTYPE 'base_item'` |
+> | 파라미터 없음 + cast | 부모 타입 `tmp` 로 받고 `$cast(seq_item, tmp)` | ✅ `addr=5` (매번 cast 해야 해서 번거로움) |
+>
+> - 파라미터로 얻는 것
+>   - **cast 없이** 바로 `seq_item.t_addr` 처럼 자식 멤버 사용
+>   - sequencer와 **타입 맞춤** : `uvm_sequencer #(base_item)` 과 connect → 타입이 다르면 **컴파일 단계에서 에러** (엉뚱한 item 연결 방지)
+>   - 부모가 준 `req` 핸들도 `base_item` 타입 → `seq_item` 을 따로 선언하지 않고 `seq_item_port.get_next_item(req);` 로 써도 됨 (UVM 예제에서 흔한 모양)
+> - 1118 16번 파라미터화 class(`#(type T)`)를 UVM이 실제로 쓰는 예 → **"부모 class 안의 타입을 자식이 정해 주는 것"**
 
 ---
 

@@ -11,6 +11,9 @@
 | 구분 | 단계 | 내용 | 수정 대상 |
 |---|---|---|---|
 | **수정** | 35-2단계 | UVM 파일에서 `uvm.dict` 설명 목록이 안 뜨던 문제: `uv`에서 먼저 뜬 일반 단어 목록(파일 안 `uvm_pkg`·`uvm_test` + verilog.dict)이 계속 남아 `uvm` 분기가 실행되지 않았음 → `s:VerilogCloseDone()`에서 `uvm`까지 치면 그 목록을 닫고 `Ctrl-x Ctrl-u`(UvmComplete)로 교체 | `~/.vimrc` |
+| **수정** | 35-2단계 | `UVM_ALL_ON`처럼 **대문자 `UVM_`**로 치면 설명 목록이 안 뜨던 문제: `uvm` 판단이 `=~#`(대소문자 구분)이었음 → `s:VerilogAutoComplete()`·`s:VerilogCloseDone()` 두 곳 모두 `=~?`로 변경 | `~/.vimrc` |
+| 추가 | 35-1단계 | `uvm.dict` 138 → 159개: 필드 플래그(`UVM_NOCOPY`/`NOCOMPARE`/`NOPRINT`/`NOPACK`/`NORECORD`, `UVM_COPY`/`COMPARE`/`PRINT`/`PACK`/`RECORD`, `UVM_REFERENCE`, `UVM_READONLY`), 출력 진법(`UVM_BIN`/`DEC`/`UNSIGNED`/`OCT`/`HEX`/`STRING`/`TIME`/`ENUM`/`NORADIX`) | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`) |
+| 추가 | 25-3단계 | vim Insert 모드에서 **Esc로 나올 때 한글·Caps Lock이 켜져 있으면 둘 다 끔** (한글 → 영어, Caps Lock off): `InsertLeave` → keystate.ps1 job에 stdin으로 `off` 전송. keystate.ps1은 stdin을 비동기로 읽고, vim이 닫혀 stdin이 끝나면 스스로 종료. 파일은 **UTF-8 BOM**으로 저장(없으면 PowerShell 5.1이 한글 주석을 CP949로 읽어 줄이 깨짐) | `~/.vim/keystate.ps1`(저장소 `ubuntu-terminal-setup/keystate.ps1`), `~/.vimrc` |
 
 ### 2026-11-20 업데이트
 
@@ -22,7 +25,7 @@
 | 변경 | 23단계 | vim md 인라인 `` `코드` `` 색 초록 → 연분홍(`#f5e0dc`, 코드 블록 초록과 구분) | `~/.vimrc` |
 | 변경 | 24단계 | `:glow` 방식 변경: 새 탭 + less → **지금 창에서 렌더링** (`q`/`:glow`로 커서·스크롤 그대로 복귀, `j/k`·`gg/G`·`/` 등 vim 키로 읽기). 기본 테마 dracula → **vim**(지금 vim 색으로 glow 테마를 매번 생성, SV 코드 블록 색 포함) | `~/.vimrc` |
 | 추가 | 34단계 | vim: 검색어 전부 색칠(`hlsearch`/`incsearch`) + 노랑/주황 검색 색, 구버전 vim tmux 트루컬러(`t_8f`/`t_8b`), `:Explore` 파일 청록, swap 폴더 자동 생성, Caps Lock `U P W Y` → 소문자 동작 | `~/.vimrc` |
-| 추가 | 35단계 | vim UVM: `uvm_` 자동완성 목록에 **한글 설명** (`uvm.dict` 138개, `completefunc=UvmComplete` + `uvm`로 시작하면 `Ctrl-x Ctrl-u`), UVM 파일(`uvm_pkg`/`` `uvm_ ``)은 ALE(verilator) 가짜 오류 안 뜨게 그 버퍼만 검사 끔 | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`), `~/.vimrc` |
+| 추가 | 35단계 | vim UVM: `uvm_` 자동완성 목록에 **한글 설명** (`uvm.dict` 159개, `completefunc=UvmComplete` + `uvm`로 시작하면 `Ctrl-x Ctrl-u`), UVM 파일(`uvm_pkg`/`` `uvm_ ``)은 ALE(verilator) 가짜 오류 안 뜨게 그 버퍼만 검사 끔 | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`), `~/.vimrc` |
 | 추가 | 36단계 | tmux `Ctrl+Shift+화살표`: 그 방향 pane과 자리 바꾸기 (전부터 있던 설정, 문서에 누락) | `~/.tmux.conf` |
 | 추가 | 37단계 | center 서버 VCS: `~/center` sshfs 자동 재연결, `srun`(서버 같은 폴더에서 실행), `run`/`sim [-n -l -s]`/`verdi`/`clean`/`smake`, `vcskill`. `sim`은 실제 시간 1h(`timeout`) + `+UVM_TIMEOUT` 1h 제한 | `~/.bashrc`, `~/.local/bin/srun`·`vcskill`(저장소 `ubuntu-terminal-setup/`) |
 | 변경 | 33-2단계 | `s:Brighten()`의 `max()`/`min()`을 비교식으로 교체: 구버전 vim(9.1 패치 1-16)에서 `E805`로 배경색·글자 밝기가 적용 안 되던 것 | `~/.vimrc` |
@@ -200,7 +203,7 @@
 | 22 | vim 줄번호 색을 회보라(`#7f849c`), 커서 줄 번호는 주황(`#fab387`)으로. `theme`로 테마를 바꿔도 유지 | `~/.vimrc` |
 | 23 | vim에서 md를 열면 제목·굵게·코드·표가 색으로 구분되고 `**` 같은 기호는 숨겨져서 읽기 좋게 | `~/.vimrc`, `~/.vim/after/syntax/markdown.vim` |
 | 24 | vim에서 `:glow` → 지금 창이 md 렌더링 화면으로 바뀜 (`q`로 편집 화면 복귀, 기본 색 = vim 색) | `~/.local/bin/glow`, `~/.config/glow/`, `~/.vimrc` |
-| 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 | `~/.vim/keystate.ps1`, `~/.vimrc` |
+| 25 | vim에서 Caps Lock이 켜져 있으면 오른쪽 위에 `CAPS`, 한글 입력 상태면 그 옆에 `한` 표시 + **Insert 모드에서 Esc로 나오면 둘 다 자동으로 끔** | `~/.vim/keystate.ps1`, `~/.vimrc` |
 | 26 | `xsv`로 터미널에서 Vivado xsim 시뮬 실행 (`-g` 파형 창, `rl` 다시 컴파일) + `simkill`로 안 끝나는 시뮬 강제 종료 | `~/.xsv.sh`, `~/.bashrc`, `~/.local/bin/simkill` |
 | 27 | vim에서 Verilog/SV 키워드를 역할별 색으로 (`module`/`class` 경계, `task`, `initial`, 타입, 포트 방향, 구분선 주석) | `~/.vim/after/syntax/`, `~/.vimrc` |
 | 28 | tmux에서 `Ctrl+b Ctrl+o` / `Ctrl+b Alt+o` / `Ctrl+b Space`로 pane 배치가 바뀌지 않게 (pane 돌리기, 레이아웃 순환 끄기) | `~/.tmux.conf` |
@@ -210,7 +213,7 @@
 | 32 | vim ALE(verilator)에서 `covergroup` "Unsupported" 오류 표시 안 나게 | `~/.local/bin/verilator-cgstrip`, `~/.vimrc` |
 | 33 | 배경색 `#45475A` 통일 (터미널·vim·tmux 상태바) + vim 글자 선명하게 + tmux 상태바 위로·굵은 pane 테두리 | `~/.theme/theme.py`, `~/.vimrc`, `~/.tmux.conf` |
 | 34 | vim 검색어 색칠, 구버전 트루컬러, netrw 파일 색, swap 폴더 자동 생성, Caps Lock `U P W Y` 소문자처럼 | `~/.vimrc` |
-| 35 | vim UVM 자동완성(설명 표시) + UVM 파일은 ALE 검사 끄기 | `~/.vim/dict/uvm.dict`, `~/.vimrc` |
+| 35 | vim UVM 자동완성(설명 표시, `uvm_`·`UVM_` 둘 다) + UVM 파일은 ALE 검사 끄기 | `~/.vim/dict/uvm.dict`, `~/.vimrc` |
 | 36 | tmux `Ctrl+Shift+화살표`로 pane 자리 바꾸기 | `~/.tmux.conf` |
 | 37 | center 서버 VCS/Verdi: `~/center` sshfs 자동 연결, `srun` / `run` / `sim` / `verdi` / `clean` / `vcskill` | `~/.bashrc`, `~/.local/bin/srun`, `~/.local/bin/vcskill` |
 
@@ -1868,6 +1871,9 @@ if has('popupwin') && executable('powershell.exe') && !empty($WSL_DISTRO_NAME) &
                           \ | highlight HangulInd   guifg=#1e1e2e guibg=#89b4fa ctermfg=234 ctermbg=111 gui=bold cterm=bold
         autocmd VimEnter * call s:KeyStart()
         autocmd VimResized * if s:key_state | call s:KeyShow() | endif
+        " Insert 모드에서 Esc 로 나올 때 한글·CAPS 가 켜져 있으면 powershell 에 off 보냄 → 영어로 + Caps Lock 끔
+        autocmd InsertLeave * if s:key_state && exists('s:key_job') && job_status(s:key_job) ==# 'run'
+                          \ | call ch_sendraw(s:key_job, "off\n") | endif
         autocmd VimLeavePre * if exists('s:key_job') | call job_stop(s:key_job, 'kill') | endif
     augroup END
     highlight CapsLockInd guifg=#1e1e2e guibg=#fab387 ctermfg=234 ctermbg=216 gui=bold cterm=bold
@@ -1876,6 +1882,31 @@ endif
 ```
 > - **이미 실행 중인 vim에는 적용되지 않는다.** vim을 새로 열도록 안내한다.
 > - WSL이 아니거나 `~/.vim/keystate.ps1`이 없으면 아무 일도 하지 않는다.
+
+### 25-3. Esc 로 Insert 모드를 나오면 한글·Caps Lock 자동으로 끄기 (2026-11-22)
+한글이나 Caps Lock이 켜진 채 Esc로 나오면 normal 모드 키가 한글/대문자로 들어가 불편해서, 나올 때 둘 다 끈다.
+- 동작: `InsertLeave` → 표시가 켜져 있을 때(`s:key_state` ≠ 0)만 keystate.ps1 job에 `off` 한 줄을 보낸다 (위 25-2 블록의 `InsertLeave` 두 줄).
+- keystate.ps1 (저장소 파일 그대로 복사, 25-1):
+  - stdin을 `StreamReader.ReadLineAsync()`로 **기다리지 않고** 읽어서 0.2초 감시 루프는 그대로 돈다.
+  - `off`를 받으면 Caps Lock이 켜져 있을 때 `keybd_event(VK_CAPITAL)`로 한 번 눌렀다 떼고, 앞 창이 터미널이면 `IMC_GETCONVERSIONMODE`로 읽은 값에서 한글 비트(1)를 빼서 `IMC_SETCONVERSIONMODE`(`WM_IME_CONTROL` wParam 2)로 쓴다 → 한/영이 영어로 바뀜.
+  - stdin이 끝나면(vim 종료) 스스로 `exit` → powershell이 남지 않는다.
+- 주의: keystate.ps1은 **UTF-8 BOM**으로 저장해야 한다. BOM이 없으면 PowerShell 5.1이 파일을 CP949로 읽어 한글 주석의 `→` 등이 줄바꿈을 먹고 `Add-Type` 줄이 주석에 합쳐져 `DllImport` 파싱 오류가 난다. 확인: `head -c 3 ~/.vim/keystate.ps1 | xxd` → `efbbbf`.
+- 주의: Chrome 원격 데스크톱으로 이 PC에 접속해 있으면, 원격 데스크톱이 **접속한 쪽 PC의 Caps Lock 상태로 다시 맞춰서** Caps Lock이 다시 켜질 수 있다 (그때는 접속한 쪽에서 Caps Lock을 꺼야 함). 한/영은 이 PC의 IME라 그대로 꺼진다.
+
+검증 (Caps Lock을 스크립트로 켠 뒤 `off`를 보냄 → `1` 다음 `0`, stdin이 끝나면 exit 0):
+```bash
+SP=<스크래치패드>
+cat > $SP/capon.ps1 <<'PS1'
+Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void keybd_event(byte vk, byte scan, uint flags, IntPtr extra);' -Name C -Namespace Cap
+[Cap.C]::keybd_event(0x14,0x3A,0,[IntPtr]::Zero); [Cap.C]::keybd_event(0x14,0x3A,2,[IntPtr]::Zero)
+PS1
+cd /mnt/c
+( sleep 3; powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w $SP/capon.ps1)"; sleep 1.5; echo off; sleep 1.5 ) \
+  | timeout 20 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w ~/.vim/keystate.ps1)"; echo "exit=$?"
+# → 0 / 1 / 0 (앞 창이 한글 상태 터미널이면 0 / 1 / 3 / 0), exit=0
+powershell.exe -NoProfile -Command '[console]::CapsLock'   # → False
+cd -
+```
 
 검증 (별도 tmux 서버, Caps Lock을 스크립트로 켰다가 다시 끔 → 원래 상태로 돌아옴):
 ```bash
@@ -2452,7 +2483,7 @@ vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | echo &hlsearch &incsearch synIDa
 ## 35단계. vim UVM 편집: 설명 붙은 UVM 자동완성 + UVM 파일은 ALE 검사 끄기
 
 UVM TB를 쓰기 시작하면서 추가 (2026-11-18 ~ 11-20).
-- **자동완성**: `uvm_`을 치면 11단계 목록에 UVM 클래스·매크로·phase·함수가 **오른쪽에 한글 설명**과 함께 뜬다 (예: `uvm_component_utils  컴포넌트를 factory에 등록`). 사전은 `~/.vim/dict/uvm.dict` (`단어<Tab>설명`, 138개).
+- **자동완성**: `uvm_`을 치면 11단계 목록에 UVM 클래스·매크로·phase·함수가 **오른쪽에 한글 설명**과 함께 뜬다 (예: `uvm_component_utils  컴포넌트를 factory에 등록`). 사전은 `~/.vim/dict/uvm.dict` (`단어<Tab>설명`, 159개). `UVM_`(대문자)로 치면 필드 플래그(`UVM_ALL_ON`, `UVM_NOCOPY` …)·출력 진법(`UVM_HEX` …)·verbosity(`UVM_LOW` …)도 설명과 함께 뜬다.
 - **ALE**: 로컬 verilator는 UVM 라이브러리를 몰라서 `import uvm_pkg::*;`, `` `uvm_component_utils `` 등마다 가짜 빨간 오류가 뜬다 → 저장할 때 파일에 `uvm_pkg`나 `` `uvm_ ``가 있으면 **그 버퍼만** 검사를 끄고 기존 표시도 지운다. UVM 문법 오류는 서버 VCS의 `comp.log`로 확인 (37단계).
 
 사전 확인: `grep -n "UvmComplete\|ale_uvm" ~/.vimrc` → 나오면 적용된 것. 11단계가 먼저 적용돼 있어야 한다.
@@ -2492,8 +2523,8 @@ endfunction
 ```
 마지막으로 11-3단계 `s:VerilogAutoComplete()` 안의 `call feedkeys("\<C-n>", 'n')` 한 줄을 아래로 교체:
 ```vim
-        " uvm 로 시작하고 uvm.dict 에 후보가 있으면 → UvmComplete (설명 같이 표시), 아니면 일반 단어 완성
-        if l:word =~# '^uvm' && !empty(UvmComplete(0, l:word))
+        " uvm 또는 UVM 으로 시작하고 uvm.dict 에 후보가 있으면 → UvmComplete (설명 같이 표시), 아니면 일반 단어 완성
+        if l:word =~? '^uvm' && !empty(UvmComplete(0, l:word))
             call feedkeys("\<C-x>\<C-u>", 'n')
         else
             call feedkeys("\<C-n>", 'n')
@@ -2503,7 +2534,7 @@ endfunction
 ```vim
     " uv 에서 먼저 뜬 일반 단어 목록(파일 단어 + verilog.dict)이 계속 남아 uvm.dict 가 안 뜨던 문제
     "  → uvm 까지 치면 그 목록을 닫고 UvmComplete 목록(설명 포함)으로 바꿈
-    if l:word =~# '^uvm' && complete_info(['mode']).mode !=# 'function' && !empty(UvmComplete(0, l:word))
+    if l:word =~? '^uvm' && complete_info(['mode']).mode !=# 'function' && !empty(UvmComplete(0, l:word))
         call feedkeys("\<C-e>\<C-x>\<C-u>", 'n')
         return
     endif
@@ -2725,6 +2756,7 @@ vcskill -l                                # → [서버] 실행 중인 시뮬레
 - [ ] vim으로 md를 열면 제목이 단계별 색, `**`·`` ` ``·링크 url이 숨겨지고 커서 줄에서만 보임, 표의 `|`가 흐림
 - [ ] vim에서 md 열고 `:glow` → 창 분할 없이 지금 창이 vim 색으로 렌더링, `q` → 원래 편집 화면(커서 위치 그대로)으로 복귀
 - [ ] vim에서 Caps Lock을 켜면 오른쪽 위에 주황 `CAPS`, `한/영`으로 한글을 켜면 그 왼쪽에 파랑 `한`이 뜨고, 끄면 사라짐
+- [ ] 한글·Caps Lock을 켠 채 `i` → `Esc` → 영어로 바뀌고 Caps Lock 꺼짐 (`한`/`CAPS` 표시 사라짐), vim을 닫으면 `pgrep -af keystate` 에 남는 powershell 없음 (25-3)
 - [ ] `iv` 입력 시 `interview`로 이동해서 Claude가 열리고, 두 번째부터는 이전 토론이 이어짐
 - [ ] TB 폴더(`/mnt/c` 또는 `/mnt/d` 아래)에서 `xsv <top> <파일들>` → 시뮬 출력이 터미널에 나오고, `xsv -g ...` → 파형 창이 뜸 (DUT 인스턴스 신호 자동 추가), `xsv -s <RTL top> <RTL 파일>` → Vivado 회로도 창이 뜸
 - [ ] `xsv-kill` → `xsv-kill: 실행 중인 Vivado 시뮬 없음` (돌고 있으면 `xsv-kill: 종료 xsimk.exe (PID …)`)
@@ -2739,7 +2771,7 @@ vcskill -l                                # → [서버] 실행 중인 시뮬레
 - [ ] tmux 상태바가 화면 맨 위, 왼쪽 위에 `날짜 시각`, pane 테두리가 굵은 선(`┃━`)이고 지금 pane 쪽만 파랑
 - [ ] `md` 미리보기에서 목차 링크를 누르면 그 제목으로 스크롤됨
 - [ ] vim에서 `/단어` 검색 시 모든 일치가 노랑, 커서 위치는 주황, `:noh`로 지워짐. Caps Lock 켜고 `Y` → 줄 복사 아닌 `y`처럼 동작
-- [ ] `.sv`에서 `uvm_comp` 입력 → 목록 오른쪽에 한글 설명, `import uvm_pkg::*;` 있는 파일은 `:w` 해도 `>>` 표시 없음
+- [ ] `.sv`에서 `uvm_comp` 입력 → 목록 오른쪽에 한글 설명 (`uvm_pkg`가 이미 있는 파일에서도), `UVM_NO` 입력 → `UVM_NOCOPY` 등 필드 플래그 + 설명, `import uvm_pkg::*;` 있는 파일은 `:w` 해도 `>>` 표시 없음
 - [ ] tmux `Ctrl+Shift+→` → 지금 pane이 오른쪽 pane과 자리를 바꿈
 - [ ] 새 터미널에서 `mountpoint ~/center` 성공, `~/center/<폴더>`에서 `run` → `sim -n 테스트 -ll` → `verdi` 동작, `vcskill -l`로 서버 프로세스 확인
 
@@ -2774,13 +2806,14 @@ vcskill -l                                # → [서버] 실행 중인 시뮬레
 | 테마 바꾸기 (터미널·vim·tmux 같이) | `theme` (목록) / `theme next` / `theme 이름` (catppuccin, onedark, everforest, gruvbox …) |
 | vim 바꾸기·검색에서 단어 자동완성 | `:%s/w` 또는 `/w` 입력 후 `Tab` (계속 누르면 다음 후보) |
 | Caps Lock / 한글 켜졌는지 확인 | vim 오른쪽 위에 `CAPS` / `한`이 보이면 켜진 상태 |
+| Caps Lock / 한글 끄기 | Insert 모드에서 `Esc` → 자동으로 영어 + Caps Lock 꺼짐 (원격 데스크톱 접속 중이면 Caps Lock은 접속한 쪽에서 꺼야 할 수 있음) |
 | Vivado 시뮬 실행 (터미널 출력) / 파형 창 | `xsv <top> <파일들>` / `xsv -g <top> <파일들>` |
 | 파형 창에서 TB 다시 컴파일 + 갱신 / 마지막 xsv 다시 실행 | 창 Tcl 콘솔 `rl` / `xsv-re` |
 | 백그라운드 Vivado 시뮬 전부 종료 (빌드 실패 `43-3345` 때) / 빌드 폴더까지 삭제 | `xsv-kill` / `xsv-clean` |
 | RTL 회로도 보기 / 수정 후 다시 그리기 | `xsv -s <top> <RTL 파일들>` / Vivado Tcl 콘솔 `rs` |
 | 안 끝나는 시뮬 강제 종료 (`xsim_build` 안 지워질 때) / Vivado까지 | `simkill` / `simkill -a` |
 | vim 검색 색칠 지우기 | `:noh` |
-| UVM 단어 자동완성 (설명 보기) | `.sv`에서 `uvm_` 입력 → `↑`/`↓` + `Tab` |
+| UVM 단어 자동완성 (설명 보기) | `.sv`에서 `uvm_` / `UVM_` 입력 → `↑`/`↓` + `Tab` (`UVM_ALL_ON`·`UVM_NOCOPY`·`UVM_HEX`·`UVM_LOW` 등 플래그·진법·verbosity 포함) |
 | 서버(center) 같은 폴더에서 명령 실행 (`~/center` 안에서) | `srun <명령>` (`smake` = `srun make`) |
 | VCS 컴파일 / 시뮬 / Verdi / 결과물 삭제 | `run` / `sim [-n 테스트] [-l n\|l\|m\|h\|f\|d] [-s 시드]` / `verdi` / `clean` |
 | 서버 시뮬·Verdi 확인 / 종료 | `vcskill -l` / `vcskill` (`-y` 확인 없이) |
@@ -2811,7 +2844,7 @@ vcskill -l                                # → [서버] 실행 중인 시뮬레
 - 면접 토론 세션: `~/.bashrc`의 `iv()` 함수 삭제 (또는 `~/.bashrc.bak_iv` 복원)
 - md 보기 좋게: `~/.vimrc`의 "md 파일을 vim 안에서 보기 좋게" 섹션 삭제, `rm ~/.vim/after/syntax/markdown.vim` (또는 `~/.vimrc.bak_mdview` 복원)
 - glow: `~/.vimrc`의 ":Glow" 섹션 삭제, 19단계 `l:alias`에서 `'glow': 'Glow'` 삭제, `rm ~/.local/bin/glow`, `rm -rf ~/.config/glow` (`~/.vimrc.bak_glow`는 11-20 변경 직전 = 오른쪽 창 실시간 미리보기 버전)
-- Caps Lock / 한글 표시: `~/.vimrc`의 "Caps Lock / 한글 표시" 섹션 삭제, `rm ~/.vim/keystate.ps1` (또는 `~/.vimrc.bak_capsind` 복원)
+- Caps Lock / 한글 표시: `~/.vimrc`의 "Caps Lock / 한글 표시" 섹션 삭제, `rm ~/.vim/keystate.ps1` (또는 `~/.vimrc.bak_capsind` 복원). Esc 자동 끄기(25-3)만 되돌리려면 `key_ind`의 `autocmd InsertLeave` 두 줄 삭제 + `~/.vim/keystate.ps1.bak_escoff` 복원
 - xsv: `~/.bashrc`의 `[ -f ~/.xsv.sh ] && source ~/.xsv.sh` 줄 삭제, `rm ~/.xsv.sh` (또는 `~/.bashrc.bak_xsv` 복원)
 - simkill: `rm ~/.local/bin/simkill`
 - Verilog 키워드 색: `~/.vimrc`의 "Verilog / SV 색" 섹션 삭제, `rm ~/.vim/after/syntax/verilog.vim ~/.vim/after/syntax/systemverilog.vim` (또는 `~/.vimrc.bak_vlogcolor` 복원). class 이름 색만 빼려면 "Verilog / SV 색" 섹션의 `vlogClassName` highlight 줄과 `s:VlogClassNames()` / `vlog_classnames` augroup 삭제

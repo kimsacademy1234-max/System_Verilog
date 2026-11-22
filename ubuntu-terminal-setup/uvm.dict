@@ -29,6 +29,27 @@ uvm_declare_p_sequencer	p_sequencer 핸들 선언 (시퀀서 타입 지정)
 uvm_analysis_imp_decl	write 함수 여러 개 쓸 때 imp 선언 (_suffix)
 UVM_ALL_ON	필드 플래그: copy/compare/print/pack 전부 켬
 UVM_DEFAULT	필드 플래그: 기본값 (ALL_ON과 거의 같음)
+UVM_NOCOPY	필드 플래그: copy() 에서 빼기
+UVM_NOCOMPARE	필드 플래그: compare() 에서 빼기
+UVM_NOPRINT	필드 플래그: print() 에서 빼기
+UVM_NOPACK	필드 플래그: pack()/unpack() 에서 빼기
+UVM_NORECORD	필드 플래그: record() 에서 빼기
+UVM_COPY	필드 플래그: copy() 만 켬
+UVM_COMPARE	필드 플래그: compare() 만 켬
+UVM_PRINT	필드 플래그: print() 만 켬
+UVM_PACK	필드 플래그: pack()/unpack() 만 켬
+UVM_RECORD	필드 플래그: record() 만 켬
+UVM_REFERENCE	필드 플래그: object 를 깊은 복사 대신 핸들만 복사/비교
+UVM_READONLY	필드 플래그: set_config 등으로 자동 설정 안 함
+UVM_BIN	출력 진법: 2진수 (UVM_ALL_ON | UVM_BIN)
+UVM_DEC	출력 진법: 10진수 (부호 있음)
+UVM_UNSIGNED	출력 진법: 10진수 (부호 없음)
+UVM_OCT	출력 진법: 8진수
+UVM_HEX	출력 진법: 16진수 (기본값)
+UVM_STRING	출력 진법: 문자열
+UVM_TIME	출력 진법: 시간
+UVM_ENUM	출력 진법: enum 이름
+UVM_NORADIX	출력 진법: 진법 표시(예: 'h) 없이
 UVM_NONE	verbosity 0: 항상 출력
 UVM_LOW	verbosity 100: 중요한 메시지
 UVM_MEDIUM	verbosity 200: 기본 출력 수준
