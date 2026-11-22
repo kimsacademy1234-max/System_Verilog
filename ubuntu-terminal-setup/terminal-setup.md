@@ -6,6 +6,12 @@
 
 ## 업데이트 이력
 
+### 2026-11-22 업데이트
+
+| 구분 | 단계 | 내용 | 수정 대상 |
+|---|---|---|---|
+| **수정** | 35-2단계 | UVM 파일에서 `uvm.dict` 설명 목록이 안 뜨던 문제: `uv`에서 먼저 뜬 일반 단어 목록(파일 안 `uvm_pkg`·`uvm_test` + verilog.dict)이 계속 남아 `uvm` 분기가 실행되지 않았음 → `s:VerilogCloseDone()`에서 `uvm`까지 치면 그 목록을 닫고 `Ctrl-x Ctrl-u`(UvmComplete)로 교체 | `~/.vimrc` |
+
 ### 2026-11-20 업데이트
 
 | 구분 | 단계 | 내용 | 수정 대상 |
@@ -16,7 +22,7 @@
 | 변경 | 23단계 | vim md 인라인 `` `코드` `` 색 초록 → 연분홍(`#f5e0dc`, 코드 블록 초록과 구분) | `~/.vimrc` |
 | 변경 | 24단계 | `:glow` 방식 변경: 새 탭 + less → **지금 창에서 렌더링** (`q`/`:glow`로 커서·스크롤 그대로 복귀, `j/k`·`gg/G`·`/` 등 vim 키로 읽기). 기본 테마 dracula → **vim**(지금 vim 색으로 glow 테마를 매번 생성, SV 코드 블록 색 포함) | `~/.vimrc` |
 | 추가 | 34단계 | vim: 검색어 전부 색칠(`hlsearch`/`incsearch`) + 노랑/주황 검색 색, 구버전 vim tmux 트루컬러(`t_8f`/`t_8b`), `:Explore` 파일 청록, swap 폴더 자동 생성, Caps Lock `U P W Y` → 소문자 동작 | `~/.vimrc` |
-| 추가 | 35단계 | vim UVM: `uvm_` 자동완성 목록에 **한글 설명** (`uvm.dict` 138개, `complete=FUvmComplete`), UVM 파일(`uvm_pkg`/`` `uvm_ ``)은 ALE(verilator) 가짜 오류 안 뜨게 그 버퍼만 검사 끔 | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`), `~/.vimrc` |
+| 추가 | 35단계 | vim UVM: `uvm_` 자동완성 목록에 **한글 설명** (`uvm.dict` 138개, `completefunc=UvmComplete` + `uvm`로 시작하면 `Ctrl-x Ctrl-u`), UVM 파일(`uvm_pkg`/`` `uvm_ ``)은 ALE(verilator) 가짜 오류 안 뜨게 그 버퍼만 검사 끔 | `~/.vim/dict/uvm.dict`(저장소 `ubuntu-terminal-setup/uvm.dict`), `~/.vimrc` |
 | 추가 | 36단계 | tmux `Ctrl+Shift+화살표`: 그 방향 pane과 자리 바꾸기 (전부터 있던 설정, 문서에 누락) | `~/.tmux.conf` |
 | 추가 | 37단계 | center 서버 VCS: `~/center` sshfs 자동 재연결, `srun`(서버 같은 폴더에서 실행), `run`/`sim [-n -l -s]`/`verdi`/`clean`/`smake`, `vcskill`. `sim`은 실제 시간 1h(`timeout`) + `+UVM_TIMEOUT` 1h 제한 | `~/.bashrc`, `~/.local/bin/srun`·`vcskill`(저장소 `ubuntu-terminal-setup/`) |
 | 변경 | 33-2단계 | `s:Brighten()`의 `max()`/`min()`을 비교식으로 교체: 구버전 vim(9.1 패치 1-16)에서 `E805`로 배경색·글자 밝기가 적용 안 되던 것 | `~/.vimrc` |
@@ -2461,7 +2467,7 @@ cp <저장소>/ubuntu-terminal-setup/uvm.dict ~/.vim/dict/uvm.dict
 백업(`cp ~/.vimrc ~/.vimrc.bak_uvmdict`) 후, 11-3단계 `augroup verilog_edit` **바로 위**에 추가:
 ```vim
 " UVM 단어 : ~/.vim/dict/uvm.dict (단어<Tab>설명) 를 읽어 목록 옆에 설명 표시
-"  'complete' 맨 앞 F 소스로 넣어서, 파일 안에 이미 있는 UVM 단어도 설명 붙은 쪽이 먼저 잡힘
+"  completefunc 로 연결 → 11단계 자동 목록이 uvm 으로 시작하는 단어에서 Ctrl-x Ctrl-u 로 이 함수를 부름
 "  (uvm.dict 를 고치면 다음 vim 실행부터 반영)
 function! UvmComplete(findstart, base) abort
     if a:findstart
@@ -2479,11 +2485,34 @@ function! UvmComplete(findstart, base) abort
     return filter(copy(s:uvm_words), 'stridx(v:val.word, a:base) == 0')
 endfunction
 ```
-그리고 `augroup verilog_edit` 안의 `setlocal dictionary=...` 줄을 아래로 교체 (`complete` 맨 앞에 `FUvmComplete,` 추가):
+그리고 `augroup verilog_edit` 안, 기존 `setlocal dictionary=~/.vim/dict/verilog.dict ...` 줄 **바로 아래**에 한 줄 추가 (dictionary 줄은 그대로 둔다):
 ```vim
-    autocmd FileType verilog,systemverilog setlocal dictionary=~/.vim/dict/verilog.dict complete=FUvmComplete,.,w,b,k iskeyword+=$
+    " UVM 단어는 dictionary(설명 못 띄움) 대신 completefunc 로 → 목록 오른쪽에 설명 표시
+    autocmd FileType verilog,systemverilog setlocal completefunc=UvmComplete
 ```
-> - `complete`의 `F{함수}` 소스는 vim 9.1 후반 패치에 생긴 기능이다 (이 PC의 vim 9.1, 패치 1-2141에서 확인). 확인법: `grep -c 'F{func}' /usr/share/vim/vim91/doc/options.txt` → 1 이상이면 지원. 지원 안 하는 vim이면 `.sv`를 열 때 `complete` 오류가 나므로 이 단계를 건너뛴다.
+마지막으로 11-3단계 `s:VerilogAutoComplete()` 안의 `call feedkeys("\<C-n>", 'n')` 한 줄을 아래로 교체:
+```vim
+        " uvm 로 시작하고 uvm.dict 에 후보가 있으면 → UvmComplete (설명 같이 표시), 아니면 일반 단어 완성
+        if l:word =~# '^uvm' && !empty(UvmComplete(0, l:word))
+            call feedkeys("\<C-x>\<C-u>", 'n')
+        else
+            call feedkeys("\<C-n>", 'n')
+        endif
+```
+그리고 11-3단계 `s:VerilogCloseDone()` 안, `if empty(l:word) | return | endif` 줄 **바로 아래**에 추가 (2026-11-22):
+```vim
+    " uv 에서 먼저 뜬 일반 단어 목록(파일 단어 + verilog.dict)이 계속 남아 uvm.dict 가 안 뜨던 문제
+    "  → uvm 까지 치면 그 목록을 닫고 UvmComplete 목록(설명 포함)으로 바꿈
+    if l:word =~# '^uvm' && complete_info(['mode']).mode !=# 'function' && !empty(UvmComplete(0, l:word))
+        call feedkeys("\<C-e>\<C-x>\<C-u>", 'n')
+        return
+    endif
+```
+> - 왜 필요한가: 자동 목록은 2글자(`uv`)부터 `<C-n>`으로 뜬다. 파일 안에 `uvm_pkg`·`uvm_test` 같은 단어가 있으면 이 목록이 열린 채로 남고, 목록이 떠 있는 동안의 입력은 `TextChangedI`가 아니라 `TextChangedP`로 들어와 위 `uvm` 분기가 실행되지 않는다. 그래서 UVM 파일에서는 파일에 이미 있는 `uvm_` 단어만 설명 없이 보였다 (예: `uvm_c` → `uvm_component_utils` 하나). `mode !=# 'function'` 조건은 이미 UvmComplete 목록이면 다시 바꾸지 않게 한다.
+> - 확인: `uvm_pkg`가 있는 .sv 파일에서 `uv` → 일반 목록, `uvm` → 설명 붙은 목록으로 바뀜, `uvm_c` → `uvm_config_db`·`uvm_component` 등 8개 + 설명. `en` 같은 일반 단어는 그대로 verilog.dict 목록.
+> - 주의 1: `setlocal dictionary=~/.vim/dict/uvm.dict` 처럼 **dictionary를 uvm.dict로 바꾸면 안 된다**. `setlocal dictionary=`는 추가가 아니라 교체라서 verilog.dict가 빠지고, `<C-n>`은 설명 없이 단어만 보여주며 한글 설명 글자까지 후보로 섞인다.
+> - 주의 2: `complete=FUvmComplete,...`(`F{함수}` 소스)는 vim 9.1 후반 패치 전용이다. 11-21 PC의 vim 9.1.0016에서는 `E539: Illegal character <F>` 오류가 나서 위 방식(`completefunc` + `Ctrl-x Ctrl-u`)으로 바꿨다. 이 방식은 vim 버전과 관계없이 동작한다.
+> - 2026-11-21: 위 문제로 설명이 안 뜨던 것 수정 (`dictionary=uvm.dict` 줄 → `completefunc=UvmComplete`, 자동 목록에 `uvm` 분기 추가).
 
 ### 35-3. `~/.vimrc`: UVM 파일은 ALE 검사 끄기
 32단계 `augroup ale_covergroup … augroup END` **바로 아래**에 추가:
@@ -2507,8 +2536,8 @@ augroup END
 
 검증:
 ```bash
-vim -Nu ~/.vimrc -es -c 'set ft=systemverilog' -c 'redir! > /dev/stdout | echo &l:complete len(UvmComplete(0,"uvm_comp")) UvmComplete(0,"uvm_component_utils")[0].menu | redir END | q'
-# → FUvmComplete,.,w,b,k 6 컴포넌트를 factory에 등록
+vim -Nu ~/.vimrc -es -c 'set ft=systemverilog' -c 'redir! > /dev/stdout | echo &l:completefunc &l:dictionary len(UvmComplete(0,"uvm_comp")) UvmComplete(0,"uvm_component_utils")[0].menu | redir END | q'
+# → UvmComplete /home/<user>/.vim/dict/verilog.dict 6 컴포넌트를 factory에 등록
 vim -Nu ~/.vimrc -es -c 'redir! > /dev/stdout | autocmd ale_uvm | redir END | q' | grep -c AleUvmCheck
 # → 3   (*.v / *.sv / *.svh)
 ```
@@ -2798,6 +2827,6 @@ vcskill -l                                # → [서버] 실행 중인 시뮬레
 - `v` / `h` n칸 분할: `~/.bashrc`의 "v / h : 지금 pane 을 n칸으로" 블록(`unalias v h` ~ `unset n`)을 예전 alias 2줄로 교체 (또는 `~/.bashrc.bak4` 복원)
 - md 목차 링크: `~/.mdview/mdview.py.bak_anchor` 복원
 - 34단계 vim 보강: `~/.vimrc`에서 `set hlsearch incsearch`, `augroup my_bg`의 Search/CurSearch/IncSearch 3줄, `if empty(&t_8f)` 블록, `augroup netrw_color`, `call mkdir(... swap ...)`, "Caps Lock 대비: U P W Y" 섹션 삭제 (검색 색만: `~/.vimrc.bak_hls` 복원)
-- 35단계 UVM: `~/.vimrc`의 `UvmComplete` 함수·`augroup ale_uvm` 블록 삭제, `complete=`에서 `FUvmComplete,` 삭제, `rm ~/.vim/dict/uvm.dict` (또는 `~/.vimrc.bak_uvmdict` 복원)
+- 35단계 UVM: `~/.vimrc`의 `UvmComplete` 함수·`augroup ale_uvm` 블록 삭제, `setlocal completefunc=UvmComplete` 줄과 `s:VerilogAutoComplete()`의 `uvm` 분기(`if … C-x C-u … else`) 삭제 → `call feedkeys("\<C-n>", 'n')`만 남김, `s:VerilogCloseDone()`의 `uvm` 블록(`if l:word =~# '^uvm' && complete_info(...)` ~ `endif`) 삭제, `rm ~/.vim/dict/uvm.dict` (또는 `~/.vimrc.bak_uvmdict` 복원)
 - `Ctrl+Shift+화살표`: `~/.tmux.conf`의 "pane 자리 바꾸기" 5줄 삭제 후 `tmux unbind -n C-S-Left \; unbind -n C-S-Right \; unbind -n C-S-Up \; unbind -n C-S-Down`
 - center VCS: `~/.bashrc`의 `alias smake` ~ `~/center` sshfs 블록 삭제, `fusermount -u ~/center`, `rm ~/.local/bin/srun ~/.local/bin/vcskill`
