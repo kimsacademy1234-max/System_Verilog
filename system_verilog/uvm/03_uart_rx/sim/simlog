@@ -1,0 +1,374 @@
+
+#-----------------------------------------------------------
+# xsim v2020.2 (64-bit)
+# SW Build 3064766 on Wed Nov 18 09:12:45 MST 2020
+# IP Build 3064653 on Wed Nov 18 14:17:31 MST 2020
+# Start of session at: Wed Nov 25 17:13:18 2026
+# Process ID: 22356
+# Current directory: D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/xsim_build
+# Command line: xsim.exe -mode tcl -source {xsim.dir/sim_r/xsim_script.tcl}
+# Log file: D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/xsim_build/xsim.log
+# Journal file: D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/xsim_build\xsim.jou
+#-----------------------------------------------------------
+source xsim.dir/sim_r/xsim_script.tcl
+# xsim {sim_r} -autoloadwcfg -runall
+Vivado Simulator 2020.2
+Time resolution is 1 ps
+run -all
+UVM_INFO /proj/xbuilds/SWIP/2020.2_0711_1805/installs/lin64/Vivado/2020.2/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(18601) @ 0: reporter [UVM/RELNOTES] 
+      (Specify +UVM_NO_RELNOTES to turn off this notice)
+  with `UVM_OBJECT_DO_NOT_NEED_CONSTRUCTOR undefined.
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_NO_DEPRECATED undefined.
+
+  You are using a version of the UVM library that has been compiled
+
+  ***********       IMPORTANT RELEASE NOTES         ************
+----------------------------------------------------------------
+(C) 2013-2014 NVIDIA Corporation
+(C) 2011-2013 Cypress Semiconductor Corp.
+(C) 2006-2014 Synopsys, Inc.
+(C) 2007-2014 Cadence Design Systems, Inc.
+(C) 2007-2014 Mentor Graphics Corporation
+
+
+----------------------------------------------------------------
+
+UVM_INFO @ 0: reporter [RNTST] Running test base_uart_test...
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(673) @ 0: uvm_test_top [base_uart_test] [BUILD - TEST]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(634) @ 0: uvm_test_top.env [_env] [BUILD - ENVIRONMENT]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(492) @ 0: uvm_test_top.env.agt_in [uart_agent_in] [BUILD - AGENT[IN]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(214) @ 0: uvm_test_top.env.agt_in.drv [uvm_driver] [BUILD - DRIVER]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(318) @ 0: uvm_test_top.env.agt_in.mon_in [uart_rx_monitor_in] [BUILD - MONITOR[IN]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(526) @ 0: uvm_test_top.env.agt_out [uart_agent_out] [BUILD - AGENT[OUT]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(394) @ 0: uvm_test_top.env.agt_out.mon_out [uart_rx_monitor_out] [BUILD - MONITOR[OUT]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(441) @ 0: uvm_test_top.env.scb [uart_scb] [BUILD - SCOREBOARD]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(503) @ 0: uvm_test_top.env.agt_in [uart_agent_in] [CONNECT - AGENT[IN]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(644) @ 0: uvm_test_top.env [_env] [CONNECT - ENV]
+UVM_INFO /proj/xbuilds/SWIP/2020.2_0711_1805/installs/lin64/Vivado/2020.2/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(18752) @ 0: reporter [UVMTOP] UVM testbench topology:
+--------------------------------------------------------------
+Name                       Type                    Size  Value
+--------------------------------------------------------------
+uvm_test_top               base_uart_test          -     @339 
+  env                      uart_env                -     @354 
+    agt_in                 uart_agent_in           -     @371 
+      drv                  uart_driver             -     @401 
+        rsp_port           uvm_analysis_port       -     @420 
+        seq_item_port      uvm_seq_item_pull_port  -     @410 
+      mon_in               uart_rx_monitor_in      -     @430 
+        in_port            uvm_analysis_port       -     @582 
+      sqr                  uvm_sequencer           -     @439 
+        rsp_export         uvm_analysis_export     -     @448 
+        seq_item_export    uvm_seq_item_pull_imp   -     @566 
+        arbitration_queue  array                   0     -    
+        lock_queue         array                   0     -    
+        num_last_reqs      integral                32    'd1  
+        num_last_rsps      integral                32    'd1  
+    agt_out                uart_agent_out          -     @380 
+      mon_out              uart_rx_monitor_out     -     @600 
+        out_port           uvm_analysis_port       -     @610 
+    scb                    uart_scb                -     @389 
+      imp_in               uvm_analysis_imp_in     -     @624 
+      imp_out              uvm_analysis_imp_out    -     @634 
+--------------------------------------------------------------
+
+UVM_INFO /proj/xbuilds/SWIP/2020.2_0711_1805/installs/lin64/Vivado/2020.2/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(6725) @ 0: reporter [UVM/FACTORY/PRINT] (*) Types with no associated type name will be printed as <unknown>
+
+####
+
+  uart_slow_seq
+  uart_seq_item
+  uart_scb
+  uart_rx_monitor_out
+  uart_rx_monitor_in
+  uart_rand_seq
+  uart_normal_seq
+  uart_fast_test
+  uart_fast_seq
+  uart_env
+  uart_driver
+  uart_coner_seq
+  uart_burst_seq
+  uart_agent_out
+  uart_agent_in
+  base_uart_test
+  base_uart_seq
+  ---------
+  Type Name
+
+All types registered with the factory: 68 total
+  No instance or type overrides are registered with this factory
+
+#### Factory Configuration (*)
+
+
+UVM_INFO /proj/xbuilds/SWIP/2020.2_0711_1805/installs/lin64/Vivado/2020.2/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(20867) @ 0: reporter [UVM/COMP/NAMECHECK] This implementation of the component name checks requires DPI to be enabled
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(682) @ 0: uvm_test_top [base_uart_test] [TEST_BASE - RUN]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(402) @ 0: uvm_test_top.env.agt_out.mon_out [uart_rx_monitor_in] [RUN - MONITOR[OUT]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(352) @ 0: uvm_test_top.env.agt_in.mon_in [uart_rx_monitor_in] [RUN - MONITOR[IN]]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 0: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 20000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6330000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 58410000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 110490000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 162570000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 214650000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 266730000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 318810000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 370890000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 422970000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 475050000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 527130000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 579210000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 631290000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 683370000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 735450000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 787530000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 839610000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 891690000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 0 , rx_done = x, kind = FASTER,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 943770000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = SLOWER,interval =  63
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 1047930000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 1047930000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 1047930000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1047930000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1049540000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1101620000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1153700000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1205780000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1257860000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1309940000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1362020000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1414100000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1466180000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1518260000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1570340000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1622420000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1674500000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1726580000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1778660000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1830740000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1882820000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1934900000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 56 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 1986980000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = FASTER,interval =  16
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 2091140000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 2091140000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 2091140000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2091140000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2092950000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2145030000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2197110000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2249190000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2301270000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2353350000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2405430000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2457510000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2509590000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2561670000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2613750000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2665830000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2717910000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2769990000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2822070000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2874150000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2926230000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 2978310000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 255 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3030390000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = FASTER,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 3134550000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 3134550000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 3134550000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3134550000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3138860000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3190940000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3243020000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3295100000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3347180000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3399260000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3451340000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3503420000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3555500000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3607580000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3659660000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3711740000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3763820000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3815900000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3867980000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3920060000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 3972140000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4024220000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4076300000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =  43
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 4180460000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 4180460000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 4180460000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4180460000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4183770000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4235850000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4287930000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4340010000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4392090000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4444170000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4496250000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4548330000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4600410000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4652490000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4704570000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4756650000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4808730000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4860810000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4912890000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 4964970000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5017050000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5069130000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 240 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5121210000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = SLOWER,interval =  33
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 5225370000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 5225370000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 5225370000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5225370000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5228280000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5280360000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5332440000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5384520000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5436600000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5488680000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5540760000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5592840000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5644920000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5697000000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5749080000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5801160000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5853240000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5905320000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 5957400000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6009480000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6061560000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6113640000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 233 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6165720000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = SLOWER,interval =  29
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 6269880000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 6269880000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 6269880000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6269880000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6271190000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6323270000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6375350000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6427430000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6479510000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6531590000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6583670000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6635750000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6687830000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6739910000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6791990000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6844070000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6896150000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 6948230000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7000310000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7052390000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7104470000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7156550000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 189 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7208630000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = SLOWER,interval =  13
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 7312790000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 7312790000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 7312790000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7312790000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7314600000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7366680000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7418760000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7470840000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7522920000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7575000000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7627080000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7679160000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7731240000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7783320000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7835400000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7887480000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7939560000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 7991640000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8043720000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8095800000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8147880000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8199960000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 246 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8252040000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =  18
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 8356200000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 8356200000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 8356200000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8356200000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8356710000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8408790000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8460870000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8512950000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8565030000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8617110000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8669190000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8721270000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8773350000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8825430000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8877510000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8929590000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 8981670000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9033750000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9085830000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9137910000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9189990000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9242070000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 120 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9294150000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = SLOWER,interval =   5
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 9398310000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 9398310000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(94) @ 9398310000: uvm_test_top.env.agt_in.sqr@@seq [base_uart_seq] [SEQ-BODY]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9398310000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> SEQUENCE] rst = 0, rx = 1, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9402720000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9454800000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9506880000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9558960000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9611040000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9663120000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9715200000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9767280000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9819360000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9871440000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9923520000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 9975600000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10027680000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10079760000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10131840000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 0, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10183920000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 0, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10236000000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10288080000: reporter@@seq_mon_in [=> MON_IN] rst = 0, rx = 1, rx_data = 209 , rx_done = x, kind = NORMAL,interval =   0
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(64) @ 10340160000: uvm_test_top.env.agt_in.sqr@@seq.uart_seq_item [=> DRIVER] rst = 0, rx = 1, rx_data = 160 , rx_done = x, kind = SLOWER,interval =  44
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(281) @ 10444320000: uvm_test_top.env.agt_in.drv [uart_driver] [FRAME_DONE]
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(282) @ 10444320000: uvm_test_top.env.agt_in.drv [uart_driver] =============================================================================================
+UVM_INFO D:/26_AI_CAMP_2/System_Verilog/system_verilog/uvm/03_uart_rx/sim/tb_uart.sv(684) @ 10444320000: uvm_test_top [uvm_test_] [TEST_BASE - END]
+UVM_INFO /proj/xbuilds/SWIP/2020.2_0711_1805/installs/lin64/Vivado/2020.2/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(19968) @ 10444320000: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+UVM_INFO /proj/xbuilds/SWIP/2020.2_0711_1805/installs/lin64/Vivado/2020.2/data/system_verilog/uvm_1.2/xlnx_uvm_package.sv(13673) @ 10444320000: reporter [UVM/REPORT/SERVER] [uvm_test_]     1
+[uvm_driver]     1
+[uart_scb]     1
+[uart_rx_monitor_out]     1
+[uart_rx_monitor_in]     3
+[uart_driver]    20
+[uart_agent_out]     1
+[uart_agent_in]     2
+[base_uart_test]     2
+[base_uart_seq]    10
+[_env]     2
+[UVMTOP]     1
+[UVM/RELNOTES]     1
+[UVM/FACTORY/PRINT]     1
+[UVM/COMP/NAMECHECK]     1
+[TEST_DONE]     1
+[RNTST]     1
+[=> SEQUENCE]    10
+[=> MON_IN]    90
+[=> DRIVER]   100
+** Report counts by id
+UVM_FATAL :    0
+UVM_ERROR :    0
+UVM_WARNING :    0
+UVM_INFO :  250
+** Report counts by severity
+
+--- UVM Report Summary ---
+
+
+$finish called at time : 10444320 ns : File "C:\Xilinx\Vivado\2020.2\data/system_verilog/uvm_1.2/xlnx_uvm_package.sv" Line 18699
+exit
+INFO: [Common 17-206] Exiting xsim at Wed Nov 25 17:13:22 2026...

@@ -10,7 +10,7 @@ import uvm_pkg::*;
 
 interface base_interface(input clk);
 
-	logic [7:0] wdata;   // drive t_data 
+	logic [7:0] wdata;   // drive wdata 
 	logic [7:0] rdata;	// monitor rdata
 	logic [7:0] addr;	// drive  if ( kind == WRITE ) we = 1 
 	logic we; 
@@ -31,11 +31,16 @@ typedef enum { READ, WRITE} kind_e;
 
 class base_item extends uvm_sequence_item;       
 
-	rand bit [7:0] t_data;
+
+
+
+	rand bit [7:0] wdata;
 	rand bit [7:0] t_addr;
 	rand kind_e kind;
 
-    
+	logic [7:0] rdata;
+	
+
 	constraint c_addr { 
 			t_addr inside{[0:255]};
 	}
@@ -43,7 +48,7 @@ class base_item extends uvm_sequence_item;
 	// 아이템 등록
 
 	`uvm_object_utils_begin(base_item)
-	`uvm_field_int (t_data,UVM_ALL_ON)       // *UVM_ALL_ON 기능 - print/copy/compare 가 t_data를 다룰 수 있도록 등록 
+	`uvm_field_int (wdata,UVM_ALL_ON)       // *UVM_ALL_ON 기능 - print/copy/compare 가 wdata를 다룰 수 있도록 등록 
 	`uvm_field_int (t_addr,UVM_ALL_ON)
 	`uvm_field_enum(kind_e,kind,UVM_ALL_ON)
 	`uvm_object_utils_end
@@ -57,7 +62,7 @@ class base_item extends uvm_sequence_item;
 	
 	function void debug_print(string name);
 
-			`uvm_info(name,$sformatf("t_data = %d, t_addr = %d, kind = %d",t_data,
+			`uvm_info(name,$sformatf("wdata = %d, t_addr = %d, kind = %d",wdata,
 			t_addr, kind),UVM_MEDIUM)  // sformatf -> string 안에 자료형 값을 넣고 싶을때 -> 출력은 string
 
 	endfunction
@@ -145,9 +150,7 @@ class base_driver extends uvm_driver #(base_item);
 		function void build_phase(uvm_phase phase); 
 			super.build_phase(phase);
 			if(!uvm_config_db #(virtual base_interface)::get(this,"","base_vif",base_vif))begin
-			
 				`uvm_fatal(get_name(),"unable to access base interface") //get_name() - 현재 인스턴스 이름 
-
 			end
 			
 			`uvm_info("base_driver","build_phase-driver",UVM_LOW)
@@ -159,7 +162,7 @@ class base_driver extends uvm_driver #(base_item);
 				seq_item_port.get_next_item(seq_item);// 시퀀스에서 아이템 전달 받음 
 				@(negedge base_vif.clk);
 				base_vif.addr = seq_item.t_addr;	
-				base_vif.wdata = seq_item.t_data;
+				base_vif.wdata = seq_item.wdata;
 
 				
 				if(seq_item.kind == WRITE)begin
@@ -173,6 +176,8 @@ class base_driver extends uvm_driver #(base_item);
 				seq_item_port.item_done();
 				seq_item.debug_print("=>DRIVER");
 			end
+			
+			sender.write(seq_item);
 
 		endtask
 
@@ -182,11 +187,19 @@ endclass
 
 //===================================================================================
 //
+// 				모니터는 파라미터화 클래스가 아님
 //
 //===================================================================================
 
 class base_monitor extends uvm_monitor;
 		`uvm_component_utils(base_monitor)
+		base_item seq_item; 
+		virtual base_interface base_vif;
+
+
+		uvm_analysis_port #(base_item) sender;  // #(자료형) sender 핸들 
+
+
 
 		function new(string name, uvm_component parent);
 			super.new(name, parent);
@@ -194,8 +207,39 @@ class base_monitor extends uvm_monitor;
 
 
 		function void build_phase(uvm_phase phase);  
+			
+			super.build_phase(phase);
+			
+			sender = new("WRITE",this);    // 비로소 모니터에 포트가 하나 만들어진다. 
+
+			
+			if(!uvm_config_db #(virtual base_interface)::get(this,"","base_vif",base_vif))begin
+				`uvm_fatal(get_name(),"unable to access base interface") //get_name() - 현재 인스턴스 이름 
+			end
+
 			`uvm_info("base_monitor","build_phase - monitor",UVM_LOW)
+
 		endfunction
+
+
+		task run_phase(uvm_phase phase);
+			forever begin
+				seq_item = base_item::type_id::create("base_seq_item");
+				@(posedge base_vif.clk);
+				#1;
+				seq_item.t_addr= base_vif.addr 
+                seq_item.wdata= base_vif.wdata
+				seq_item.rdata= base_vif.rdata
+
+				
+				if(base_vif.we) seq_item.kind = WRITE;
+				else seq_item.kind = READ;
+			end
+		endtask
+
+
+
+
 endclass
 
 //===================================================================================
@@ -353,22 +397,6 @@ end
 
 
 endmodule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
